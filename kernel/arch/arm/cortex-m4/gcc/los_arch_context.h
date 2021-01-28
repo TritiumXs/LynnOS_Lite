@@ -35,7 +35,6 @@
 #include "los_config.h"
 #include "los_compiler.h"
 
-
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
