@@ -151,8 +151,14 @@ LITE_OS_SEC_TEXT_INIT VOID *HalTskStackInit(UINT32 taskID, UINT32 stackSize, VOI
 
 void HalBackTrace()
 {
-  
 }
+
+#if (LOSCFG_MEM_LEAKCHECK == 1)
+VOID HalRecordLR(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount,
+                 UINTPTR stackStart, UINTPTR stackEnd)
+{
+}
+#endif
 
 LITE_OS_SEC_TEXT_INIT UINT32 HalStartSchedule(OS_TICK_HANDLER handler)
 {

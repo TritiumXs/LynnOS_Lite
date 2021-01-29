@@ -42,8 +42,8 @@ extern "C" {
 #endif /* __cplusplus */
 
 /*lint -save -e40 -e522 -e533*/
-
 UINT32 g_intCount = 0;
+
 /*lint -restore*/
 
 HWI_PROC_FUNC __attribute__((aligned(0x100))) g_hwiForm[OS_VECTOR_CNT] = {0};
@@ -85,6 +85,16 @@ LITE_OS_SEC_TEXT_MINOR VOID HalHwiDefaultHandler(VOID)
     while (1) {}
 }
 
+WEAK VOID HalPreInterruptHandler(UINT32 arg)
+{
+    return;
+}
+
+WEAK VOID HalAftInterruptHandler(UINT32 arg)
+{
+    return;
+}
+
 /* ****************************************************************************
  Function    : HalInterrupt
  Description : Hardware interrupt entry function
@@ -109,6 +119,8 @@ LITE_OS_SEC_TEXT VOID HalInterrupt(VOID)
 
     hwiIndex = HalIntNumGet();
 
+    HalPreInterruptHandler(hwiIndex);
+
 #if (OS_HWI_WITH_ARG == 1)
     if (g_hwiSlaveForm[hwiIndex].pfnHandler != 0) {
         g_hwiSlaveForm[hwiIndex].pfnHandler((VOID *)g_hwiSlaveForm[hwiIndex].pParm);
@@ -118,6 +130,9 @@ LITE_OS_SEC_TEXT VOID HalInterrupt(VOID)
         g_hwiSlaveForm[hwiIndex]();
     }
 #endif
+
+    HalAftInterruptHandler(hwiIndex);
+
     intSave = LOS_IntLock();
     g_intCount--;
     LOS_IntRestore(intSave);
@@ -198,8 +213,6 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
     return LOS_OK;
 }
 
-#define OS_NVIC_INT_CTRL_SIZE           4
-#define OS_NVIC_SHCSR_SIZE              4
 #define FAULT_STATUS_REG_BIT            32
 #define USGFAULT                        (1 << 18)
 #define BUSFAULT                        (1 << 17)
@@ -207,9 +220,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
 #define DIV0FAULT                       (1 << 4)
 #define HARDFAULT_IRQN                  (-13)
 
-static ExcInfoArray g_excArray[OS_EXC_TYPE_MAX];
-
-static ExcInfo g_excInfo = {0};
+ExcInfo g_excInfo = {0};
 
 UINT8 g_uwExcTbl[FAULT_STATUS_REG_BIT] = {
     0, 0, 0, 0, 0, 0, OS_EXC_UF_DIVBYZERO, OS_EXC_UF_UNALIGNED,
@@ -282,17 +293,6 @@ UINT32 HalExcContextDump(UINT32 index, UINT32 *excContent)
     return 0;
 }
 
-VOID HalDumpMsg(VOID)
-{
-    UINT32 index = 0;
-    for (index = 0; index < (OS_EXC_TYPE_MAX - 1); index++) {
-        if (g_excArray[index].uwValid == FALSE) {
-            continue;
-        }
-        g_excArray[index].pFnExcInfoCb(index, g_excArray[index].pArg);
-    }
-}
-
 LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, UINT32 pid, EXC_CONTEXT_S *excBufAddr)
 {
     UINT16 tmpFlag = (excType >> 16) & OS_NULL_SHORT;
@@ -323,22 +323,9 @@ LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, U
     } else {
         g_excInfo.context = excBufAddr;
     }
-    HalDumpMsg();
-    HalSysExit();
-}
 
-VOID HalExcRegister(ExcInfoType type, EXC_INFO_SAVE_CALLBACK func, VOID *arg)
-{
-    ExcInfoArray *excInfo = NULL;
-    if ((type >= OS_EXC_TYPE_MAX) || (func == NULL)) {
-        PRINT_ERR("HalExcRegister ERROR!\n");
-        return;
-    }
-    excInfo = &(g_excArray[type]);
-    excInfo->uwType = type;
-    excInfo->pFnExcInfoCb = func;
-    excInfo->pArg = arg;
-    excInfo->uwValid = TRUE;
+    OsDoExcHook(EXC_INTERRUPT);
+    HalSysExit();
 }
 
 /* ****************************************************************************
@@ -378,9 +365,6 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiInit()
     *(volatile UINT32 *)OS_NVIC_SHCSR |= (USGFAULT | BUSFAULT | MEMFAULT);
     /* Enable DIV 0 and unaligned exception */
     *(volatile UINT32 *)OS_NVIC_CCR |= DIV0FAULT;
-
-    HalExcRegister(OS_EXC_TYPE_CONTEXT, (EXC_INFO_SAVE_CALLBACK)HalExcContextDump, NULL);
-    HalExcRegister(OS_EXC_TYPE_NVIC, (EXC_INFO_SAVE_CALLBACK)HalExcNvicDump, NULL);
 
     return;
 }
