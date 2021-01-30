@@ -46,6 +46,11 @@ VOID HalArchInit();
 void HalBackTrace();
 #define LOS_BackTrace HalBackTrace
 
+#if (LOSCFG_MEM_LEAKCHECK == 1)
+VOID HalRecordLR(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount,
+                 UINTPTR stackStart, UINTPTR stackEnd);
+#endif
+
 #ifdef __cplusplus
 #if __cplusplus
 }

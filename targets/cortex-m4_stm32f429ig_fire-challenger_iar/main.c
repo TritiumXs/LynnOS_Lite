@@ -43,9 +43,6 @@ extern "C" {
 #endif /* __cpluscplus */
 #endif /* __cpluscplus */
 
-#pragma data_alignment=8
-UINT8 g_memStart[OS_SYS_MEM_SIZE];
-
 VOID taskSampleEntry2(VOID)
 {
     while(1) {
@@ -109,8 +106,8 @@ LITE_OS_SEC_TEXT_INIT int main(void)
     if (ret == LOS_OK) {
         LOS_Start();
     }
-	
-	while (1) {
+
+    while (1) {
         __asm volatile("wfi");
     }
 }
