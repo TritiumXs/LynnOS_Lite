@@ -32,6 +32,7 @@
  .syntax unified
  .arch armv7e-m
  .thumb
+ .fpu fpv4-sp-d16
 .section .text
 
 
@@ -58,13 +59,15 @@
 .equ FLAG_HWI_ACTIVE,   0x20000
 .equ FLAG_NO_FLOAT,   0x10000000
 
-.equ OS_NVIC_FSR                 ,   0xE000ED28      //include BusFault/MemFault/UsageFault State Regeister
-.equ OS_NVIC_HFSR                ,   0xE000ED2C      //HardFault State Regeister
-.equ OS_NVIC_BFAR                ,   0xE000ED38
-.equ OS_NVIC_MMAR                ,   0xE000ED34
-.equ OS_NVIC_ACT_BASE            ,   0xE000E300
-.equ OS_NVIC_SHCSRS              ,   0xE000ED24
-.equ OS_NVIC_SHCSR_MASK          ,   0xC00
+.equ    OS_FPU_CPACR,				0xE000ED88
+.equ    OS_FPU_CPACR_ENABLE,		0x00F00000
+.equ 	OS_NVIC_FSR,   				0xE000ED28      //include BusFault/MemFault/UsageFault State Regeister
+.equ 	OS_NVIC_HFSR,   			0xE000ED2C      //HardFault State Regeister
+.equ 	OS_NVIC_BFAR,   			0xE000ED38
+.equ 	OS_NVIC_MMAR,   			0xE000ED34
+.equ 	OS_NVIC_ACT_BASE,   		0xE000E300
+.equ 	OS_NVIC_SHCSRS,   			0xE000ED24
+.equ 	OS_NVIC_SHCSR_MASK,   		0xC00
 
     .type HalExcNMI, %function
     .global HalExcNMI
@@ -275,13 +278,22 @@ _hwiActiveCheck:
 _ExcInMSP:
     .fnstart
     .cantunwind
-    CMP   LR, #0XFFFFFFED
+    CMP   LR, #0xFFFFFFED
     BNE   _NoFloatInMsp
     ADD   R3, R13, #104
     PUSH  {R3}
     MRS   R12, PRIMASK                  // store message-->exc: disable int?
-    PUSH {R4-R12}                       // store message-->exc: {R4-R12}
-    #VPUSH {D8-D15}						// FPU
+    PUSH  {R4-R12}                      // store message-->exc: {R4-R12}
+
+	ldr.w	r1, =OS_FPU_CPACR
+    ldr     r1, [r1]
+    and     r1, r1, #OS_FPU_CPACR_ENABLE
+    cmp     r1, #OS_FPU_CPACR_ENABLE
+    bne     __DisabledFPU
+    VPUSH {D8-D15}						// FPU
+    B     _handleEntry
+
+__DisabledFPU:
     B     _handleEntry
   .fnend
 
@@ -341,8 +353,17 @@ _hwiActiveCheckNext:
     // copy auto saved task register
 
     LDMFD R3!, {R4-R11}                  // R4-R11 store PSP reg(auto push when exc in task)
-    #VLDMIA  R3!, {D8-D15}				 // FPU
-    #VSTMDB  R2!, {D8-D15}				 // FPU
+    ldr.w 	r3, =OS_FPU_CPACR
+	ldr		r3, [r3]
+	and 	r3, r3, #OS_FPU_CPACR_ENABLE
+	cmp 	r3, #OS_FPU_CPACR_ENABLE
+	bne		__DisabledFPU1
+    VLDMIA  R3!, {D8-D15}				 // FPU
+    VSTMDB  R2!, {D8-D15}				 // FPU
+	STMFD R2!, {R4-R11}
+    B     _handleEntry
+
+__DisabledFPU1:
     STMFD R2!, {R4-R11}
     B     _handleEntry
   .fnend
@@ -352,7 +373,7 @@ _hwiActiveCheckNext:
 _NoFloatInPsp:
     .fnstart
     .cantunwind
-    MOV   R2,  R13                           //no auto push floating registers
+    MOV   R2,  R13                      //no auto push floating registers
     SUB   R13, #32                      // add 8 Bytes reg(for STMFD)
 
     MRS   R3,  PSP
