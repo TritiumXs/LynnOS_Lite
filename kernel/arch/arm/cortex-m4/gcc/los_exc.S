@@ -285,7 +285,7 @@ _ExcInMSP:
     MRS   R12, PRIMASK                  // store message-->exc: disable int?
     PUSH  {R4-R12}                      // store message-->exc: {R4-R12}
 
-	ldr.w	r1, =OS_FPU_CPACR
+    ldr.w	r1, =OS_FPU_CPACR
     ldr     r1, [r1]
     and     r1, r1, #OS_FPU_CPACR_ENABLE
     cmp     r1, #OS_FPU_CPACR_ENABLE
@@ -354,13 +354,13 @@ _hwiActiveCheckNext:
 
     LDMFD R3!, {R4-R11}                  // R4-R11 store PSP reg(auto push when exc in task)
     ldr.w 	r3, =OS_FPU_CPACR
-	ldr		r3, [r3]
-	and 	r3, r3, #OS_FPU_CPACR_ENABLE
-	cmp 	r3, #OS_FPU_CPACR_ENABLE
-	bne		__DisabledFPU1
+    ldr		r3, [r3]
+    and 	r3, r3, #OS_FPU_CPACR_ENABLE
+    cmp 	r3, #OS_FPU_CPACR_ENABLE
+    bne		__DisabledFPU1
     VLDMIA  R3!, {D8-D15}				 // FPU
     VSTMDB  R2!, {D8-D15}				 // FPU
-	STMFD R2!, {R4-R11}
+    STMFD R2!, {R4-R11}
     B     _handleEntry
 
 __DisabledFPU1:

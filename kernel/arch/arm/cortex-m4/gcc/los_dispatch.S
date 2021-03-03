@@ -93,12 +93,12 @@ HalStartToRun:
     bx      r6
 
 __DisabledFPU:
- 	add     r12, r12, #36
- 	ldmfd	r12!,{r0-r7}
- 	msr		psp, r12
- 	mov     lr, r5
- 	cpsie 	I
- 	bx 		r6
+    add     r12, r12, #36
+    ldmfd	r12!,{r0-r7}
+    msr		psp, r12
+    mov     lr, r5
+    cpsie 	I
+    bx 		r6
     .fnend
 
 
@@ -157,14 +157,13 @@ HalPendSV:
 
 HalTaskSwitch:
     mrs     r0, psp
-
     stmfd   r0!, {r4-r12}
-	ldr.w 	r3, =OS_FPU_CPACR
-	ldr		r3, [r3]
-	and 	r3, r3, #OS_FPU_CPACR_ENABLE
-	cmp 	r3, #OS_FPU_CPACR_ENABLE
-	bne		__DisabledFPU1
-	vstmdb	r0!, {d8-d15}
+    ldr.w 	r3, =OS_FPU_CPACR
+    ldr		r3, [r3]
+    and 	r3, r3, #OS_FPU_CPACR_ENABLE
+    cmp 	r3, #OS_FPU_CPACR_ENABLE
+    bne		__DisabledFPU1
+    vstmdb	r0!, {d8-d15}
 
 __DisabledFPU1:
     ldr     r5, =g_losTask
@@ -189,10 +188,10 @@ __DisabledFPU1:
     strh    r7,  [r0 , #4]
 
     ldr     r1,   [r0]
-	and 	r3, r3, #OS_FPU_CPACR_ENABLE
-	cmp 	r3, #OS_FPU_CPACR_ENABLE
-	bne		__DisabledFPU2
-	vldmia	r1!, {d8-d15}
+    and 	r3, r3, #OS_FPU_CPACR_ENABLE
+    cmp 	r3, #OS_FPU_CPACR_ENABLE
+    bne		__DisabledFPU2
+    vldmia	r1!, {d8-d15}
 
 __DisabledFPU2:
     ldmfd   r1!, {r4-r12}
