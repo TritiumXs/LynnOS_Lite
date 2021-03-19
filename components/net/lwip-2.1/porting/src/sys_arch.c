@@ -41,8 +41,14 @@
 #include <los_timer.h>
 #include <los_config.h>
 
+#ifndef YES
 #define YES 1
+#endif
+
+#ifndef NO
 #define NO 0
+#endif
+
 #define LOSCFG_KERNEL_SMP NO
 
 #if (LOSCFG_KERNEL_SMP == YES)
