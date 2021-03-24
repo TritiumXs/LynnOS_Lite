@@ -147,6 +147,8 @@ HalTaskSchedule:
     dsb
     isb
     bx      lr
+    dsb
+    isb
    .fnend
 
 
