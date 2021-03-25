@@ -2021,8 +2021,7 @@ UINT32 OsMemSystemInit(VOID)
         m_aucSysMem0 = (UINT8 *)(((UINTPTR)heapAddr + (OS_MEM_ALIGN_SIZE - 1)) &
                        ~(OS_MEM_ALIGN_SIZE - 1));
         heapSize -= (UINT32)(m_aucSysMem0 - heapAddr);
-    }
-    else {
+    } else {
         m_aucSysMem0 = heapAddr;
     }
 
