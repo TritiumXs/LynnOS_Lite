@@ -2007,20 +2007,27 @@ VOID LOS_MemUnlockEnable(VOID *pool)
 UINT32 OsMemSystemInit(VOID)
 {
     UINT32 ret;
+    UINT8 *heapAddr;
+    UINT32 heapSize;
 
 #if (LOSCFG_SYS_EXTERNAL_HEAP == 0)
-    m_aucSysMem0 = g_memStart;
+    heapAddr = g_memStart;
 #else
-    m_aucSysMem0 = LOSCFG_SYS_HEAP_ADDR;
+    heapAddr = LOSCFG_SYS_HEAP_ADDR;
 #endif
+    heapSize = LOSCFG_SYS_HEAP_SIZE;
 
-    if ((UINTPTR)m_aucSysMem0 & (OS_MEM_ALIGN_SIZE - 1)) {
-        m_aucSysMem0 = (UINT8 *)(((UINTPTR)m_aucSysMem0 + (OS_MEM_ALIGN_SIZE - 1)) &
+    if ((UINTPTR)heapAddr & (OS_MEM_ALIGN_SIZE - 1)) {
+        m_aucSysMem0 = (UINT8 *)(((UINTPTR)heapAddr + (OS_MEM_ALIGN_SIZE - 1)) &
                        ~(OS_MEM_ALIGN_SIZE - 1));
+        heapSize -= (UINT32)(m_aucSysMem0 - heapAddr);
+    }
+    else{
+        m_aucSysMem0 = heapAddr;
     }
 
-    ret = LOS_MemInit(m_aucSysMem0, LOSCFG_SYS_HEAP_SIZE);
-    PRINT_INFO("LiteOS heap memory address:0x%x,size:0x%x\n", m_aucSysMem0, LOSCFG_SYS_HEAP_SIZE);
+    ret = LOS_MemInit(m_aucSysMem0, heapSize);
+    PRINT_INFO("LiteOS heap memory address:0x%x,size:0x%x\n", m_aucSysMem0, heapSize);
     return ret;
 }
 
