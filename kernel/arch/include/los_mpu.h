@@ -50,6 +50,7 @@ typedef enum {
     MPU_RW_ANY = 1,
     MPU_RO_BY_PRIVILEGED_ONLY = 2,
     MPU_RO_ANY = 3,
+    MPU_NO_ACCESS_ALL = 4,
 } MpuAccessPermission;
 
 typedef enum {
@@ -83,6 +84,7 @@ VOID HalMpuEnable(UINT32 defaultRegionEnable);
 VOID HalMpuDisable();
 UINT32 HalMpuSetRegion(UINT32 regionId, MPU_CFG_PARA *para);
 UINT32 HalMpuDisableRegion(UINT32 regionId);
+INT32 HalMpuUnusedRegionGet(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus
