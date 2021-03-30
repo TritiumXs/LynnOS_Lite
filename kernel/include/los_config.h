@@ -395,7 +395,7 @@ extern UINT8 *m_aucSysMem0;
  * Starting address of the task stack
  */
 #ifndef OS_TASK_STACK_ADDR
-#define OS_TASK_STACK_ADDR                                  (&m_aucSysMem0[0])
+#define OS_TASK_STACK_ADDR                                  LOSCFG_SYS_HEAP_ADDR
 #endif
 
 /**
