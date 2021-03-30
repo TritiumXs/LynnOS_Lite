@@ -897,7 +897,7 @@ UINT32 LOS_MemInit(VOID *pool, UINT32 size)
     if (((UINTPTR)pool & (OS_MEM_ALIGN_SIZE - 1)) || \
         (size & (OS_MEM_ALIGN_SIZE - 1))) {
         PRINT_ERR("LiteOS heap memory address or size configured not aligned:address:0x%x,size:0x%x, alignsize:%d\n", \
-        (UINTPTR)pool, size, OS_MEM_ALIGN_SIZE);
+                  (UINTPTR)pool, size, OS_MEM_ALIGN_SIZE);
         return OS_ERROR;
     }
 
