@@ -64,6 +64,7 @@ extern "C" {
 #define LOSCFG_BASE_CORE_TSK_IDLE_STACK_SIZE                (0x500U)
 #define LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE             (0x2D0U)
 #define LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE                 (0x130U)
+#define LOSCFG_BASE_CORE_TSK_MONITOR                        1
 #define LOSCFG_BASE_CORE_TIMESLICE                          1
 #define LOSCFG_BASE_CORE_TIMESLICE_TIMEOUT                  10
 /*=============================================================================
