@@ -609,6 +609,14 @@ extern UINT8 *m_aucSysMem0;
 #define LOSCFG_BACKTRACE_DEPTH                               15
 #endif
 
+/**
+ * @ingroup los_config
+ * Configuration trustzone secure heap size.
+ */
+#ifndef LOSCFG_TRUSTZONE_HEAP_SIZE
+#define LOSCFG_TRUSTZONE_HEAP_SIZE                           2048
+#endif
+
 #ifdef __cplusplus
 #if __cplusplus
 }
