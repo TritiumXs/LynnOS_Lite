@@ -29,51 +29,59 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _KAL_H
-#define _KAL_H
+    PRESERVE8
 
-#include "los_config.h"
-#include "los_compiler.h"
-#include "cmsis_os2.h"
+    EXPORT HalSecureContextInitAsm
+    EXPORT HalSecureContextLoadAsm
+    EXPORT HalSecureContextSaveAsm
 
-#ifdef __cplusplus
-#if __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-#endif /* __cplusplus */
+OS_SECURE_SCB_AIRCR     EQU     0xE000ED0C
 
-#if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
-/**
-* @brief Enumerates timer permissions.
-*
-* @since 1.0
-* @version 1.0
-*/
-typedef enum  {
-  /** The timer is not allowed to wake up the RTOS. */
-  osTimerRousesIgnore       =     0,
-  /** The timer is allowed to wake up the RTOS. */
-  osTimerRousesAllow        =     1
-} osTimerRouses_t;
+    SECTION     .text:CODE(2)
+    THUMB
+    REQUIRE8
 
-/**
-* @brief Enumerates timer alignment modes.
-*
-*/
-typedef enum  {
-  /** The timer ignores alignment. */
-  osTimerAlignIgnore        =     0,
-  /** The timer allows alignment. */
-  osTimerAlignAllow         =     1
-} osTimerAlign_t;
+HalSecureContextInitAsm
+    LDR     R0, =OS_SECURE_SCB_AIRCR
+    LDR     R1, [R0]
 
-osTimerId_t osTimerExtNew (osTimerFunc_t func, osTimerType_t type, void *argument, const osTimerAttr_t *attr,
-                           osTimerRouses_t ucRouses, osTimerAlign_t ucSensitive);
-#endif
+    MOV     R2, #0xFFFF
+    LSL     R2, R2, #16
+    BIC     R1, R1, R2
+    MOV     R2, #0x05FA
+    LSL     R2, R2, #16
+    ORR     R1, R1, R2
 
-#ifdef __cplusplus
-#if __cplusplus
-}
-#endif /* __cplusplus */
-#endif /* __cplusplus */
-#endif /* _KAL_H */
+    BIC     R1, R1, #0x4000
+    MOV     R2, #0x4000
+    ORR     R1, R1, R2
+    STR     R1, [R0]
+
+    MOV     R0, #0
+    MSR     PSPLIM, R0
+    MSR     PSP, R0
+    BX      LR
+
+HalSecureContextLoadAsm
+    MRS     R1, IPSR
+    CBZ     R1, __ThreadMode
+
+    LDMIA   R0!, {R1, R2}               /* R1 = g_secureContext->curStackPointer, R2 = g_secureContext->stackLimit. */
+    MSR     PSPLIM, R2                  /* Restore PSPLIM. */
+    MSR     PSP, R1                     /* Restore PSP. */
+    BX      LR
+
+HalSecureContextSaveAsm
+    MRS     R0, IPSR
+    CBZ     R0, __ThreadMode
+
+    MRS     R0, PSP
+    STR     R0, [R1]                    /* g_secureContext->curStackPointer = R0. */
+    MOV     R0, #0
+    MSR     PSPLIM, R0                  /* No PSPLIM for the current task. */
+    MSR     PSP, R0                     /* No secure stack for the current task. */
+
+__ThreadMode
+    BX      LR
+
+    END

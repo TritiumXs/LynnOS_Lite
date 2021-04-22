@@ -29,51 +29,70 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _KAL_H
-#define _KAL_H
+#include "los_secure_context.h"
+#include "los_secure_macros.h"
+#include "los_secure_heap.h"
 
-#include "los_config.h"
-#include "los_compiler.h"
-#include "cmsis_os2.h"
+OS_NON_SECURE_CALLABLE VOID HalSecureContextInit(VOID)
+{
+    UINT32 ipsr;
 
-#ifdef __cplusplus
-#if __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-#endif /* __cplusplus */
+    OS_IPSR_READ(ipsr);
+    if (!ipsr) {
+        return;
+    }
 
-#if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
-/**
-* @brief Enumerates timer permissions.
-*
-* @since 1.0
-* @version 1.0
-*/
-typedef enum  {
-  /** The timer is not allowed to wake up the RTOS. */
-  osTimerRousesIgnore       =     0,
-  /** The timer is allowed to wake up the RTOS. */
-  osTimerRousesAllow        =     1
-} osTimerRouses_t;
-
-/**
-* @brief Enumerates timer alignment modes.
-*
-*/
-typedef enum  {
-  /** The timer ignores alignment. */
-  osTimerAlignIgnore        =     0,
-  /** The timer allows alignment. */
-  osTimerAlignAllow         =     1
-} osTimerAlign_t;
-
-osTimerId_t osTimerExtNew (osTimerFunc_t func, osTimerType_t type, void *argument, const osTimerAttr_t *attr,
-                           osTimerRouses_t ucRouses, osTimerAlign_t ucSensitive);
-#endif
-
-#ifdef __cplusplus
-#if __cplusplus
+    HalSecureContextInitAsm();
 }
-#endif /* __cplusplus */
-#endif /* __cplusplus */
-#endif /* _KAL_H */
+
+OS_NON_SECURE_CALLABLE OsSecureContext *HalSecureContextAlloc(UINT32 size)
+{
+    OsSecureContext *secureContext = NULL;
+    UINT32 ipsr;
+
+    OS_IPSR_READ(ipsr);
+    if (!ipsr) {
+        return NULL;
+    }
+
+    secureContext = HalSecureMalloc(sizeof(OsSecureContext));
+    if (secureContext == NULL) {
+        return NULL;
+    }
+
+    secureContext->stackLimit = HalSecureMalloc(size);
+    if (secureContext->stackLimit == NULL) {
+        HalSecureFree(secureContext);
+        return NULL;
+    }
+
+    secureContext->stackStart = secureContext->stackLimit + size;
+    secureContext->curStackPointer = secureContext->stackStart;
+
+    return secureContext;
+}
+
+OS_NON_SECURE_CALLABLE VOID HalSecureContextFree(OsSecureContext *secureContext)
+{
+    UINT32 ipsr;
+
+    OS_IPSR_READ(ipsr);
+    if (!ipsr) {
+        return;
+    }
+
+    HalSecureFree(secureContext->stackLimit);
+    secureContext->stackLimit = NULL;
+    HalSecureFree(secureContext);
+}
+
+OS_NON_SECURE_CALLABLE VOID HalSecureContextLoad(OsSecureContext *secureContext)
+{
+    HalSecureContextLoadAsm(secureContext);
+}
+
+OS_NON_SECURE_CALLABLE VOID HalSecureContextSave(OsSecureContext *secureContext)
+{
+    HalSecureContextSaveAsm(secureContext);
+}
+

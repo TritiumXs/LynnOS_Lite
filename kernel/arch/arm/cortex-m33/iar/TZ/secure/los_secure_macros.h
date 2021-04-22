@@ -29,12 +29,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _KAL_H
-#define _KAL_H
+#ifndef _LOS_SECURE_MACROS_H
+#define _LOS_SECURE_MACROS_H
 
 #include "los_config.h"
-#include "los_compiler.h"
-#include "cmsis_os2.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -42,38 +40,18 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-#if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
-/**
-* @brief Enumerates timer permissions.
-*
-* @since 1.0
-* @version 1.0
-*/
-typedef enum  {
-  /** The timer is not allowed to wake up the RTOS. */
-  osTimerRousesIgnore       =     0,
-  /** The timer is allowed to wake up the RTOS. */
-  osTimerRousesAllow        =     1
-} osTimerRouses_t;
+#define OS_NON_SECURE_CALLABLE  __attribute__((cmse_nonsecure_entry)) __attribute((used))
+#define OS_IPSR_READ(ipsr)      __asm volatile("MRS %0, IPSR" : "=r" (ipsr))
 
-/**
-* @brief Enumerates timer alignment modes.
-*
-*/
-typedef enum  {
-  /** The timer ignores alignment. */
-  osTimerAlignIgnore        =     0,
-  /** The timer allows alignment. */
-  osTimerAlignAllow         =     1
-} osTimerAlign_t;
-
-osTimerId_t osTimerExtNew (osTimerFunc_t func, osTimerType_t type, void *argument, const osTimerAttr_t *attr,
-                           osTimerRouses_t ucRouses, osTimerAlign_t ucSensitive);
-#endif
+#define OS_SVC_ALLOCATE_SECURE_CONTEXT  0
+#define OS_SVC_FREE_SECURE_CONTEXT      1
+#define OS_SVC_START_SCHEDULE           2
 
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif /* __cplusplus */
 #endif /* __cplusplus */
-#endif /* _KAL_H */
+
+#endif
+

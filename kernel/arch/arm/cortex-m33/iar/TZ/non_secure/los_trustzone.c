@@ -29,51 +29,55 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _KAL_H
-#define _KAL_H
+#include "los_trustzone.h"
+#include "los_secure_macros.h"
+#include "los_secure_context.h"
+#include "los_debug.h"
+#include "los_arch_context.h"
 
-#include "los_config.h"
-#include "los_compiler.h"
-#include "cmsis_os2.h"
+OsSecureContext *g_secureContext = NULL;
 
-#ifdef __cplusplus
-#if __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-#endif /* __cplusplus */
-
-#if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
-/**
-* @brief Enumerates timer permissions.
-*
-* @since 1.0
-* @version 1.0
-*/
-typedef enum  {
-  /** The timer is not allowed to wake up the RTOS. */
-  osTimerRousesIgnore       =     0,
-  /** The timer is allowed to wake up the RTOS. */
-  osTimerRousesAllow        =     1
-} osTimerRouses_t;
-
-/**
-* @brief Enumerates timer alignment modes.
-*
-*/
-typedef enum  {
-  /** The timer ignores alignment. */
-  osTimerAlignIgnore        =     0,
-  /** The timer allows alignment. */
-  osTimerAlignAllow         =     1
-} osTimerAlign_t;
-
-osTimerId_t osTimerExtNew (osTimerFunc_t func, osTimerType_t type, void *argument, const osTimerAttr_t *attr,
-                           osTimerRouses_t ucRouses, osTimerAlign_t ucSensitive);
-#endif
-
-#ifdef __cplusplus
-#if __cplusplus
+VOID HalSecureSVCHandler(UINT32 svcID, UINTPTR arg)
+{
+    switch (svcID) {
+        case OS_SVC_START_SCHEDULE:
+            HalSecureContextInit();
+            HalStartFirstTask();
+            break;
+        case OS_SVC_ALLOCATE_SECURE_CONTEXT:
+            g_secureContext = HalSecureContextAlloc(arg);
+            if (g_secureContext == NULL) {
+                PRINT_ERR("Secure context alloc failed!\n");
+            } else {
+                HalSecureContextLoad(g_secureContext);
+            }
+            break;
+        case OS_SVC_FREE_SECURE_CONTEXT:
+            HalSecureContextFree(g_secureContext);
+            break;
+        default:
+            PRINT_ERR("Incorrect svc id = %u\n", svcID);
+            break;
+    }
 }
-#endif /* __cplusplus */
-#endif /* __cplusplus */
-#endif /* _KAL_H */
+
+VOID HalStartToRun(VOID)
+{
+    HalSVCStartSchedule();
+}
+
+VOID LOS_SecureContextAlloc(UINT32 secureStackSize)
+{
+    if (secureStackSize == 0) {
+        return;
+    }
+
+    secureStackSize = LOS_Align(secureStackSize, sizeof(UINTPTR));
+    HalSVCSecureContextAlloc(secureStackSize);
+}
+
+VOID LOS_SecureContextFree(VOID)
+{
+    HalSVCSecureContextFree();
+}
+
