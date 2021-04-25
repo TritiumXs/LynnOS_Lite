@@ -1543,17 +1543,17 @@ extern UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E mode, UINT32 ta
 
 /**
  * @ingroup  los_task
- * @brief Check whether a task ID is valid.
- *
+ * @brief Get the real task ID.
+ *t
  * @par Description:
- * This API is used to check whether a task ID, excluding the idle task ID, is valid.
+ * This API is used to get the real task ID.
  * @attention None.
  *
  * @param  taskID [IN] Task ID.
  *
- * @retval 0 or 1. One indicates that the task ID is invalid, whereas zero indicates that the task ID is valid.
+ * @retval real task ID.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
 #define OS_TSK_GET_INDEX(taskID)                        (taskID)
@@ -1570,7 +1570,7 @@ extern UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E mode, UINT32 ta
  *
  * @retval Pointer to the task control block.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
 #define OS_TCB_FROM_PENDLIST(ptr)                       LOS_DL_LIST_ENTRY(ptr, LosTaskCB, pendList)
@@ -1587,7 +1587,7 @@ extern UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E mode, UINT32 ta
  *
  * @retval Pointer to the task control block.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
 #define OS_TCB_FROM_TID(taskID)                         (((LosTaskCB *)g_taskCBArray) + (taskID))
@@ -1738,7 +1738,7 @@ extern LOS_DL_LIST          g_taskRecyleList;
  *
  * @retval  UINT32    Initialization result.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
 extern UINT32 OsTaskInit(VOID);
@@ -1759,7 +1759,7 @@ extern UINT32 OsTaskInit(VOID);
  *
  * @retval  UINT32   Create result.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
 extern UINT32 OsIdleTaskCreate(VOID);
@@ -1780,7 +1780,7 @@ extern UINT32 OsIdleTaskCreate(VOID);
  *
  * @retval  None.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
 extern VOID OsTaskSwitchCheck(VOID);
@@ -1801,7 +1801,7 @@ extern VOID OsTaskSwitchCheck(VOID);
  *
  * @retval  None.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
 extern VOID OsTaskMonInit(VOID);
@@ -1822,7 +1822,7 @@ extern VOID OsTaskMonInit(VOID);
  *
  * @retval  None.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
 extern VOID OsTaskEntry(UINT32 taskID);
@@ -1843,7 +1843,7 @@ extern VOID OsTaskEntry(UINT32 taskID);
  *
  * @retval  UINT32  Task water line.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
 extern UINT32 OsGetTaskWaterLine(UINT32 taskID);
@@ -1864,7 +1864,7 @@ extern UINT32 OsGetTaskWaterLine(UINT32 taskID);
  *
  * @retval  UINT8 *  String.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
 extern UINT8 *OsConvertTskStatus(UINT16 taskStatus);
@@ -1885,7 +1885,7 @@ extern UINT8 *OsConvertTskStatus(UINT16 taskStatus);
  *
  * @retval  UINT32  All task information.
  * @par Dependency:
- * <ul><li>los_task_pri.h: the header file that contains the API declaration.</li></ul>
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
 extern UINT32 OsGetAllTskInfo(VOID);
