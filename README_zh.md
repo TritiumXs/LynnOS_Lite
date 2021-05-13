@@ -110,6 +110,10 @@ LiteOS-M内核移植的具体开发板的工程由社区开发者提供，可以
 
         该仓包含OpenHarmony LiteOS-M内核移植支持`Nucleo-F767ZI`开发板的工程代码，支持Ninja、GCC、IAR等方式进行编译。
 
+## 技术交流
+
+欢迎提交[issue](https://gitee.com/openharmony/kernel_liteos_m/issues)对关心的问题发起讨论，或加入 [OpenHarmony轻内核微信交流群](https://gitee.com/openharmony/kernel_liteos_m/issues/I3PXAY)和社区专家大佬一起交流分享。
+
 ## 修改日志
 
 v1.0.1
