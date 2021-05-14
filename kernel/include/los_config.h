@@ -135,7 +135,7 @@ extern "C" {
  * Configuration item for using system defined vector base address and interrupt handlers.
  * If LOSCFG_USE_SYSTEM_DEFINED_INTERRUPT is set to 0, vector base address will not be
  * modified by system. In arm, it should be noted that PendSV_Handler and SysTick_Handler should
- * be redefined to HalPendSV and OsTickHandler respectly in this case, because system depends on
+ * be redefined to HalPendSV and OsTickHandler respectively in this case, because system depends on
  * these interrupt handlers to run normally. What's more, LOS_HwiCreate will not register handler.
  */
 #ifndef LOSCFG_USE_SYSTEM_DEFINED_INTERRUPT
@@ -541,8 +541,8 @@ extern UINT8 *m_aucSysMem0;
  * @ingroup los_config
  * Configuration of hardware stack protection
  */
-#ifndef LOSCFG_EXC_HRADWARE_STACK_PROTECTION
-#define LOSCFG_EXC_HRADWARE_STACK_PROTECTION                0
+#ifndef LOSCFG_EXC_HARDWARE_STACK_PROTECTION
+#define LOSCFG_EXC_HARDWARE_STACK_PROTECTION                0
 #endif
 
 /* =============================================================================
