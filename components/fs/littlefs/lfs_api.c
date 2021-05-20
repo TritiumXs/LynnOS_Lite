@@ -206,6 +206,41 @@ int FreeMountRes(const char *target)
     return VFS_ERROR;
 }
 
+int ConvertFlagToLfsOpenFlag (int oflags)
+{
+    int lfsOpenFlag = 0;
+
+    if (oflags & O_CREAT) {
+        lfsOpenFlag |= LFS_O_CREAT;
+    }
+
+    if (oflags & O_EXCL) {
+        lfsOpenFlag |= LFS_O_EXCL;
+    }
+
+    if (oflags & O_TRUNC) {
+        lfsOpenFlag |= LFS_O_TRUNC;
+    }
+
+    if (oflags & O_APPEND) {
+        lfsOpenFlag |= LFS_O_APPEND;
+    }
+
+    if (oflags & O_RDWR) {
+        lfsOpenFlag |= LFS_O_RDWR;
+    }
+
+    if (oflags & O_WRONLY) {
+        lfsOpenFlag |= LFS_O_WRONLY;
+    }
+
+    if (oflags & O_RDONLY) {
+        lfsOpenFlag |= LFS_O_RDONLY;
+    }
+
+    return lfsOpenFlag;
+}
+
 const struct MountOps g_lfsMnt = {
     .Mount = LfsMount,
     .Umount = LfsUmount,
@@ -256,7 +291,15 @@ int LfsMount(const char *source, const char *target, const char *fileSystemType,
         goto errout;
     }
     
-    return lfs_mount(&(fileOpInfo->lfsInfo), (struct lfs_config*)data);
+    ret = lfs_mount(&(fileOpInfo->lfsInfo), (struct lfs_config*)data);
+    if (ret != 0) {
+        ret = lfs_format(&(fileOpInfo->lfsInfo), (struct lfs_config*)data);
+        if (ret == 0) {
+            ret = lfs_mount(&(fileOpInfo->lfsInfo), (struct lfs_config*)data);
+        }
+    }
+
+    return ret;
 errout:
     return ret;
 }
@@ -426,7 +469,8 @@ int LfsOpen(const char *pathName, int openFlag, int mode)
         goto errout;
     }
 
-    int err = lfs_file_open(&(fileOpInfo->lfsInfo), &(fsHandle->file), pathName, openFlag);
+    int lfsOpenFlag = ConvertFlagToLfsOpenFlag(openFlag);
+    int err = lfs_file_open(&(fileOpInfo->lfsInfo), &(fsHandle->file), pathName, lfsOpenFlag);
     if (err != 0) {
         goto errout;
     }
