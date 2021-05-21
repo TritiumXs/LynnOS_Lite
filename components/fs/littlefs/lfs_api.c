@@ -450,6 +450,8 @@ int LfsClosedir(const DIR *dir)
 int LfsOpen(const char *pathName, int openFlag, int mode)
 {
     int fd = INVALID_FD;
+    int err = INVALID_FD;
+
     struct FileOpInfo *fileOpInfo = NULL;
 
     if (pathName == NULL) {
@@ -470,7 +472,7 @@ int LfsOpen(const char *pathName, int openFlag, int mode)
     }
 
     int lfsOpenFlag = ConvertFlagToLfsOpenFlag(openFlag);
-    int err = lfs_file_open(&(fileOpInfo->lfsInfo), &(fsHandle->file), pathName, lfsOpenFlag);
+    err = lfs_file_open(&(fileOpInfo->lfsInfo), &(fsHandle->file), pathName, lfsOpenFlag);
     if (err != 0) {
         goto errout;
     }
@@ -478,7 +480,7 @@ int LfsOpen(const char *pathName, int openFlag, int mode)
     g_handle[fd].lfsHandle = &(fileOpInfo->lfsInfo);
     return fd;
 errout:
-    return INVALID_FD;
+    return err;
 }
 
 int LfsRead(int fd, void *buf, unsigned int len)
