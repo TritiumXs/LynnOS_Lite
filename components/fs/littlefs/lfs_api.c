@@ -92,6 +92,22 @@ FileDirInfo *GetFreeDir(const char *dirName)
     return NULL;
 }
 
+void FreeDirInfo(const char *dirName) 
+{
+    pthread_mutex_lock(&g_FslocalMutex);
+    for (int i = 0; i < LFS_MAX_OPEN_DIRS; i++) {
+        if (g_lfsDir[i].useFlag == 1 && strcmp(g_lfsDir[i].dirName, dirName) == 0) {
+            g_lfsDir[i].useFlag = 0;
+            if (g_lfsDir[i].dirName) {
+                free(g_lfsDir[i].dirName);
+                g_lfsDir[i].dirName = NULL;
+            }
+            pthread_mutex_unlock(&g_FslocalMutex);
+        }
+    }
+    pthread_mutex_unlock(&g_FslocalMutex);
+}
+
 BOOL CheckDirIsOpen(const char *dirName)
 {
     pthread_mutex_lock(&g_FslocalMutex);
@@ -438,13 +454,18 @@ struct dirent *LfsReaddir(DIR *dir)
 
 int LfsClosedir(const DIR *dir)
 {
+    int ret;
     FileDirInfo *dirInfo = (FileDirInfo *)dir;
 
     if (dirInfo == NULL || dirInfo->lfsHandle == NULL) {
         return VFS_ERROR;
     }
 
-    return lfs_dir_close(dirInfo->lfsHandle, (lfs_dir_t *)(&(dirInfo->dir)));
+    ret = lfs_dir_close(dirInfo->lfsHandle, (lfs_dir_t *)(&(dirInfo->dir)));
+
+    FreeDirInfo(dirInfo->dirName);
+
+    return ret;
 }
 
 int LfsOpen(const char *pathName, int openFlag, int mode)
