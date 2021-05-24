@@ -436,7 +436,7 @@ struct dirent *LfsReaddir(DIR *dir)
     ret = lfs_dir_read(dirInfo->lfsHandle, (lfs_dir_t *)(&(dirInfo->dir)), &lfsInfo);
     if (ret == 0) {
         pthread_mutex_lock(&g_FslocalMutex);
-        g_nameValue.d_name = strdup(lfsInfo.name);
+        (void)strncpy_s(g_nameValue.d_name, sizeof(g_nameValue.d_name), lfsInfo.name, strlen(lfsInfo.name) + 1);
         if (lfsInfo.type == LFS_TYPE_DIR) {
             g_nameValue.d_type = DT_DIR;
         } else if (lfsInfo.type == LFS_TYPE_REG) {
