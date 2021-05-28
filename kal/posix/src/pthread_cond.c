@@ -83,7 +83,7 @@ STATIC INLINE INT32 CondInitCheck(const pthread_cond_t *cond)
 
 int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
-    int ret = ENOERR;
+    int ret = 0;
 
     if (cond == NULL) {
         return EINVAL;
@@ -113,19 +113,19 @@ int pthread_cond_destroy(pthread_cond_t *cond)
     }
 
     if (CondInitCheck(cond)) {
-        return ENOERR;
+        return 0;
     }
 
     if (LOS_EventDestroy(&cond->event) != LOS_OK) {
         return EBUSY;
     }
-    if (pthread_mutex_destroy(cond->mutex) != ENOERR) {
+    if (pthread_mutex_destroy(cond->mutex) != 0) {
         PRINT_ERR("%s mutex destroy fail!\n", __FUNCTION__);
         return EINVAL;
     }
     free(cond->mutex);
     cond->mutex = NULL;
-    return ENOERR;
+    return 0;
 }
 
 STATIC VOID PthreadCountSub(pthread_cond_t *cond)
@@ -140,7 +140,7 @@ STATIC VOID PthreadCountSub(pthread_cond_t *cond)
 
 int pthread_cond_broadcast(pthread_cond_t *cond)
 {
-    int ret = ENOERR;
+    int ret = 0;
 
     if (cond == NULL) {
         return EINVAL;
@@ -160,7 +160,7 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
 
 int pthread_cond_signal(pthread_cond_t *cond)
 {
-    int ret = ENOERR;
+    int ret = 0;
 
     if (cond == NULL) {
         return EINVAL;
@@ -187,7 +187,7 @@ STATIC INT32 ProcessReturnVal(pthread_cond_t *cond, INT32 val)
         /* 0: event does not occur */
         case 0:
         case BROADCAST_EVENT:
-            ret = ENOERR;
+            ret = 0;
             break;
         case LOS_ERRNO_EVENT_READ_TIMEOUT:
             PthreadCountSub(cond);
@@ -213,7 +213,7 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 
     if (CondInitCheck(cond)) {
         ret = pthread_cond_init(cond, NULL);
-        if (ret != ENOERR) {
+        if (ret != 0) {
             return ret;
         }
     }
@@ -231,13 +231,13 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     }
 
     absTicks = OsTimeSpec2Tick(absTime);
-    if (pthread_mutex_unlock(mutex) != ENOERR) {
+    if (pthread_mutex_unlock(mutex) != 0) {
         PRINT_ERR("%s: %d failed\n", __FUNCTION__, __LINE__);
     }
 
     ret = (INT32)LOS_EventRead(&(cond->event), 0x0f, LOS_WAITMODE_OR | LOS_WAITMODE_CLR, absTicks);
 
-    if (pthread_mutex_lock(mutex) != ENOERR) {
+    if (pthread_mutex_lock(mutex) != 0) {
         PRINT_ERR("%s: %d failed\n", __FUNCTION__, __LINE__);
     }
 
@@ -255,7 +255,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 
     if (CondInitCheck(cond)) {
         ret = pthread_cond_init(cond, NULL);
-        if (ret != ENOERR) {
+        if (ret != 0) {
             return ret;
         }
     }
@@ -264,11 +264,11 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
     cond->count++;
     (VOID)pthread_mutex_unlock(cond->mutex);
 
-    if (pthread_mutex_unlock(mutex) != ENOERR) {
+    if (pthread_mutex_unlock(mutex) != 0) {
         PRINT_ERR("%s: %d failed\n", __FUNCTION__, __LINE__);
     }
     ret = (INT32)LOS_EventRead(&(cond->event), 0x0f, LOS_WAITMODE_OR | LOS_WAITMODE_CLR, LOS_WAIT_FOREVER);
-    if (pthread_mutex_lock(mutex) != ENOERR) {
+    if (pthread_mutex_lock(mutex) != 0) {
         PRINT_ERR("%s: %d failed\n", __FUNCTION__, __LINE__);
     }
 
@@ -276,7 +276,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
         /* 0: event does not occur */
         case 0:
         case BROADCAST_EVENT:
-            ret = ENOERR;
+            ret = 0;
             break;
         default:
             PthreadCountSub(cond);

@@ -39,7 +39,7 @@ STATIC pthread_mutex_t g_mqueueMutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 int MapMqErrno(UINT32 err)
 {
     if (err == LOS_OK) {
-        return ENOERR;
+        return 0;
     }
     switch (err) {
         case LOS_ERRNO_QUEUE_INVALID:
@@ -182,7 +182,7 @@ STATIC struct mqpersonal *DoMqueueCreate(const struct mq_attr *attr, const CHAR 
     UINT32 mqueueID;
 
     UINT32 err = LOS_QueueCreate(NULL, attr->mq_maxmsg, &mqueueID, 0, attr->mq_msgsize);
-    if (MapMqErrno(err) != ENOERR) {
+    if (MapMqErrno(err) != 0) {
         goto ERROUT;
     }
 
@@ -537,7 +537,7 @@ int mq_timedsend(mqd_t personal, const char *msg, size_t msgLen, unsigned int ms
     (VOID)pthread_mutex_unlock(&g_mqueueMutex);
 
     err = LOS_QueueWriteCopy(mqueueID, (VOID *)msg, (UINT32)msgLen, (UINT32)absTicks);
-    if (MapMqErrno(err) != ENOERR) {
+    if (MapMqErrno(err) != 0) {
         goto ERROUT;
     }
     return 0;
@@ -591,7 +591,7 @@ ssize_t mq_timedreceive(mqd_t personal, char *msg, size_t msgLen, unsigned int *
     (VOID)pthread_mutex_unlock(&g_mqueueMutex);
 
     err = LOS_QueueReadCopy(mqueueID, (VOID *)msg, &receiveLen, (UINT32)absTicks);
-    if (MapMqErrno(err) == ENOERR) {
+    if (MapMqErrno(err) == 0) {
         return (ssize_t)receiveLen;
     } else {
         goto ERROUT;
