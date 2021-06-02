@@ -62,7 +62,7 @@ git clone https://gitee.com/harylee/nucleo_f767zi.git
 假设克隆到的代码目录为`~/nucleo_f767zi`。 执行如下命令把代码目录的`device`、`vendor`目录复制到`openHarmony`工程的相应目录。
 
 ```
-mkdir /home/zhushy/openHarmony/device/st
+mkdir ~/openHarmony/device/st
 
 cp -r ~/nucleo_f767zi/device/st/nucleo_f767zi ~/openHarmony/device/st/nucleo_f767zi
 
