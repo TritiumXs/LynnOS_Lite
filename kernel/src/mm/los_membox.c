@@ -235,7 +235,7 @@ VOID LOS_ShowBox(VOID *pool)
     PRINT_INFO("free node list:\r\n");
 
     for (node = boxInfo->stFreeList.pstNext, index = 0; node != NULL;
-         node = node->pstNext, ++index) {
+        node = node->pstNext, ++index) {
         PRINT_INFO("(%u, 0x%p)\r\n", index, node);
     }
 
