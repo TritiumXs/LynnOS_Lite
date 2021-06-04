@@ -33,6 +33,7 @@
 #define _LOS_TIMER_H
 
 #include "los_compiler.h"
+#include "los_pm.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -52,18 +53,9 @@ extern "C" {
 #define RTC_CALIBRATE_SLEEP_TIME 8
 #define MACHINE_CYCLE_DEALAY_TIMES (LOSCFG_BASE_CORE_TICK_PER_SECOND << 2)
 
-typedef enum {
-    OS_SYS_NORMAL_SLEEP = 0,
-    OS_SYS_DEEP_SLEEP,
-} LOS_SysSleepEnum;
-
 VOID HalTickLock(VOID);
 
 VOID HalTickUnlock(VOID);
-
-BOOL HalGetSysSleepFlag(VOID);
-
-VOID HalClearSysSleepFlag(VOID);
 
 VOID HalEnterSleep(LOS_SysSleepEnum sleep);
 
