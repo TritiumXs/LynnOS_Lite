@@ -44,7 +44,9 @@
 #if (LOSCFG_BASE_CORE_CPUP == 1)
 #include "los_cpup.h"
 #endif
-
+#if (LOSCFG_KERNEL_PM == 1)
+#include "los_pm.h"
+#endif
 
 /**
  * @ingroup los_task
@@ -152,11 +154,14 @@ STATIC VOID OsRecyleFinishedTask(VOID)
  Output      : None
  Return      : None
  *****************************************************************************/
-LITE_OS_SEC_TEXT WEAK VOID OsIdleTask(VOID)
+LITE_OS_SEC_TEXT VOID OsIdleTask(VOID)
 {
     while (1) {
         OsRecyleFinishedTask();
-        HalEnterSleep(OS_SYS_DEEP_SLEEP);
+
+#if (LOSCFG_KERNEL_PM == 1)
+        OsPmEnter();
+#endif
     }
 }
 

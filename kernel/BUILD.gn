@@ -41,6 +41,7 @@ static_library("kernel") {
     "src/los_sortlink.c",
     "src/mm/los_membox.c",
     "src/mm/los_memory.c",
+    "src/los_pm.c",
   ]
 
   include_dirs = [

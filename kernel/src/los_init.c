@@ -58,6 +58,9 @@
 #include "los_exc_info.h"
 #endif
 
+#if (LOSCFG_KERNEL_PM == 1)
+#include "los_pm.h"
+#endif
 
 /*****************************************************************************
  Function    : LOS_Reboot
@@ -179,6 +182,14 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_KernelInit(VOID)
     ret = LOS_TraceInit();
     if (ret != LOS_OK) {
         PRINT_ERR("LOS_TraceInit error\n");
+        return ret;
+    }
+#endif
+
+#if (LOSCFG_KERNEL_PM == 1)
+    ret = LOS_PmInit();
+    if (ret != LOS_OK) {
+        PRINT_ERR("Pm init failed!\n");
         return ret;
     }
 #endif
