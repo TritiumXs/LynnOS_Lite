@@ -1,0 +1,117 @@
+# Copyright (c) 2021-2021, Huawei Device Co., Ltd. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this list of
+#    conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list
+#    of conditions and the following disclaimer in the documentation and/or other materials
+#    provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used
+#    to endorse or promote products derived from this software without specific prior written
+#    permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+config(lwip_depends) {
+  defines = [
+    "_BSD_SOURCE = 1",
+  ]
+}
+
+static_library("lwip") {
+  source = [
+    "//third_party/lwip/src/api/api_lib.c",
+    "//third_party/lwip/src/api/api_msg.c",
+    "//third_party/lwip/src/api/err.c",
+    "//third_party/lwip/src/api/if_api.c",
+    "//third_party/lwip/src/api/netbuf.c",
+    "//third_party/lwip/src/api/netdb.c",
+    "//third_party/lwip/src/api/netifapi.c",
+    "//third_party/lwip/src/api/sockets.c",
+    "//third_party/lwip/src/api/tcpip.c",
+
+    "//third_party/lwip/src/apps/sntp/sntp.c",
+
+    "//third_party/lwip/src/core/altcp_alloc.c",
+    "//third_party/lwip/src/core/altcp_tcp.c",
+    "//third_party/lwip/src/core/altcp.c",
+    "//third_party/lwip/src/core/def.c",
+    "//third_party/lwip/src/core/dns.c",
+    "//third_party/lwip/src/core/inet_chksum.c",
+    "//third_party/lwip/src/core/init.c",
+    "//third_party/lwip/src/core/ip.c",
+    "//third_party/lwip/src/core/mem.c",
+    "//third_party/lwip/src/core/memp.c",
+    "//third_party/lwip/src/core/netif.c",
+    "//third_party/lwip/src/core/pbuf.c",
+    "//third_party/lwip/src/core/raw.c",
+    "//third_party/lwip/src/core/stats.c",
+    "//third_party/lwip/src/core/sys.c",
+    "//third_party/lwip/src/core/tcp_in.c",
+    "//third_party/lwip/src/core/tcp_out.c",
+    "//third_party/lwip/src/core/tcp.c",
+    "//third_party/lwip/src/core/timeouts.c",
+    "//third_party/lwip/src/core/udp.c",
+
+    "//third_party/lwip/src/core/ipv4/autoip.c",
+    "//third_party/lwip/src/core/ipv4/dhcp.c",
+    "//third_party/lwip/src/core/ipv4/etharp.c",
+    "//third_party/lwip/src/core/ipv4/icmp.c",
+    "//third_party/lwip/src/core/ipv4/igmp.c",
+    "//third_party/lwip/src/core/ipv4/ip4_addr.c",
+    "//third_party/lwip/src/core/ipv4/ip4_frag.c",
+    "//third_party/lwip/src/core/ipv4/ip4.c",
+
+    "//third_party/lwip/src/core/ipv6/dhcp6.c",
+    "//third_party/lwip/src/core/ipv6/ethip6.c",
+    "//third_party/lwip/src/core/ipv6/icmp6.c",
+    "//third_party/lwip/src/core/ipv6/inet6.c",
+    "//third_party/lwip/src/core/ipv6/ip6_addr.c",
+    "//third_party/lwip/src/core/ipv6/ip6_frag.c",
+    "//third_party/lwip/src/core/ipv6/ip6.c",
+    "//third_party/lwip/src/core/ipv6/mld6.c",
+    "//third_party/lwip/src/core/ipv6/nd6.c",
+
+    "//third_party/lwip/src/netif/bridgeif_fdb.c",
+    "//third_party/lwip/src/netif/bridgeif.c",
+    "//third_party/lwip/src/netif/ethernet.c",
+    "//third_party/lwip/src/netif/lowpan6_ble.c",
+    "//third_party/lwip/src/netif/lowpan6_common.c",
+    "//third_party/lwip/src/netif/lowpan6.c",
+    "//third_party/lwip/src/netif/slipif.c",
+    "//third_party/lwip/src/netif/zepif.c",
+
+    "//kernel/liteos_m/components/net/lwip-2.1/porting/src/driverif.c",
+    "//kernel/liteos_m/components/net/lwip-2.1/porting/src/lwip_init.c"
+    "//kernel/liteos_m/components/net/lwip-2.1/porting/src/netdb_porting.c"
+    "//kernel/liteos_m/components/net/lwip-2.1/porting/src/sockets_porting.c"
+    "//kernel/liteos_m/components/net/lwip-2.1/porting/src/sys_arch.c"
+
+    "//kernel/liteos_m/components/net/lwip-2.1/enhancement/src/fixme.c"
+  ]
+
+  include_dirs = [
+    "//kernel/liteos_m/kernel/arch/include",
+    "//kernel/liteos_m/kal/posix/include",
+    "//kernel/liteos_m/components/net/lwip-2.1/porting/include",
+    "//third_party/lwip/src/include",
+  ]
+
+  all_dependent_configs = [
+    ":lwip_depends",
+  ]
+}

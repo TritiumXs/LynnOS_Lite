@@ -38,6 +38,8 @@ static_library("posix") {
     "src/pthread_mutex.c",
     "src/semaphore.c",
     "src/time.c",
+
+    "musl_src/network/h_errno.c",
   ]
 
   include_dirs = [
