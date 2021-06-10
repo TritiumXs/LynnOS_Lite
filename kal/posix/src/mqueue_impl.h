@@ -72,7 +72,6 @@
  */
 #define MQ_MAX_MSG_LEN    64
 
-#define ENOERR 0
 
 /* CONSTANTS */
 
