@@ -88,7 +88,7 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 
     /* PS: skip the first tick because it is NOT a full tick. */
     ret = LOS_TaskDelay(tick ? (UINT32)(tick + 1) : 0);
-    if (ret == LOS_OK || ret == LOS_ERRNO_TSK_YIELD_NOT_ENOUGH_TASK) {
+    if (ret == LOS_OK) {
         if (rmtp) {
             rmtp->tv_sec = rmtp->tv_nsec = 0;
         }
