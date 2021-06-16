@@ -29,78 +29,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "los_debug.h"
-#include "stdarg.h"
-#include "los_context.h"
+#include "stdio_impl.h"
 
-
-#if (LOSCFG_KERNEL_PRINTF == 1)
-STATIC const CHAR *g_logString[] = {
-    "EMG",
-    "COMMON",
-    "ERR",
-    "WARN",
-    "INFO",
-    "DEBUG",
-};
-#endif
-
-STATIC ExcHookFn g_excHook;
-STATIC BACK_TRACE_HOOK g_backTraceHook = NULL;
-
-VOID OsBackTraceHookSet(BACK_TRACE_HOOK hook)
+int __wrap_fclose(FILE *f)
 {
-    if (g_backTraceHook == NULL) {
-        g_backTraceHook = hook;
-    }
+    return __fclose(f);
 }
 
-VOID OsBackTraceHookCall(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount, UINTPTR SP)
+int __wrap_fflush(FILE *f)
 {
-    if (g_backTraceHook != NULL) {
-        g_backTraceHook(LR, LRSize, jumpCount, SP);
-    } else {
-        PRINT_ERR("Record LR failed, because of g_backTraceHook is not registered, "
-                  "should call OSBackTraceInit firstly\n");
-    }
+    return __fflush(f);
 }
-
-VOID OsExcHookRegister(ExcHookFn excHookFn)
-{
-    UINT32 intSave = LOS_IntLock();
-    if (!g_excHook) {
-        g_excHook = excHookFn;
-    }
-    LOS_IntRestore(intSave);
-}
-
-VOID OsDoExcHook(EXC_TYPE excType)
-{
-    UINT32 intSave = LOS_IntLock();
-    if (g_excHook) {
-        g_excHook(excType);
-    }
-    LOS_IntRestore(intSave);
-}
-
-#if (LOSCFG_KERNEL_PRINTF == 1)
-INT32 OsLogLevelCheck(INT32 level)
-{
-    if (level > PRINT_LEVEL) {
-        return LOS_NOK;
-    }
-
-    if ((level != LOG_COMMON_LEVEL) && ((level > LOG_EMG_LEVEL) && (level <= LOG_DEBUG_LEVEL))) {
-        PRINTK("[%s]", g_logString[level]);
-    }
-
-    return LOS_OK;
-}
-#endif
-
-#if (LOSCFG_KERNEL_PRINTF > 1)
-WEAK VOID HalConsoleOutput(LogModuleType type, INT32 level, const CHAR *fmt, ...)
-{
-}
-#endif
-

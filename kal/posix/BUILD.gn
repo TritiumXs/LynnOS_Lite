@@ -45,6 +45,15 @@ static_library("posix") {
     "../../kernel/arch/include",
     "../../kernel/include",
     "../../utils",
+  ]
+
+  public_configs = [ ":include" ]
+}
+
+config("include") {
+  include_dirs = [
+    "include",
+    "//third_party/musl/porting/liteos_m/kernel/include",
     "//third_party/bounds_checking_function/include",
   ]
 }
