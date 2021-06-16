@@ -43,6 +43,7 @@
 #include "sys/statfs.h"
 #include "sys/stat.h"
 #include "unistd.h"
+#include "los_config.h"
 
 struct FsMap g_fsmap[MAX_FILESYSTEM_LEN] = {0};
 struct FsMap *g_fs = NULL;
@@ -426,11 +427,11 @@ int stat(const char *path, struct stat *buf)
         errno = ENODEV;
         return FS_FAILURE;
     }
-    if (g_fs->fsFops == NULL || g_fs->fsFops->Stat == NULL) {
+    if (g_fs->fsFops == NULL || g_fs->fsFops->Getattr == NULL) {
         errno = ENOSYS;
         return FS_FAILURE;
     }
-    return g_fs->fsFops->Stat(path, buf);
+    return g_fs->fsFops->Getattr(path, buf);
 }
 
 int fsync(int fd)
