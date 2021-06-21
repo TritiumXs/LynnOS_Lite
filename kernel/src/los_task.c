@@ -1050,7 +1050,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_CurTaskPriSet(UINT16 taskPrio)
  Description : Adjust the procedure order of specified task
  Input       : None
  Output      : None
- Return      : LOS_OK on success or error code on failure
+ Return      : LOS_OK
  *****************************************************************************/
 LITE_OS_SEC_TEXT_MINOR UINT32 LOS_TaskYield(VOID)
 {

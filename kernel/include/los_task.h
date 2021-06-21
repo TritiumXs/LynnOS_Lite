@@ -201,7 +201,7 @@ extern "C" {
 
 /**
  * @ingroup los_task
- * Task error code: Only one task or no task is available for scheduling.
+ * Task error code: Only one task or no task is available for scheduling. The code is unused.
  *
  * Value: 0x02000210
  *
@@ -725,7 +725,6 @@ extern UINT32 LOS_TaskDelete(UINT32 taskID);
  * @retval #LOS_ERRNO_TSK_DELAY_IN_INT              The task delay occurs during an interrupt.
  * @retval #LOS_ERRNO_TSK_DELAY_IN_LOCK             The task delay occurs when the task scheduling is locked.
  * @retval #LOS_ERRNO_TSK_ID_INVALID                Invalid Task ID
- * @retval #LOS_ERRNO_TSK_YIELD_NOT_ENOUGH_TASK     No tasks with the same priority is available for scheduling.
  * @retval #LOS_OK                                  The task is successfully delayed.
  * @par Dependency:
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
@@ -845,16 +844,10 @@ extern UINT32 LOS_CurTaskPriSet(UINT16 taskPrio);
  * This API is used to move current task in a queue of tasks with the same priority to the tail of the queue of ready
  * tasks.
  *
- * @attention
- * <ul>
- * <li>At least two ready tasks need to be included in the queue of ready tasks with the same priority. If the
- * less than two ready tasks are included in the queue, an error is reported.</li>
- * </ul>
+ * @attention None.
  *
  * @param  None.
  *
- * @retval #LOS_ERRNO_TSK_ID_INVALID                    Invalid Task ID
- * @retval #LOS_ERRNO_TSK_YIELD_NOT_ENOUGH_TASK         No tasks with the same priority is available for scheduling.
  * @retval #LOS_OK                                      The scheduling sequence of tasks with same priority is
  *                                                      successfully changed.
  * @par Dependency:
