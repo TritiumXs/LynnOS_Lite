@@ -38,11 +38,11 @@ declare_args() {
   enable_ohos_kernel_liteos_m_pm = true
 }
 
-group("kernel") {
+static_library("liteos_kernel") {
+  complete_static_lib = true
   deps = [
     "kernel:kernel",
-    "utils:utils",
-    "//third_party/bounds_checking_function:libsec_static",
+    "utils:utils"
   ]
   if (enable_ohos_kernel_liteos_m_cppsupport == true) {
     deps += [ "components/cppsupport:cppsupport" ]
@@ -62,6 +62,13 @@ group("kernel") {
   if (enable_ohos_kernel_liteos_m_pm == true) {
     deps += [ "components/power:pm" ]
   }
+}
+
+group("kernel") {
+  deps = [
+    ":liteos_kernel",
+    "//third_party/bounds_checking_function:libsec_static",
+  ]
   if (enable_ohos_kernel_liteos_m_kal == true) {
     deps += [ "kal:kal" ]
   }
