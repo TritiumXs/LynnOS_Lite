@@ -46,6 +46,7 @@ extern "C" {
 #define OS_SCHED_TIME_SLICES       ((LOSCFG_BASE_CORE_TIMESLICE_TIMEOUT * OS_SYS_NS_PER_US) / OS_NS_PER_CYCLE)
 #define OS_TIME_SLICE_MIN          (INT32)((50 * OS_SYS_NS_PER_US) / OS_NS_PER_CYCLE) /* 50us */
 #define OS_TICK_RESPONSE_TIME_MAX  LOSCFG_BASE_CORE_TICK_RESPONSE_MAX
+#define OS_TICK_RESPONSE_PRECISION (OS_CYCLE_PER_TICK / 2)
 #if (LOSCFG_BASE_CORE_TICK_RESPONSE_MAX == 0)
 #error "Must specify the maximum value that tick timer counter supports!"
 #endif
@@ -131,7 +132,7 @@ STATIC INLINE VOID OsTimeSliceUpdate(LosTaskCB *taskCB, UINT64 currTime)
 STATIC INLINE VOID OsSchedSetNextExpireTime(UINT64 startTime, UINT32 responseID, UINT64 taskEndTime, BOOL timeUpdate)
 {
     UINT64 nextExpireTime = OsGetNextExpireTime(startTime);
-    UINT64 nextResponseTime;
+    UINT64 nextResponseTime = 0;
     BOOL isTimeSlice = FALSE;
 
     /* The current thread's time slice has been consumed, but the current system lock task cannot
@@ -142,19 +143,22 @@ STATIC INLINE VOID OsSchedSetNextExpireTime(UINT64 startTime, UINT32 responseID,
         isTimeSlice = TRUE;
     }
 
-    if ((g_schedResponseTime > nextExpireTime) && ((g_schedResponseTime - nextExpireTime) >= OS_CYCLE_PER_TICK)) {
-        nextResponseTime = nextExpireTime - startTime;
+    if ((g_schedResponseTime > nextExpireTime) &&
+        ((g_schedResponseTime - nextExpireTime) >= OS_TICK_RESPONSE_PRECISION)) {
+        if (nextExpireTime >= startTime) {
+            nextResponseTime = nextExpireTime - startTime;
+        }
         if (nextResponseTime > OS_TICK_RESPONSE_TIME_MAX) {
             if (SchedRealSleepTimeSet != NULL) {
                 SchedRealSleepTimeSet(nextResponseTime);
             }
             nextResponseTime = OS_TICK_RESPONSE_TIME_MAX;
             nextExpireTime = startTime + nextResponseTime;
-        } else if (nextResponseTime < OS_CYCLE_PER_TICK) {
+        } else if (nextResponseTime < OS_TICK_RESPONSE_PRECISION) {
             if (SchedRealSleepTimeSet != NULL) {
                 SchedRealSleepTimeSet(0);
             }
-            nextResponseTime = OS_CYCLE_PER_TICK;
+            nextResponseTime = OS_TICK_RESPONSE_PRECISION;
             nextExpireTime = startTime + nextResponseTime;
             if (nextExpireTime >= g_schedResponseTime) {
                 return;
