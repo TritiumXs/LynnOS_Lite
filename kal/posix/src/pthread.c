@@ -232,3 +232,20 @@ int pthread_getname_np(pthread_t thread, char *buf, size_t buflen)
     }
     return ERANGE;
 }
+
+
+int pthread_setspecific(pthread_key_t k, const void *x)
+{
+    unsigned int ret = LOS_SetSpecific(k, x);
+    if (ret != LOS_OK) {
+        return EINVAL;
+    }
+
+    return 0;
+}
+
+void *pthread_getspecific(pthread_key_t k)
+{
+    return LOS_GetSpecific(k);
+}
+

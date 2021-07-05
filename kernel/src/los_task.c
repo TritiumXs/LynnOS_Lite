@@ -581,6 +581,8 @@ LITE_OS_SEC_TEXT VOID OsTaskSwitchCheck(VOID)
         g_pfnUsrTskSwitchHook();
     }
 
+    LOSCFG_BASE_CORE_TSK_SWITCH_HOOK();
+
 #if (LOSCFG_KERNEL_TRACE == 1)
     LOS_Trace(LOS_TRACE_SWITCH, 0);
 #endif
@@ -663,10 +665,13 @@ LITE_OS_SEC_TEXT_INIT STATIC_INLINE UINT32 OsTaskInitParamCheck(TSK_INIT_PARAM_S
 
 LITE_OS_SEC_TEXT_INIT UINT32 OsNewTaskInit(LosTaskCB *taskCB, TSK_INIT_PARAM_S *taskInitParam, VOID *topOfStack)
 {
+    UINT32 tsdSize;
+
     taskCB->stackPointer    = HalTskStackInit(taskCB->taskID, taskInitParam->uwStackSize, topOfStack);
     taskCB->arg             = taskInitParam->uwArg;
     taskCB->topOfStack      = (UINT32)(UINTPTR)topOfStack;
     taskCB->stackSize       = taskInitParam->uwStackSize;
+    taskCB->keyNum          = taskInitParam->keyNum;
     taskCB->taskSem         = NULL;
     taskCB->taskMux         = NULL;
     taskCB->taskStatus      = OS_TASK_STATUS_SUSPEND;
@@ -679,6 +684,10 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsNewTaskInit(LosTaskCB *taskCB, TSK_INIT_PARAM_S *
     taskCB->taskName        = taskInitParam->pcName;
     taskCB->msg             = NULL;
     SET_SORTLIST_VALUE(&taskCB->sortList, OS_SORT_LINK_INVALID_TIME);
+    if (taskCB->keyNum) {
+        tsdSize = taskCB->keyNum * sizeof(UINTPTR);
+        (VOID)memset_s((VOID *)(taskCB->topOfStack + taskCB->stackSize), tsdSize, 0, tsdSize);
+    }
     return LOS_OK;
 }
 
@@ -694,6 +703,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_TaskCreateOnly(UINT32 *taskID, TSK_INIT_PARAM_S
     UINT32 intSave;
     VOID  *topOfStack = NULL;
     LosTaskCB *taskCB = NULL;
+    UINT32 size;
     UINT32 retVal;
 
     if (taskID == NULL) {
@@ -718,13 +728,13 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_TaskCreateOnly(UINT32 *taskID, TSK_INIT_PARAM_S
 
     LOS_IntRestore(intSave);
 
+    size = taskInitParam->uwStackSize + taskInitParam->keyNum * sizeof(UINTPTR);
 #if (LOSCFG_EXC_HARDWARE_STACK_PROTECTION == 1)
-    UINTPTR stackPtr = (UINTPTR)LOS_MemAllocAlign(OS_TASK_STACK_ADDR, taskInitParam->uwStackSize +
-        OS_TASK_STACK_PROTECT_SIZE, OS_TASK_STACK_PROTECT_SIZE);
+    UINTPTR stackPtr = (UINTPTR)LOS_MemAllocAlign(OS_TASK_STACK_ADDR, size + OS_TASK_STACK_PROTECT_SIZE,
+                                                  OS_TASK_STACK_PROTECT_SIZE);
     topOfStack = (VOID *)(stackPtr + OS_TASK_STACK_PROTECT_SIZE);
 #else
-    topOfStack = (VOID *)LOS_MemAllocAlign(OS_TASK_STACK_ADDR, taskInitParam->uwStackSize,
-        LOSCFG_STACK_POINT_ALIGN_SIZE);
+    topOfStack = (VOID *)LOS_MemAllocAlign(OS_TASK_STACK_ADDR, size, LOSCFG_STACK_POINT_ALIGN_SIZE);
 #endif
     if (topOfStack == NULL) {
         intSave = LOS_IntLock();
@@ -1290,6 +1300,41 @@ LITE_OS_SEC_TEXT CHAR* LOS_TaskNameGet(UINT32 taskID)
     LOS_IntRestore(intSave);
 
     return taskCB->taskName;
+}
+
+LITE_OS_SEC_TEXT UINT32 LOS_SetSpecific(UINT32 key, const VOID *value)
+{
+    UINT32    intSave;
+    UINT32   *tsd = NULL;
+    LosTaskCB *taskCB = g_losTask.runTask;
+
+    if (key >= taskCB->keyNum) {
+        return LOS_NOK;
+    }
+
+    tsd = (UINT32 *)(taskCB->topOfStack + taskCB->stackSize);
+    intSave = LOS_IntLock();
+    tsd[key] = (UINT32)value;
+    LOS_IntRestore(intSave);
+    return LOS_OK;
+}
+
+LITE_OS_SEC_TEXT VOID *LOS_GetSpecific(UINT32 key)
+{
+    UINT32    intSave;
+    VOID      *value = NULL;
+    UINT32   *tsd = NULL;
+    LosTaskCB *taskCB = g_losTask.runTask;
+
+    if (key >= taskCB->keyNum) {
+        return NULL;
+    }
+
+    tsd = (UINT32 *)(taskCB->topOfStack + taskCB->stackSize);
+    intSave = LOS_IntLock();
+    value = (VOID *)tsd[key];
+    LOS_IntRestore(intSave);
+    return value;
 }
 
 LITE_OS_SEC_TEXT_MINOR VOID LOS_Msleep(UINT32 mSecs)

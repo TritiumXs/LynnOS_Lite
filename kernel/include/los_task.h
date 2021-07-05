@@ -401,6 +401,7 @@ typedef VOID *(*TSK_ENTRY_FUNC)(UINT32 arg);
 typedef struct tagTskInitParam {
     TSK_ENTRY_FUNC       pfnTaskEntry;              /**< Task entrance function                 */
     UINT16               usTaskPrio;                /**< Task priority                          */
+    UINT32               keyNum;                    /**< Number of task private data            */
     UINT32               uwArg;                     /**< Task parameters                        */
     UINT32               uwStackSize;               /**< Task stack size                        */
     CHAR                 *pcName;                   /**< Task name                              */
@@ -1102,6 +1103,10 @@ extern CHAR* LOS_TaskNameGet(UINT32 taskID);
  */
 extern VOID LOS_UDelay(UINT64 microseconds);
 
+extern UINT32 LOS_SetSpecific(UINT32 key, const VOID *value);
+
+extern VOID *LOS_GetSpecific(UINT32 key);
+
 /**
  * @ingroup los_task
  * Null task ID
@@ -1350,6 +1355,7 @@ typedef struct {
     UINT32                      waitTimes;
     SortLinkList                sortList;
     UINT64                      startTime;
+    UINT32                      keyNum;
     UINT32                      stackSize;                /**< Task stack size */
     UINT32                      topOfStack;               /**< Task stack top */
     UINT32                      taskID;                   /**< Task ID */

@@ -235,6 +235,14 @@ extern "C" {
 
 /**
  * @ingroup los_config
+ * Configuration item for task context switch hook
+ */
+#ifndef LOSCFG_BASE_CORE_TSK_SWITCH_HOOK
+#define LOSCFG_BASE_CORE_TSK_SWITCH_HOOK()
+#endif
+
+/**
+ * @ingroup los_config
  * Define a usable task priority.Highest task priority.
  */
 #ifndef LOS_TASK_PRIORITY_HIGHEST
