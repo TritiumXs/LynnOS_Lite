@@ -1546,13 +1546,13 @@ STATIC INLINE VOID OsMemMagicCheckPrint(struct OsMemNodeHead **tmpNode)
 
 STATIC UINT32 OsMemAddrValidCheckPrint(const VOID *pool, struct OsMemFreeNodeHead **tmpNode)
 {
-    if (!OsMemAddrValidCheck(pool, (*tmpNode)->prev)) {
+    if (((*tmpNode)->prev != NULL) && !OsMemAddrValidCheck(pool, (*tmpNode)->prev)) {
         PRINT_ERR("[%s], %d, memory check error!\n"
                   " freeNode.prev: 0x%x is out of legal mem range\n",
                   __FUNCTION__, __LINE__, (*tmpNode)->prev);
         return LOS_NOK;
     }
-    if (!OsMemAddrValidCheck(pool, (*tmpNode)->next)) {
+    if (((*tmpNode)->next != NULL) && !OsMemAddrValidCheck(pool, (*tmpNode)->next)) {
         PRINT_ERR("[%s], %d, memory check error!\n"
                   " freeNode.next: 0x%x is out of legal mem range\n",
                   __FUNCTION__, __LINE__, (*tmpNode)->next);
