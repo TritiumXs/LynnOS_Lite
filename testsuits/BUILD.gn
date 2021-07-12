@@ -31,6 +31,7 @@ lite_component("test") {
         "sample/kernel/sem:test_sem",
         "sample/kernel/swtmr:test_swtmr",
         "sample/kernel/task:test_task",
+        "sample/kernel/dynlink:test_dynlink",
         #"sample/kernel/tickless:test_tickless",
     ]
 }

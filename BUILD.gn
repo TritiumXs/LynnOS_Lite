@@ -37,6 +37,7 @@ declare_args() {
   enable_ohos_kernel_liteos_m_test = false
   enable_ohos_kernel_liteos_m_pm = true
   enable_ohos_kernel_liteos_m_lwip = false
+  enable_ohos_kernel_liteos_m_dynlink = false
   ohos_kernel_liteos_m_lwip_path = "components/net/lwip-2.1:lwip"
 }
 
@@ -72,5 +73,8 @@ group("kernel") {
   }
   if (enable_ohos_kernel_liteos_m_lwip == true) {
     deps += [ ohos_kernel_liteos_m_lwip_path ]
+  }
+  if (enable_ohos_kernel_liteos_m_dynlink == true) {
+    deps += [ "components/dynlink:dynlink" ]
   }
 }
