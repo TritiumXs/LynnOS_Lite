@@ -194,17 +194,8 @@ CONTINUE_NEXT_NODE:
 }
 #endif
 
-/*****************************************************************************
-Function    : OsSwtmrStart
-Description : Start Software Timer
-Input       : swtmr ---------- Need to start Software Timer
-Output      : None
-Return      : None
-*****************************************************************************/
-LITE_OS_SEC_TEXT VOID OsSwtmrStart(SWTMR_CTRL_S *swtmr)
+STATIC VOID OsSwtmrStart(UINT64 currTime, SWTMR_CTRL_S *swtmr)
 {
-    UINT64 currTime = OsGetCurrSchedTimeCycle();
-
     swtmr->uwCount = swtmr->uwInterval;
     swtmr->ucState = OS_SWTMR_STATUS_TICKING;
 
@@ -255,7 +246,7 @@ LITE_OS_SEC_TEXT VOID OsSwtmrStop(SWTMR_CTRL_S *swtmr)
     }
 }
 
-STATIC VOID OsSwtmrTimeoutHandle(SWTMR_CTRL_S *swtmr)
+STATIC VOID OsSwtmrTimeoutHandle(UINT64 currTime, SWTMR_CTRL_S *swtmr)
 {
     SwtmrHandlerItem swtmrHandler;
 
@@ -271,7 +262,7 @@ STATIC VOID OsSwtmrTimeoutHandle(SWTMR_CTRL_S *swtmr)
             swtmr->usTimerID %= LOSCFG_BASE_CORE_SWTMR_LIMIT;
         }
     } else if (swtmr->ucMode == LOS_SWTMR_MODE_PERIOD) {
-        OsSwtmrStart(swtmr);
+        OsSwtmrStart(currTime, swtmr);
     } else if (swtmr->ucMode == LOS_SWTMR_MODE_NO_SELFDELETE) {
         swtmr->ucState = OS_SWTMR_STATUS_CREATED;
     }
@@ -292,7 +283,7 @@ STATIC BOOL OsSwtmrScan(VOID)
         OsDeleteNodeSortLink(g_swtmrSortLinkList, sortList);
 
         SWTMR_CTRL_S *swtmr = LOS_DL_LIST_ENTRY(sortList, SWTMR_CTRL_S, stSortList);
-        OsSwtmrTimeoutHandle(swtmr);
+        OsSwtmrTimeoutHandle(currTime, swtmr);
 
         needSchedule = TRUE;
         if (LOS_ListEmpty(listObject)) {
@@ -521,7 +512,7 @@ LITE_OS_SEC_TEXT UINT32 LOS_SwtmrStart(UINT32 swtmrId)
             OsSwtmrStop(swtmr);
             /* fall through */
         case OS_SWTMR_STATUS_CREATED:
-            OsSwtmrStart(swtmr);
+            OsSwtmrStart(OsGetCurrSchedTimeCycle(), swtmr);
             break;
         default:
             ret = LOS_ERRNO_SWTMR_STATUS_INVALID;
@@ -662,5 +653,3 @@ LITE_OS_SEC_TEXT UINT32 LOS_SwtmrDelete(UINT32 swtmrId)
 }
 
 #endif /* (LOSCFG_BASE_CORE_SWTMR == 1) */
-
-
