@@ -50,6 +50,7 @@ static_library("kernel") {
     "../components/exchook",
     "../components/backtrace",
     "../components/power",
+    "../components/dynlink",
     "../utils",
     "//third_party/bounds_checking_function/include",
   ]
