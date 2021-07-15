@@ -29,78 +29,44 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "los_debug.h"
-#include "stdarg.h"
-#include "los_interrupt.h"
+#ifndef _HWLITEOS_SHELL_SHCMDPARSE_H
+#define _HWLITEOS_SHELL_SHCMDPARSE_H
 
+#include "string.h"
+#include "show.h"
 
-#if (LOSCFG_KERNEL_PRINTF == 1)
-STATIC const CHAR *g_logString[] = {
-    "EMG",
-    "COMMON",
-    "ERR",
-    "WARN",
-    "INFO",
-    "DEBUG",
-};
+#ifdef  __cplusplus
+#if  __cplusplus
+extern "C" {
+#endif
 #endif
 
-STATIC ExcHookFn g_excHook;
-STATIC BACK_TRACE_HOOK g_backTraceHook = NULL;
+#define CMD_PARSED_RETCODE_BASE            LOS_OK
+#define CMD_PARSED_RETCODE_TYPE_INVALID    (CMD_PARSED_RETCODE_BASE + 1)
+#define CMD_PARSED_RETCODE_PARAM_OVERTOP   (CMD_PARSED_RETCODE_BASE + 3)
+#define CMD_PARSED_RETCODE_CMDKEY_NOTFOUND (CMD_PARSED_RETCODE_BASE + 4)
 
-VOID OsBackTraceHookSet(BACK_TRACE_HOOK hook)
-{
-    if (g_backTraceHook == NULL) {
-        g_backTraceHook = hook;
-    }
-}
+typedef UINT32 (*FUNC_ONE_TOKEN)(VOID *ctx, UINT32 index, CHAR *token);
 
-VOID OsBackTraceHookCall(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount, UINTPTR SP)
-{
-    if (g_backTraceHook != NULL) {
-        g_backTraceHook(LR, LRSize, jumpCount, SP);
-    } else {
-        PRINT_ERR("Record LR failed, because of g_backTraceHook is not registered, "
-                  "should call OSBackTraceInit firstly\n");
-    }
-}
+/*
+ * Description: the info struct after cmd parser
+ */
+typedef struct {
+    UINT32 paramCnt;                /* count of para */
+    CmdType cmdType;                /* cmd type, judge cmd keyword */
+    CHAR cmdKeyword[CMD_KEY_LEN];   /* cmd keyword str */
+    CHAR *paramArray[CMD_MAX_PARAS];
+} CmdParsed;
 
-VOID OsExcHookRegister(ExcHookFn excHookFn)
-{
-    UINT32 intSave = LOS_IntLock();
-    if (!g_excHook) {
-        g_excHook = excHookFn;
-    }
-    LOS_IntRestore(intSave);
-}
+extern UINT32 OsCmdParse(CHAR *cmdStr, CmdParsed *cmdParsed);
+extern CHAR *OsCmdParseStrdup(const CHAR *str);
+extern UINT32 OsCmdParseOneToken(CmdParsed *cmdParsed, UINT32 index, const CHAR *token);
+extern UINT32 OsCmdTokenSplit(CHAR *cmdStr, CHAR split, CmdParsed *cmdParsed);
 
-VOID OsDoExcHook(EXC_TYPE excType)
-{
-    UINT32 intSave = LOS_IntLock();
-    if (g_excHook) {
-        g_excHook(excType);
-    }
-    LOS_IntRestore(intSave);
-}
-
-#if (LOSCFG_KERNEL_PRINTF == 1)
-INT32 OsLogLevelCheck(INT32 level)
-{
-    if (level > PRINT_LEVEL) {
-        return LOS_NOK;
-    }
-
-    if ((level != LOG_COMMON_LEVEL) && ((level > LOG_EMG_LEVEL) && (level <= LOG_DEBUG_LEVEL))) {
-        PRINTK("[%s]", g_logString[level]);
-    }
-
-    return LOS_OK;
+#ifdef __cplusplus
+#if __cplusplus
 }
 #endif
-
-#if (LOSCFG_KERNEL_PRINTF > 1)
-WEAK VOID HalConsoleOutput(LogModuleType type, INT32 level, const CHAR *fmt, ...)
-{
-}
 #endif
 
+#endif /* _HWLITEOS_SHELL_SHCMDPARSE_H */

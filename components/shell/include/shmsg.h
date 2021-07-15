@@ -29,78 +29,29 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "los_debug.h"
-#include "stdarg.h"
-#include "los_interrupt.h"
+#ifndef _HWLITEOS_SHELL_SHMSG_H
+#define _HWLITEOS_SHELL_SHMSG_H
 
+#include "shell.h"
+#include "shcmdparse.h"
 
-#if (LOSCFG_KERNEL_PRINTF == 1)
-STATIC const CHAR *g_logString[] = {
-    "EMG",
-    "COMMON",
-    "ERR",
-    "WARN",
-    "INFO",
-    "DEBUG",
-};
-#endif
+#ifdef __cplusplus
+#if __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+#endif /* __cplusplus */
 
-STATIC ExcHookFn g_excHook;
-STATIC BACK_TRACE_HOOK g_backTraceHook = NULL;
+extern UINT32 ShellMsgTypeGet(CmdParsed *cmdParsed, const CHAR *cmdType);
+extern void ExecCmdline(const char *cmdline);
 
-VOID OsBackTraceHookSet(BACK_TRACE_HOOK hook)
-{
-    if (g_backTraceHook == NULL) {
-        g_backTraceHook = hook;
-    }
+#define SHELL_CMD_PARSE_EVENT   0x111
+
+#define SH_OK  0
+#define SH_NOK 1
+#ifdef __cplusplus
+#if __cplusplus
 }
+#endif /* __cplusplus */
+#endif /* __cplusplus */
 
-VOID OsBackTraceHookCall(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount, UINTPTR SP)
-{
-    if (g_backTraceHook != NULL) {
-        g_backTraceHook(LR, LRSize, jumpCount, SP);
-    } else {
-        PRINT_ERR("Record LR failed, because of g_backTraceHook is not registered, "
-                  "should call OSBackTraceInit firstly\n");
-    }
-}
-
-VOID OsExcHookRegister(ExcHookFn excHookFn)
-{
-    UINT32 intSave = LOS_IntLock();
-    if (!g_excHook) {
-        g_excHook = excHookFn;
-    }
-    LOS_IntRestore(intSave);
-}
-
-VOID OsDoExcHook(EXC_TYPE excType)
-{
-    UINT32 intSave = LOS_IntLock();
-    if (g_excHook) {
-        g_excHook(excType);
-    }
-    LOS_IntRestore(intSave);
-}
-
-#if (LOSCFG_KERNEL_PRINTF == 1)
-INT32 OsLogLevelCheck(INT32 level)
-{
-    if (level > PRINT_LEVEL) {
-        return LOS_NOK;
-    }
-
-    if ((level != LOG_COMMON_LEVEL) && ((level > LOG_EMG_LEVEL) && (level <= LOG_DEBUG_LEVEL))) {
-        PRINTK("[%s]", g_logString[level]);
-    }
-
-    return LOS_OK;
-}
-#endif
-
-#if (LOSCFG_KERNEL_PRINTF > 1)
-WEAK VOID HalConsoleOutput(LogModuleType type, INT32 level, const CHAR *fmt, ...)
-{
-}
-#endif
-
+#endif /* _HWLITEOS_SHELL_SHMSG_H */
