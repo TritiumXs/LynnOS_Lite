@@ -621,7 +621,7 @@ extern UINT8 *m_aucSysMem0;
  * Configuration item for low power frame tailoring
  */
 #ifndef LOSCFG_KERNEL_PM
-#define LOSCFG_KERNEL_PM                                     0//1
+#define LOSCFG_KERNEL_PM                                     1
 #endif
 
 /**
