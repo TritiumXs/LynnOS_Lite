@@ -82,7 +82,7 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 			VOID *pool = va_arg(ap, VOID *);
 			LOS_TRACE(MEM_INFO_REQ, pool);
 			break;
-                }
+		}
 
 		case EVENT_CREATE: {
 			PEVENT_CB_S eventCB = va_arg(ap, PEVENT_CB_S);
@@ -94,7 +94,7 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 			PEVENT_CB_S eventCB = va_arg(ap, PEVENT_CB_S);
 			LOS_TRACE(EVENT_DELETE, (UINTPTR)eventCB, LOS_OK);
 			break;
-                }
+		}
 
 		case EVENT_READ: {
 			PEVENT_CB_S eventCB = va_arg(ap, PEVENT_CB_S);
@@ -110,7 +110,7 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 			UINT32 events = va_arg(ap, UINT32);
 			LOS_TRACE(EVENT_WRITE, (UINTPTR)eventCB, eventCB->uwEventID, events);
 			break;
-                }
+		}
 
 		case EVENT_CLEAR: {
 			PEVENT_CB_S eventCB = va_arg(ap, PEVENT_CB_S);
@@ -139,13 +139,13 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 			LOS_TRACE(QUEUE_RW, queueCB->queueID, queueCB->queueSize, bufferSize, operateType, queueCB->readWriteableCnt[OS_QUEUE_READ],
 					queueCB->readWriteableCnt[OS_QUEUE_WRITE], timeout);
 			break;
-                }
+		}
 
 		case SEM_CREATE: {
 			LosSemCB *semCB = va_arg(ap, LosSemCB *);
 			LOS_TRACE(SEM_CREATE, semCB->semID, 0, semCB->semCount);
 			break;
-                }
+		}
 
 		case SEM_DELETE: {
 			LosSemCB *semCB = va_arg(ap, LosSemCB *);
@@ -160,7 +160,7 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 			(VOID)runningTask;
 			LOS_TRACE(SEM_PEND, semCB->semID, semCB->semCount, timeout);
 			break;
-                }
+		}
 
 		case SEM_POST: {
 			LosSemCB *semCB = va_arg(ap, LosSemCB *);
@@ -212,7 +212,7 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 			LosTaskCB *taskCB = va_arg(ap, LosTaskCB *);
 			LOS_TRACE(TASK_SUSPEND, taskCB->taskID, taskCB->taskStatus, g_losTask.runTask->taskID);
 			break;
-                }
+		}
 
 		case TASK_RESUME: {
 			LosTaskCB *taskCB = va_arg(ap, LosTaskCB *);
@@ -224,7 +224,7 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 			LosTaskCB *taskCB = va_arg(ap, LosTaskCB *);
 			LOS_TRACE(TASK_DELETE, taskCB->taskID, taskCB->taskStatus, (UINTPTR)taskCB->stackPointer);
 			break;
-                }
+		}
 
 		case TASK_SWITCH: {
 			LosTaskCB *newTask = g_losTask.newTask;
@@ -243,7 +243,7 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 			UINT32 hwiNum = va_arg(ap, UINT32);
 			LOS_TRACE(HWI_RESPONSE_OUT, hwiNum);
 			break;
-                }
+		}
 
 		default: {
 			break;
