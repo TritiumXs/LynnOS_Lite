@@ -56,17 +56,17 @@ VOID OsTraceCnvHookData(UINT32 type, ...)
 		
 		case MEM_FREE: {
 			VOID *pool = va_arg(ap, VOID *);
-                        VOID *ptr = va_arg(ap, VOID *);
-	 		LOS_TRACE(MEM_FREE, pool, (UINTPTR)ptr);
+			VOID *ptr = va_arg(ap, VOID *);
+			LOS_TRACE(MEM_FREE, pool, (UINTPTR)ptr);
 			break;		
 		}
 		
 		case MEM_REALLOC: {
-                        VOID *pool = va_arg(ap, VOID *);
-                        VOID *ptr = va_arg(ap, VOID *);
-                        UINT32 size = va_arg(ap, UINT32);
-                        LOS_TRACE(MEM_REALLOC, pool, (UINTPTR)ptr, size);
-                        break;
+			VOID *pool = va_arg(ap, VOID *);
+			VOID *ptr = va_arg(ap, VOID *);
+			UINT32 size = va_arg(ap, UINT32);
+			LOS_TRACE(MEM_REALLOC, pool, (UINTPTR)ptr, size);
+			break;
                 }
 
 		case MEM_ALLOC_ALIGN: {
