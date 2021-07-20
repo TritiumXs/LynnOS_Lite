@@ -179,7 +179,7 @@ STATIC VOID OsTraceInfoEventData(VOID)
     TraceEventFrame *frame = &g_traceRecoder.ctrl.frameBuf[0];
 
     for (i = 0; i < g_traceRecoder.ctrl.maxRecordCount; i++, frame++) {
-        PRINTK("%-7u 0x%-15x 0x%-12x 0x%-7x 0x%-11x ", i, (UINT32)frame->curTime, frame->eventType,
+        PRINTK("%-7u 0x%-15llx 0x%-12x 0x%-7x 0x%-11x ", i, (UINT32)frame->curTime, frame->eventType,
             frame->curTask, frame->identity);
 #ifdef LOSCFG_TRACE_FRAME_CORE_MSG
         UINT32 taskLockCnt = frame->core.taskLockCnt;

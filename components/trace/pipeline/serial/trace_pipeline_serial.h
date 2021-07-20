@@ -39,8 +39,7 @@ extern "C" {
 
 extern INT32 uart_putc(CHAR c);
 
-//#define UART_PUTC(c) uart_putc((c))
-#define UART_PUTC(c)	//fputc((c), NULL)
+#define UART_PUTC(c) uart_putc((c))
 
 #ifdef __cplusplus
 #if __cplusplus
