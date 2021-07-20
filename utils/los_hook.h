@@ -35,6 +35,7 @@
 #include "internal/los_hook_types.h"
 #include "los_config.h"
 #include "los_error.h"
+#include "los_trace.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -120,7 +121,12 @@ extern "C" {
 /**
  * Call hook functions.
  */
-#define OsHookCall(hookType, ...)               hookType##_CallHook(__VA_ARGS__)
+//#define OsHookCall(hookType, ...)               hookType##_CallHook(__VA_ARGS__)
+#define OsHookCall(hookType, ...) \
+	do { \
+		hookType##_CallHook(__VA_ARGS__); \
+		LOS_TRACE_CNV(hookType, ##__VA_ARGS__); \
+	} while (0)
 
 #else
 #define LOS_HookReg(hookType, hookFn)
