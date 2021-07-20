@@ -54,96 +54,95 @@ extern VOID OsTraceCnvHookData(UINT32 type, ...);
 				_type = MEM_FREE; \
 				break; \
 			case LOS_HOOK_TYPE_MEM_INIT: \
-                                _type = MEM_INFO_REQ; \
-                                break;\
-                        case LOS_HOOK_TYPE_MEM_REALLOC: \
-                                _type = MEM_REALLOC; \
-                                break; \
+				_type = MEM_INFO_REQ; \
+				break;\
+			case LOS_HOOK_TYPE_MEM_REALLOC: \
+				_type = MEM_REALLOC; \
+				break; \
 			case LOS_HOOK_TYPE_MEM_ALLOCALIGN: \
-                                _type = MEM_ALLOC_ALIGN; \
-                                break;\
-                        case LOS_HOOK_TYPE_EVENT_INIT: \
-                                _type = EVENT_CREATE; \
-                                break; \
+				_type = MEM_ALLOC_ALIGN; \
+				break;\
+			case LOS_HOOK_TYPE_EVENT_INIT: \
+				_type = EVENT_CREATE; \
+				break; \
 			case LOS_HOOK_TYPE_EVENT_READ: \
-                                _type = EVENT_READ; \
-                                break;\
-                        case LOS_HOOK_TYPE_EVENT_WRITE: \
-                                _type = EVENT_WRITE; \
-                                break; \
+				_type = EVENT_READ; \
+				break;\
+			case LOS_HOOK_TYPE_EVENT_WRITE: \
+				_type = EVENT_WRITE; \
+				break; \
 			case LOS_HOOK_TYPE_EVENT_CLEAR: \
-                                _type = EVENT_CLEAR; \
-                                break;\
-                        case LOS_HOOK_TYPE_EVENT_DESTROY: \
-                                _type = EVENT_DELETE; \
-                                break; \
+				_type = EVENT_CLEAR; \
+				break;\
+			case LOS_HOOK_TYPE_EVENT_DESTROY: \
+				_type = EVENT_DELETE; \
+				break; \
 			case LOS_HOOK_TYPE_QUEUE_CREATE: \
-                                _type = QUEUE_CREATE; \
-                                break;\
-                        case LOS_HOOK_TYPE_QUEUE_DELETE: \
-                                _type = QUEUE_DELETE; \
-                                break; \
+				_type = QUEUE_CREATE; \
+				break;\
+			case LOS_HOOK_TYPE_QUEUE_DELETE: \
+				_type = QUEUE_DELETE; \
+				break; \
 			case LOS_HOOK_TYPE_QUEUE_READ: \
-                                _type = QUEUE_RW; \
-                                break;\
-                        case LOS_HOOK_TYPE_QUEUE_WRITE: \
-                                _type = QUEUE_RW; \
-                                break; \
+				_type = QUEUE_RW; \
+				break;\
+			case LOS_HOOK_TYPE_QUEUE_WRITE: \
+				_type = QUEUE_RW; \
+				break; \
 			case LOS_HOOK_TYPE_SEM_CREATE: \
-                                _type = SEM_CREATE; \
-                                break;\
-                        case LOS_HOOK_TYPE_SEM_DELETE: \
-                                _type = SEM_DELETE; \
-                                break; \
+				_type = SEM_CREATE; \
+				break;\
+			case LOS_HOOK_TYPE_SEM_DELETE: \
+				_type = SEM_DELETE; \
+				break; \
 			case LOS_HOOK_TYPE_SEM_POST: \
-                                _type = SEM_POST; \
-                                break;\
-                        case LOS_HOOK_TYPE_SEM_PEND: \
-                                _type = SEM_PEND; \
-                                break; \
+				_type = SEM_POST; \
+				break;\
+			case LOS_HOOK_TYPE_SEM_PEND: \
+				_type = SEM_PEND; \
+				break; \
 			case LOS_HOOK_TYPE_MUX_CREATE: \
-                                _type = MUX_CREATE; \
-                                break;\
-                        case LOS_HOOK_TYPE_MUX_POST: \
-                                _type = MUX_POST; \
-                                break; \
+				_type = MUX_CREATE; \
+				break;\
+			case LOS_HOOK_TYPE_MUX_POST: \
+				_type = MUX_POST; \
+				break; \
 			case LOS_HOOK_TYPE_MUX_PEND: \
-                                _type = MUX_PEND; \
-                                break;\
-                        case LOS_HOOK_TYPE_MUX_DELETE: \
-                                _type = MUX_DELETE; \
-                                break; \
+				_type = MUX_PEND; \
+				break;\
+			case LOS_HOOK_TYPE_MUX_DELETE: \
+				_type = MUX_DELETE; \
+				break; \
 			case LOS_HOOK_TYPE_TASK_PRIMODIFY: \
-                                _type = TASK_PRIOSET; \
-                                break;\
-                        case LOS_HOOK_TYPE_TASK_DELETE: \
-                                _type = TASK_DELETE; \
-                                break; \
+				_type = TASK_PRIOSET; \
+				break;\
+			case LOS_HOOK_TYPE_TASK_DELETE: \
+				_type = TASK_DELETE; \
+				break; \
 			case LOS_HOOK_TYPE_TASK_CREATE: \
-                                _type = TASK_CREATE; \
-                                break;\
-                        case LOS_HOOK_TYPE_TASK_SWITCHEDIN: \
-                                _type = TASK_SWITCH; \
-                                break; \
+				_type = TASK_CREATE; \
+				break;\
+			case LOS_HOOK_TYPE_TASK_SWITCHEDIN: \
+				_type = TASK_SWITCH; \
+				break; \
 			case LOS_HOOK_TYPE_MOVEDTASKTOREADYSTATE: \
-                                _type = TASK_RESUME; \
-                                break;\
-                        case LOS_HOOK_TYPE_MOVEDTASKTOSUSPENDEDLIST: \
-                                _type = TASK_SUSPEND; \
-                                break; \
+				_type = TASK_RESUME; \
+				break;\
+			case LOS_HOOK_TYPE_MOVEDTASKTOSUSPENDEDLIST: \
+				_type = TASK_SUSPEND; \
+				break; \
 			case LOS_HOOK_TYPE_ISR_ENTER: \
-                                _type = HWI_RESPONSE_IN; \
-                                break;\
-                        case LOS_HOOK_TYPE_ISR_EXIT: \
-                                _type = HWI_RESPONSE_OUT; \
-                                break; \
+				_type = HWI_RESPONSE_IN; \
+				break;\
+			case LOS_HOOK_TYPE_ISR_EXIT: \
+				_type = HWI_RESPONSE_OUT; \
+				break; \
 			default: \
 				 _type = 0; \
 				break; \
 		} \
 		OsTraceCnvHookData(_type, ##args); \
 	} while (0)
-
 
 #ifdef __cplusplus
 #if __cplusplus
