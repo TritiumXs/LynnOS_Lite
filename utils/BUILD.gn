@@ -39,6 +39,7 @@ static_library("utils") {
     "../kernel/arch/include",
     ".",
     "../components/trace",
+    "../components/trace/cnv",
     "//third_party/bounds_checking_function/include",
   ]
 }

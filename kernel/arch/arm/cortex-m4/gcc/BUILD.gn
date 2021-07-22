@@ -42,6 +42,7 @@ static_library("arch") {
     "../../../../../kernel/include",
     "../../../../../utils",
     "../../../../../components/trace",
+    "../../../../../components/trace/cnv",
     "//third_party/bounds_checking_function/include",
   ]
 }
