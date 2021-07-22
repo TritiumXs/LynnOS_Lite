@@ -46,6 +46,7 @@ extern "C" {
 
 extern VOID OsTraceCnvHookData(UINT32 type, ...);
 
+#if (LOSCFG_KERNEL_TRACE == 1)
 #define LOS_TRACE_CNV(hookType, args...) \
 	do { \
 		UINT32 _type; \
@@ -146,6 +147,9 @@ extern VOID OsTraceCnvHookData(UINT32 type, ...);
 		} \
 		OsTraceCnvHookData(_type, ##args); \
 	} while (0)
+#else
+#define LOS_TRACE_CNV(hookType, args...)
+#endif
 
 #ifdef __cplusplus
 #if __cplusplus
