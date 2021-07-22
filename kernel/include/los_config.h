@@ -614,7 +614,7 @@ extern UINT8 *m_aucSysMem0;
 #endif
 
 #ifndef LOSCFG_KERNEL_TRACE
-#define LOSCFG_KERNEL_TRACE                                 1
+#define LOSCFG_KERNEL_TRACE                                 0
 #endif
 
 #if (LOSCFG_KERNEL_TRACE == 1)
@@ -643,7 +643,7 @@ extern UINT8 *m_aucSysMem0;
  * Configuration item for low power frame tailoring
  */
 #ifndef LOSCFG_KERNEL_PM
-#define LOSCFG_KERNEL_PM                                    1
+#define LOSCFG_KERNEL_PM                                     1
 #endif
 
 /**
