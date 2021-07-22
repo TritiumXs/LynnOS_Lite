@@ -121,7 +121,6 @@ extern "C" {
 /**
  * Call hook functions.
  */
-//#define OsHookCall(hookType, ...)               hookType##_CallHook(__VA_ARGS__)
 #define OsHookCall(hookType, ...) \
 	do { \
 		hookType##_CallHook(__VA_ARGS__); \

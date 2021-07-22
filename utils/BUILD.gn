@@ -38,6 +38,7 @@ static_library("utils") {
     "../kernel/include",
     "../kernel/arch/include",
     ".",
+    "../components/trace",
     "//third_party/bounds_checking_function/include",
   ]
 }
