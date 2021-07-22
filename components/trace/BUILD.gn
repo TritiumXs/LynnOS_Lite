@@ -27,19 +27,25 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-static_library("utils") {
-  sources = [
-    "los_debug.c",
-    "los_error.c",
-    "los_hook.c",
+static_library("trace") {
+  sources = [ 
+    "los_trace.c",
+    "trace_offline.c",
+    "trace_online.c",
+    "cnv/trace_cnv.c",
+    "pipeline/trace_pipeline.c",
+    "pipeline/trace_tlv.c",
+    "pipeline/serial/trace_pipeline_serial.c"
   ]
 
   include_dirs = [
-    "../kernel/include",
-    "../kernel/arch/include",
-    ".",
-    "../components/trace",
-    "../components/trace/cnv",
+    "../../kernel/include",
+    "../../kernel/arch/include",
+    "../../utils",
+    "./", 
+    "cnv",
+    "pipeline",
+    "pipeline/serial",
     "//third_party/bounds_checking_function/include",
   ]
 }

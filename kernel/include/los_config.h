@@ -613,6 +613,28 @@ extern UINT8 *m_aucSysMem0;
 #define LOSCFG_DEBUG_HOOK                                   0
 #endif
 
+#ifndef LOSCFG_KERNEL_TRACE
+#define LOSCFG_KERNEL_TRACE                                 0
+#endif
+
+#if (LOSCFG_KERNEL_TRACE == 1)
+#define LOSCFG_TRACE_FRAME_MAX_PARAMS                       3
+#define LOSCFG_TRACE_FRAME_EVENT_COUNT                      no
+#define LOSCFG_RECORDER_MODE_OFFLINE
+//#define LOSCFG_RECORDER_MODE_ONLINE
+#define LOSCFG_TRACE_CLIENT_INTERACT
+#define LOSCFG_TRACE_BUFFER_SIZE                            2048
+
+#ifndef NUM_HAL_INTERRUPT_UART
+#define NUM_HAL_INTERRUPT_UART                              0xff
+#endif
+
+#ifndef OS_TICK_INT_NUM
+#define OS_TICK_INT_NUM                                     0xff
+#endif
+
+#endif
+
 /* =============================================================================
                                        PM module configuration
 ============================================================================= */
