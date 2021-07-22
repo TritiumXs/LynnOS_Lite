@@ -614,7 +614,7 @@ extern UINT8 *m_aucSysMem0;
 #endif
 
 #ifndef LOSCFG_KERNEL_TRACE
-#define LOSCFG_KERNEL_TRACE				    1
+#define LOSCFG_KERNEL_TRACE                                 1
 #endif
 
 #if (LOSCFG_KERNEL_TRACE == 1)
