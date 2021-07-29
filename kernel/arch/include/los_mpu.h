@@ -80,7 +80,7 @@ typedef struct {
 } MPU_CFG_PARA;
 
 VOID HalMpuEnable(UINT32 defaultRegionEnable);
-VOID HalMpuDisable();
+VOID HalMpuDisable(VOID);
 UINT32 HalMpuSetRegion(UINT32 regionId, MPU_CFG_PARA *para);
 UINT32 HalMpuDisableRegion(UINT32 regionId);
 INT32 HalMpuUnusedRegionGet(VOID);
