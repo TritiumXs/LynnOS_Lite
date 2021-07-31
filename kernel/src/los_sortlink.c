@@ -41,6 +41,13 @@ extern "C" {
 
 STATIC SortLinkAttribute g_taskSortLink;
 STATIC SortLinkAttribute g_swtmrSortLink;
+STATIC BOOL g_isMiniPeriod = FALSE;
+UINT32 g_tickMiniCount;
+
+VOID OsSortLinkMiniPeriodEnable(VOID)
+{
+    g_isMiniPeriod = TRUE;
+}
 
 UINT32 OsSortLinkInit(SortLinkAttribute *sortLinkHeader)
 {
@@ -78,7 +85,7 @@ STATIC INLINE VOID OsAddNode2SortLink(SortLinkAttribute *sortLinkHeader, SortLin
     } while (1);
 }
 
-VOID OsDeleteNodeSortLink(SortLinkAttribute *sortLinkHeader, SortLinkList *sortList)
+STATIC INLINE VOID OsDeleteNodeSortLink(SortLinkAttribute *sortLinkHeader, SortLinkList *sortList)
 {
     LOS_ListDelete(&sortList->sortLinkNode);
     SET_SORTLIST_VALUE(sortList, OS_SORT_LINK_INVALID_TIME);
@@ -86,76 +93,74 @@ VOID OsDeleteNodeSortLink(SortLinkAttribute *sortLinkHeader, SortLinkList *sortL
 
 STATIC INLINE UINT64 OsGetSortLinkNextExpireTime(SortLinkAttribute *sortHeader, UINT64 startTime)
 {
-    UINT64 expirTime = 0;
-    UINT64 nextExpirTime = 0;
+    UINT64 expireTime = 0;
+    UINT64 nextExpireTime = OS_SCHED_MAX_RESPONSE_TIME - OS_TICK_RESPONSE_PRECISION;
     LOS_DL_LIST *head = &sortHeader->sortLink;
     LOS_DL_LIST *list = head->pstNext;
 
     if (LOS_ListEmpty(head)) {
-        return OS_SCHED_MAX_RESPONSE_TIME - OS_CYCLE_PER_TICK;
+        return nextExpireTime;
     }
 
     do {
         SortLinkList *listSorted = LOS_DL_LIST_ENTRY(list, SortLinkList, sortLinkNode);
-        if (listSorted->responseTime <= startTime) {
-            expirTime = startTime;
+        if (listSorted->responseTime <= (startTime + OS_TICK_RESPONSE_PRECISION)) {
+            expireTime = listSorted->responseTime;
             list = list->pstNext;
         } else {
-            nextExpirTime = listSorted->responseTime;
+            nextExpireTime = listSorted->responseTime;
             break;
         }
     } while (list != head);
 
-    if (expirTime == 0) {
-        return nextExpirTime;
+    if (expireTime >= startTime) {
+        return expireTime;
     }
 
-    if (nextExpirTime == 0) {
-        return expirTime;
+    /* An existing node times out */
+    if (expireTime) {
+        return startTime;
     }
 
-    if ((nextExpirTime - expirTime) <= OS_US_PER_TICK) {
-        return nextExpirTime;
-    }
-
-    return expirTime;
+    return nextExpireTime;
 }
 
-VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, SortLinkType type)
+VOID OsAddTask2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks)
 {
-    UINT32 intSave;
-    SortLinkAttribute *sortLinkHeader = NULL;
-
-    if (type == OS_SORT_LINK_TASK) {
-        sortLinkHeader = &g_taskSortLink;
-    } else if (type == OS_SORT_LINK_SWTMR) {
-        sortLinkHeader = &g_swtmrSortLink;
-    } else {
-        LOS_Panic("Sort link type error : %u\n", type);
-    }
-
-    intSave = LOS_IntLock();
+    UINT32 intSave = LOS_IntLock();
     SET_SORTLIST_VALUE(node, startTime + (UINT64)waitTicks * OS_CYCLE_PER_TICK);
-    OsAddNode2SortLink(sortLinkHeader, node);
+    OsAddNode2SortLink(&g_taskSortLink, node);
     LOS_IntRestore(intSave);
 }
 
-VOID OsDeleteSortLink(SortLinkList *node, SortLinkType type)
+VOID OsDeleteTaskFromSortLink(SortLinkList *node)
 {
-    UINT32 intSave;
-    SortLinkAttribute *sortLinkHeader = NULL;
-
-    if (type == OS_SORT_LINK_TASK) {
-        sortLinkHeader = &g_taskSortLink;
-    } else if (type == OS_SORT_LINK_SWTMR) {
-        sortLinkHeader = &g_swtmrSortLink;
-    } else {
-        LOS_Panic("Sort link type error : %u\n", type);
-    }
-
-    intSave = LOS_IntLock();
+    UINT32 intSave = LOS_IntLock();
     if (node->responseTime != OS_SORT_LINK_INVALID_TIME) {
-        OsDeleteNodeSortLink(sortLinkHeader, node);
+        OsDeleteNodeSortLink(&g_taskSortLink, node);
+    }
+    LOS_IntRestore(intSave);
+}
+
+VOID OsAddSwtmr2SortLink(SortLinkList *node, UINT64 startTime, UINT64 waitTime, UINT32 ticks)
+{
+    UINT32 intSave = LOS_IntLock();
+    SET_SORTLIST_VALUE(node, startTime + waitTime);
+    OsAddNode2SortLink(&g_swtmrSortLink, node);
+    if (g_isMiniPeriod && (ticks == OS_TICK_MINI_PERIOD)) {
+        g_tickMiniCount++;
+    }
+    LOS_IntRestore(intSave);
+}
+
+VOID OsDeleteSwtmrFromSortLink(SortLinkList *node, UINT32 ticks)
+{
+    UINT32 intSave = LOS_IntLock();
+    if (node->responseTime != OS_SORT_LINK_INVALID_TIME) {
+        OsDeleteNodeSortLink(&g_swtmrSortLink, node);
+        if (g_isMiniPeriod && (ticks == OS_TICK_MINI_PERIOD)) {
+            g_tickMiniCount--;
+        }
     }
     LOS_IntRestore(intSave);
 }
@@ -186,16 +191,16 @@ UINT64 OsGetNextExpireTime(UINT64 startTime)
     return (taskExpirTime < swtmrExpirTime) ? taskExpirTime : swtmrExpirTime;
 }
 
-UINT32 OsSortLinkGetTargetExpireTime(UINT64 currTime, const SortLinkList *targetSortList)
+UINT32 OsSortLinkGetTargetRemainTimeTick(UINT64 currTime, const SortLinkList *targetSortList)
 {
     if (currTime >= targetSortList->responseTime) {
         return 0;
     }
 
-    return (UINT32)(((targetSortList->responseTime - currTime) * LOSCFG_BASE_CORE_TICK_PER_SECOND) / OS_SYS_CLOCK);
+    return (UINT32)((targetSortList->responseTime - currTime) / OS_CYCLE_PER_TICK);
 }
 
-UINT32 OsSortLinkGetNextExpireTime(const SortLinkAttribute *sortLinkHeader)
+UINT32 OsSortLinkGetNextExpireTimeTick(const SortLinkAttribute *sortLinkHeader)
 {
     LOS_DL_LIST *head = (LOS_DL_LIST *)&sortLinkHeader->sortLink;
 
@@ -204,7 +209,7 @@ UINT32 OsSortLinkGetNextExpireTime(const SortLinkAttribute *sortLinkHeader)
     }
 
     SortLinkList *listSorted = LOS_DL_LIST_ENTRY(head->pstNext, SortLinkList, sortLinkNode);
-    return OsSortLinkGetTargetExpireTime(OsGetCurrSchedTimeCycle(), listSorted);
+    return OsSortLinkGetTargetRemainTimeTick(OsGetCurrSchedTimeCycle(), listSorted);
 }
 
 #ifdef __cplusplus

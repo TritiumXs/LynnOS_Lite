@@ -42,6 +42,9 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
+#define OS_TICK_MINI_PERIOD        1 /* A tick */
+#define OS_SCHED_MINI_PERIOD       (OS_SYS_CLOCK / 1000)
+#define OS_TICK_RESPONSE_PRECISION ((UINT32)(((UINT64)750 * OS_SYS_CLOCK) / OS_SYS_US_PER_SECOND))
 #define OS_SCHED_MAX_RESPONSE_TIME (UINT64)(((UINT64)-1) - 1U)
 
 extern UINT32 g_taskScheduled;

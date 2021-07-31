@@ -46,6 +46,8 @@ typedef enum {
     OS_SORT_LINK_SWTMR = 2,
 } SortLinkType;
 
+extern UINT32 g_tickMiniCount;
+
 typedef struct {
     LOS_DL_LIST sortLinkNode;
     UINT64      responseTime;
@@ -57,15 +59,26 @@ typedef struct {
 
 #define OS_SORT_LINK_INVALID_TIME ((UINT64)-1)
 #define SET_SORTLIST_VALUE(sortList, value) (((SortLinkList *)(sortList))->responseTime = (value))
+#define GET_SORTLIST_VALUE(sortList) (((SortLinkList *)(sortList))->responseTime)
+
+STATIC INLINE UINT64 OsSortLinkGetRemainTime(UINT64 currTime, const SortLinkList *targetSortList)
+{
+    if (currTime >= targetSortList->responseTime) {
+        return 0;
+    }
+    return (targetSortList->responseTime - currTime);
+}
 
 SortLinkAttribute *OsGetSortLinkAttribute(SortLinkType type);
 UINT64 OsGetNextExpireTime(UINT64 startTime);
 UINT32 OsSortLinkInit(SortLinkAttribute *sortLinkHeader);
-VOID OsDeleteNodeSortLink(SortLinkAttribute *sortLinkHeader, SortLinkList *sortList);
-VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, SortLinkType type);
-VOID OsDeleteSortLink(SortLinkList *node, SortLinkType type);
-UINT32 OsSortLinkGetTargetExpireTime(UINT64 currTime, const SortLinkList *targetSortList);
-UINT32 OsSortLinkGetNextExpireTime(const SortLinkAttribute *sortLinkHeader);
+VOID OsSortLinkMiniPeriodEnable(VOID);
+VOID OsAddTask2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks);
+VOID OsDeleteTaskFromSortLink(SortLinkList *node);
+VOID OsAddSwtmr2SortLink(SortLinkList *node, UINT64 startTime, UINT64 waitTime, UINT32 ticks);
+VOID OsDeleteSwtmrFromSortLink(SortLinkList *node, UINT32 ticks);
+UINT32 OsSortLinkGetTargetRemainTimeTick(UINT64 currTime, const SortLinkList *targetSortList);
+UINT32 OsSortLinkGetNextExpireTimeTick(const SortLinkAttribute *sortLinkHeader);
 
 #ifdef __cplusplus
 #if __cplusplus
