@@ -607,7 +607,7 @@ extern UINT8 *m_aucSysMem0;
                                        Fs module configuration
 ============================================================================= */
 #ifndef LOSCFG_SUPPORT_FATFS
-#define LOSCFG_SUPPORT_FATFS
+#define LOSCFG_SUPPORT_FATFS                                0
 #endif
 
 #ifndef LOSCFG_SUPPORT_LITTLEFS

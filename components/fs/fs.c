@@ -30,7 +30,7 @@
  */
 #include "fs_operations.h"
 #include "los_config.h"
-#ifdef LOSCFG_SUPPORT_FATFS
+#if (LOSCFG_SUPPORT_FATFS == 1)
 #include "fatfs.h"
 #endif
 #include "dirent.h"
@@ -161,7 +161,7 @@ static size_t GetCanonicalPath(const char *cwd, const char *path, char *buf, siz
 
 static void InitMountInfo(void)
 {
-#ifdef LOSCFG_SUPPORT_FATFS
+#if (LOSCFG_SUPPORT_FATFS == 1)
     extern struct MountOps g_fatfsMnt;
     extern struct FileOps g_fatfsFops;
     g_fsmap[0].fileSystemtype = strdup("fat");
