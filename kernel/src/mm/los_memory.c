@@ -38,7 +38,6 @@
 #include "los_interrupt.h"
 #include "los_task.h"
 
-
 /* Used to cut non-essential functions. */
 #define OS_MEM_EXPAND_ENABLE    0
 
@@ -111,6 +110,7 @@ STATIC INLINE UINT32 OsMemSlGet(UINT32 size, UINT32 fl)
 }
 
 /* The following is the memory algorithm related macro definition and interface implementation. */
+#define UINT32_HAVE_BITS          32
 
 struct OsMemNodeHead {
 #if (LOSCFG_BASE_MEM_NODE_INTEGRITY_CHECK == 1)
@@ -124,8 +124,8 @@ struct OsMemNodeHead {
         struct OsMemNodeHead *next; /* The next is used for sentinel node points to the expand node */
     } ptr;
 #if (LOSCFG_MEM_FREE_BY_TASKID == 1)
-    UINT32 taskID : 6;
-    UINT32 sizeAndFlag : 26;
+    UINT32 taskID : TASKID_NEED_BITS;
+    UINT32 sizeAndFlag : UINT32_HAVE_BITS - TASKID_NEED_BITS;
 #else
     UINT32 sizeAndFlag;
 #endif
@@ -180,32 +180,22 @@ struct OsMemPoolHead {
 } while (0);
 
 #define OS_MEM_NODE_MAGIC          0xABCDDCBA
-#if (LOSCFG_MEM_FREE_BY_TASKID == 1)
-#define OS_MEM_NODE_USED_FLAG      (1U << 25)
-#define OS_MEM_NODE_ALIGNED_FLAG   (1U << 24)
+#define FLAGS_NEED_BITS            2
+#define OS_MEM_NODE_USED_FLAG      (1U << (UINT32_HAVE_BITS - TASKID_NEED_BITS - 1))
+#define OS_MEM_NODE_ALIGNED_FLAG   (1U << (UINT32_HAVE_BITS - TASKID_NEED_BITS - 2))
 #if (LOSCFG_MEM_LEAKCHECK == 1)
-#define OS_MEM_NODE_LEAK_FLAG      (1U << 23)
+#define OS_MEM_NODE_LEAK_FLAG      (1U << (UINT32_HAVE_BITS - TASKID_NEED_BITS - 3))
+#undef FLAGS_NEED_BITS
+#define FLAGS_NEED_BITS            3
 #else
 #define OS_MEM_NODE_LEAK_FLAG      0
 #endif
 #if (OS_MEM_EXPAND_ENABLE == 1)
-#define OS_MEM_NODE_LAST_FLAG      (1U << 22)  /* Sentinel Node */
+#define OS_MEM_NODE_LAST_FLAG      (1U << (UINT32_HAVE_BITS - TASKID_NEED_BITS - 4))  /* Sentinel Node */
+#undef FLAGS_NEED_BITS
+#define FLAGS_NEED_BITS            4
 #else
 #define OS_MEM_NODE_LAST_FLAG      0
-#endif
-#else
-#define OS_MEM_NODE_USED_FLAG      (1U << 31)
-#define OS_MEM_NODE_ALIGNED_FLAG   (1U << 30)
-#if (LOSCFG_MEM_LEAKCHECK == 1)
-#define OS_MEM_NODE_LEAK_FLAG      (1U << 29)
-#else
-#define OS_MEM_NODE_LEAK_FLAG      0
-#endif
-#if (OS_MEM_EXPAND_ENABLE == 1)
-#define OS_MEM_NODE_LAST_FLAG      (1U << 28)  /* Sentinel Node */
-#else
-#define OS_MEM_NODE_LAST_FLAG      0
-#endif
 #endif
 
 #define OS_MEM_NODE_ALIGNED_AND_USED_FLAG \
@@ -294,6 +284,55 @@ STATIC VOID OsMemInfoPrint(VOID *pool);
 STATIC INLINE VOID OsMemNodeSetTaskID(struct OsMemUsedNodeHead *node)
 {
     node->header.taskID = LOS_CurTaskIDGet();
+}
+
+VOID OsStatisticsMemUsedForEveryTask(VOID *pool, UINT32 *outArray, UINT32 arraySize)
+{
+    struct OsMemPoolHead *poolInfo = (struct OsMemPoolHead *)pool;
+    struct OsMemNodeHead *tmpNode = NULL;
+    struct OsMemNodeHead *endNode = NULL;
+    UINT32 intSave;
+
+    if (pool == NULL) {
+        PRINTK("input param is NULL\n");
+        return;
+    }
+    if (LOS_MemIntegrityCheck(pool)) {
+        PRINTK("LOS_MemIntegrityCheck error\n");
+        return;
+    }
+
+    MEM_LOCK(poolInfo, intSave);
+    endNode = OS_MEM_END_NODE(pool, poolInfo->info.totalSize);
+#if OS_MEM_EXPAND_ENABLE
+    UINT32 size;
+    for (tmpNode = OS_MEM_FIRST_NODE(pool); tmpNode <= endNode;
+         tmpNode = OS_MEM_NEXT_NODE(tmpNode)) {
+        if (tmpNode == endNode) {
+            if (OsMemIsLastSentinelNode(endNode) == FALSE) {
+                size = OS_MEM_NODE_GET_SIZE(endNode->sizeAndFlag);
+                tmpNode = OsMemSentinelNodeGet(endNode);
+                endNode = OS_MEM_END_NODE(tmpNode, size);
+                continue;
+            } else {
+                break;
+            }
+        }
+#else
+    for (tmpNode = OS_MEM_FIRST_NODE(pool); tmpNode < endNode;
+         tmpNode = OS_MEM_NEXT_NODE(tmpNode)) {
+#endif
+#ifndef LOSCFG_MEM_MUL_REGIONS
+        if (OS_MEM_NODE_GET_USED_FLAG(tmpNode->sizeAndFlag)) {
+#else
+        if (OS_MEM_NODE_GET_USED_FLAG(tmpNode->sizeAndFlag) && !OS_MEM_IS_GAP_NODE(tmpNode)) {
+#endif
+            if (tmpNode->taskID < arraySize) {
+                outArray[tmpNode->taskID] += OS_MEM_NODE_GET_SIZE(tmpNode->sizeAndFlag);
+            }
+        }
+    }
+    MEM_UNLOCK(poolInfo, intSave);
 }
 #endif
 
@@ -803,6 +842,7 @@ STATIC UINT32 OsMemPoolInit(VOID *pool, UINT32 size)
     struct OsMemPoolHead *poolHead = (struct OsMemPoolHead *)pool;
     struct OsMemNodeHead *newNode = NULL;
     struct OsMemNodeHead *endNode = NULL;
+    UINT32 nodeSize;
 
     (VOID)memset_s(poolHead, sizeof(struct OsMemPoolHead), 0, sizeof(struct OsMemPoolHead));
 
@@ -810,8 +850,16 @@ STATIC UINT32 OsMemPoolInit(VOID *pool, UINT32 size)
     poolHead->info.totalSize = size;
     poolHead->info.attr &= ~(OS_MEM_POOL_UNLOCK_ENABLE | OS_MEM_POOL_EXPAND_ENABLE); /* default attr: lock, not expand. */
 
+    nodeSize = size - sizeof(struct OsMemPoolHead) - OS_MEM_NODE_HEAD_SIZE;
+    if (nodeSize > (1 << (UINT32_HAVE_BITS - TASKID_NEED_BITS - FLAGS_NEED_BITS)) - 1) {
+        PRINT_ERR("In OsMemNodeHead, only have UINT32_HAVE_BITS - TASKID_NEED_BITS - FLAGS_NEED_BITS = %d bits \
+                  to record node size, size of input: %d is too large, maybe overflow.\n",
+                  UINT32_HAVE_BITS - TASKID_NEED_BITS - FLAGS_NEED_BITS, nodeSize);
+        return LOS_NOK;
+    }
+
     newNode = OS_MEM_FIRST_NODE(pool);
-    newNode->sizeAndFlag = (size - sizeof(struct OsMemPoolHead) - OS_MEM_NODE_HEAD_SIZE);
+    newNode->sizeAndFlag = nodeSize;
     newNode->ptr.prev = OS_MEM_END_NODE(pool, size);
     OS_MEM_SET_MAGIC(newNode);
     OsMemFreeNodeAdd(pool, (struct OsMemFreeNodeHead *)newNode);
@@ -962,13 +1010,11 @@ UINT32 LOS_MemPoolList(VOID)
 STATIC INLINE VOID *OsMemAlloc(struct OsMemPoolHead *pool, UINT32 size, UINT32 intSave)
 {
     struct OsMemNodeHead *allocNode = NULL;
-
 #if (LOSCFG_BASE_MEM_NODE_INTEGRITY_CHECK == 1)
     if (OsMemAllocCheck(pool, intSave) == LOS_NOK) {
         return NULL;
     }
 #endif
-
     UINT32 allocSize = OS_MEM_ALIGN(size + OS_MEM_NODE_HEAD_SIZE, OS_MEM_ALIGN_SIZE);
 #if OS_MEM_EXPAND_ENABLE
 retry:
