@@ -470,6 +470,18 @@ extern UINT8 *m_aucSysMem0;
 #define LOSCFG_MEM_FREE_BY_TASKID                           0
 #endif
 
+#if (LOSCFG_MEM_FREE_BY_TASKID == 1)
+#if (LOSCFG_BASE_CORE_TSK_LIMIT + 1 > 128)
+#error "When LOSCFG_MEM_FREE_BY_TASKID is true, LOSCFG_BASE_CORE_TSK_LIMIT larger than 127 is not support "
+#elif (LOSCFG_BASE_CORE_TSK_LIMIT + 1 > 64)
+#define TASKID_NEED_BITS          7
+#else
+#define TASKID_NEED_BITS          6
+#endif
+#else
+#define TASKID_NEED_BITS          0
+#endif
+
 /**
  * @ingroup los_config
  * Configuration module tailoring of mem node integrity checking
