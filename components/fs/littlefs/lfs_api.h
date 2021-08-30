@@ -56,24 +56,27 @@ typedef unsigned mode_t;
 #define VFS_OK  0
 #endif
 
-typedef struct {
-    uint8_t useFlag;
-    const char *pathName;
-    lfs_t *lfsHandle;
-    lfs_file_t file;
-} LittleFsHandleStruct;
-
 struct FileOpInfo {
     uint8_t useFlag;
     const struct FileOps *fsVops;
     char *dirName;
     lfs_t lfsInfo;
+    pthread_mutex_t lock;
 };
+
+typedef struct {
+    uint8_t useFlag;
+    const char *pathName;
+    lfs_t *lfsHandle;
+    lfs_file_t file;
+    struct FileOpInfo *fileOpInfo;
+} LittleFsHandleStruct;
 
 typedef struct {
     uint8_t useFlag;
     char *dirName;
     lfs_t *lfsHandle;
+    struct FileOpInfo *fileOpInfo;
     lfs_dir_t dir;
 } FileDirInfo;
 

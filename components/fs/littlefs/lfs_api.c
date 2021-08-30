@@ -32,6 +32,7 @@
 #define _GNU_SOURCE 1
 #include "lfs_api.h"
 #include "los_config.h"
+#include "cmsis_os.h"
 #include "securec.h"
 
 lfs_t g_lfs;
@@ -40,29 +41,49 @@ FileDirInfo g_lfsDir[LFS_MAX_OPEN_DIRS] = {0};
 struct FileOpInfo g_fsOp[LOSCFG_LFS_MAX_MOUNT_SIZE] = {0};
 static LittleFsHandleStruct g_handle[LITTLE_FS_MAX_OPEN_FILES] = {0};
 struct dirent g_nameValue;
-static pthread_mutex_t g_FslocalMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_fsLocalMutex = PTHREAD_MUTEX_INITIALIZER;
 static const char *g_littlefsMntName[LOSCFG_LFS_MAX_MOUNT_SIZE] = {"/a", "/b", "/c"};
+
+static void inline LfsLock(void)
+{
+    (void)pthread_mutex_lock(&g_fsLocalMutex);
+}
+
+static void inline LfsUnlock(void)
+{
+    (void)pthread_mutex_unlock(&g_fsLocalMutex);
+}
+
+static void LfsPartitionLock(struct FileOpInfo *fileOpInfo)
+{
+    (void)pthread_mutex_lock(&(fileOpInfo->lock));
+}
+
+static void LfsPartitionUnlock(struct FileOpInfo *fileOpInfo)
+{
+    (void)pthread_mutex_unlock(&(fileOpInfo->lock));
+}
 
 LittleFsHandleStruct *LfsAllocFd(const char *fileName, int *fd)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LITTLE_FS_MAX_OPEN_FILES; i++) {
         if (g_handle[i].useFlag == 0) {
             *fd = i;
             g_handle[i].useFlag = 1;
             g_handle[i].pathName = strdup(fileName);
-            pthread_mutex_unlock(&g_FslocalMutex);
+            LfsUnlock();
             return &(g_handle[i]);
         }
     }
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     *fd = INVALID_FD;
     return NULL;
 }
 
 static void LfsFreeFd(int fd)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     g_handle[fd].useFlag = 0;
     if (g_handle[fd].pathName != NULL) {
         free((void *)g_handle[fd].pathName);
@@ -72,21 +93,25 @@ static void LfsFreeFd(int fd)
     if (g_handle[fd].lfsHandle != NULL) {
         g_handle[fd].lfsHandle = NULL;
     }
-    pthread_mutex_unlock(&g_FslocalMutex);
+
+    if (g_handle[fd].fileOpInfo != NULL) {
+        g_handle[fd].fileOpInfo = NULL;
+    }
+    LfsUnlock();
 }
 
 BOOL CheckFileIsOpen(const char *fileName)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LITTLE_FS_MAX_OPEN_FILES; i++) {
         if (g_handle[i].useFlag == 1) {
             if (strcmp(g_handle[i].pathName, fileName) == 0) {
-                pthread_mutex_unlock(&g_FslocalMutex);
+                LfsUnlock();
                 return TRUE;
             }
         }
     }
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     return FALSE;
 }
 
@@ -103,22 +128,22 @@ static BOOL LfsFdIsValid(int fd)
 
 FileDirInfo *GetFreeDir(const char *dirName)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LFS_MAX_OPEN_DIRS; i++) {
         if (g_lfsDir[i].useFlag == 0) {
             g_lfsDir[i].useFlag = 1;
             g_lfsDir[i].dirName = strdup(dirName);
-            pthread_mutex_unlock(&g_FslocalMutex);
+            LfsUnlock();
             return &(g_lfsDir[i]);
         }
     }
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     return NULL;
 }
 
 void FreeDirInfo(const char *dirName)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LFS_MAX_OPEN_DIRS; i++) {
         if (g_lfsDir[i].useFlag == 1 && strcmp(g_lfsDir[i].dirName, dirName) == 0) {
             g_lfsDir[i].useFlag = 0;
@@ -126,24 +151,26 @@ void FreeDirInfo(const char *dirName)
                 free(g_lfsDir[i].dirName);
                 g_lfsDir[i].dirName = NULL;
             }
-            pthread_mutex_unlock(&g_FslocalMutex);
+            g_lfsDir[i].fileOpInfo = NULL;
+            LfsUnlock();
+            return;
         }
     }
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
 }
 
 BOOL CheckDirIsOpen(const char *dirName)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LFS_MAX_OPEN_DIRS; i++) {
         if (g_lfsDir[i].useFlag == 1) {
             if (strcmp(g_lfsDir[i].dirName, dirName) == 0) {
-                pthread_mutex_unlock(&g_FslocalMutex);
+                LfsUnlock();
                 return TRUE;
             }
         }
     }
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     return FALSE;
 }
 
@@ -165,35 +192,36 @@ BOOL CheckPathIsMounted(const char *pathName, struct FileOpInfo **fileOpInfo)
     char tmpName[LITTLEFS_MAX_LFN_LEN] = {0};
     int len = GetFirstLevelPathLen(pathName);
 
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LOSCFG_LFS_MAX_MOUNT_SIZE; i++) {
         if (g_fsOp[i].useFlag == 1) {
             (void)strncpy_s(tmpName, LITTLEFS_MAX_LFN_LEN, pathName, len);
             if (strcmp(tmpName, g_fsOp[i].dirName) == 0) {
                 *fileOpInfo = &(g_fsOp[i]);
-                pthread_mutex_unlock(&g_FslocalMutex);
+                LfsUnlock();
                 return TRUE;
             }
         }
     }
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     return FALSE;
 }
 
 struct FileOpInfo *AllocMountRes(const char* target, const struct FileOps *fileOps)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LOSCFG_LFS_MAX_MOUNT_SIZE; i++) {
         if (g_fsOp[i].useFlag == 0 && strcmp(target, g_littlefsMntName[i]) == 0) {
             g_fsOp[i].useFlag = 1;
             g_fsOp[i].fsVops = fileOps;
             g_fsOp[i].dirName = strdup(target);
-            pthread_mutex_unlock(&g_FslocalMutex);
+            pthread_mutex_init(&(g_fsOp[i].lock), NULL);
+            LfsUnlock();
             return &(g_fsOp[i]);
         }
     }
 
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     return NULL;
 }
 
@@ -203,26 +231,26 @@ int SetDefaultMountPath(int pathNameIndex, const char* target)
         return VFS_ERROR;
     }
 
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     g_littlefsMntName[pathNameIndex] = strdup(target);
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     return VFS_OK;
 }
 
 struct FileOpInfo *GetMountRes(const char *target, int *mountIndex)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LOSCFG_LFS_MAX_MOUNT_SIZE; i++) {
         if (g_fsOp[i].useFlag == 1) {
             if (g_fsOp[i].dirName && strcmp(target, g_fsOp[i].dirName) == 0) {
                 *mountIndex = i;
-                pthread_mutex_unlock(&g_FslocalMutex);
+                LfsUnlock();
                 return &(g_fsOp[i]);
             }
         }
     }
 
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     return NULL;
 }
 
@@ -232,33 +260,34 @@ int FreeMountResByIndex(int mountIndex)
         return VFS_ERROR;
     }
 
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     if (g_fsOp[mountIndex].useFlag == 1 && g_fsOp[mountIndex].dirName != NULL) {
         g_fsOp[mountIndex].useFlag = 0;
         free(g_fsOp[mountIndex].dirName);
         g_fsOp[mountIndex].dirName = NULL;
+        pthread_mutex_destroy(&(g_fsOp[mountIndex].lock));
     }
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
 
     return VFS_OK;
 }
 
 int FreeMountRes(const char *target)
 {
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     for (int i = 0; i < LOSCFG_LFS_MAX_MOUNT_SIZE; i++) {
         if (g_fsOp[i].useFlag == 1) {
             if (g_fsOp[i].dirName && strcmp(target, g_fsOp[i].dirName) == 0) {
                 g_fsOp[i].useFlag = 0;
                 free(g_fsOp[i].dirName);
                 g_fsOp[i].dirName = NULL;
-                pthread_mutex_unlock(&g_FslocalMutex);
+                LfsUnlock();
                 return VFS_OK;
             }
         }
     }
 
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
     return VFS_ERROR;
 }
 
@@ -356,6 +385,7 @@ int LfsMount(const char *source, const char *target, const char *fileSystemType,
         goto errout;
     }
 
+    LfsPartitionLock(fileOpInfo);
     ret = lfs_mount(&(fileOpInfo->lfsInfo), (struct lfs_config*)data);
     if (ret != 0) {
         ret = lfs_format(&(fileOpInfo->lfsInfo), (struct lfs_config*)data);
@@ -363,6 +393,7 @@ int LfsMount(const char *source, const char *target, const char *fileSystemType,
             ret = lfs_mount(&(fileOpInfo->lfsInfo), (struct lfs_config*)data);
         }
     }
+    LfsPartitionUnlock(fileOpInfo);
 
     if (ret != 0) {
         errno = LittlefsErrno(ret);
@@ -390,13 +421,16 @@ int LfsUmount(const char *target)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(fileOpInfo);
     ret = lfs_unmount(&(fileOpInfo->lfsInfo));
     if (ret != 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
     }
+    LfsPartitionUnlock(fileOpInfo);
 
     (void)FreeMountResByIndex(mountIndex);
+
     return ret;
 }
 
@@ -415,7 +449,9 @@ int LfsUnlink(const char *fileName)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(fileOpInfo);
     ret = lfs_remove(&(fileOpInfo->lfsInfo), fileName);
+    LfsPartitionUnlock(fileOpInfo);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
@@ -439,7 +475,9 @@ int LfsMkdir(const char *dirName, mode_t mode)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(fileOpInfo);
     ret = lfs_mkdir(&(fileOpInfo->lfsInfo), dirName);
+    LfsPartitionUnlock(fileOpInfo);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
@@ -464,7 +502,9 @@ int LfsRmdir(const char *dirName)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(fileOpInfo);
     ret = lfs_remove(&(fileOpInfo->lfsInfo), dirName);
+    LfsPartitionUnlock(fileOpInfo);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
@@ -498,9 +538,11 @@ DIR *LfsOpendir(const char *dirName)
         errno = ENFILE;
         goto errout;
     }
+    dirInfo->fileOpInfo = fileOpInfo;
 
+    LfsPartitionLock(fileOpInfo);
     ret = lfs_dir_open(&(fileOpInfo->lfsInfo), (lfs_dir_t *)(&(dirInfo->dir)), dirName);
-
+    LfsPartitionUnlock(fileOpInfo);
     if (ret != 0) {
         FreeDirInfo(dirName);
         errno = LittlefsErrno(ret);
@@ -527,9 +569,11 @@ struct dirent *LfsReaddir(DIR *dir)
         return NULL;
     }
 
+    LfsPartitionLock(dirInfo->fileOpInfo);
     ret = lfs_dir_read(dirInfo->lfsHandle, (lfs_dir_t *)(&(dirInfo->dir)), &lfsInfo);
+    LfsPartitionUnlock(dirInfo->fileOpInfo);
     if (ret == TRUE) {
-        pthread_mutex_lock(&g_FslocalMutex);
+        LfsLock();
         (void)strncpy_s(g_nameValue.d_name, sizeof(g_nameValue.d_name), lfsInfo.name, strlen(lfsInfo.name) + 1);
         if (lfsInfo.type == LFS_TYPE_DIR) {
             g_nameValue.d_type = DT_DIR;
@@ -538,7 +582,7 @@ struct dirent *LfsReaddir(DIR *dir)
         }
 
         g_nameValue.d_reclen = lfsInfo.size;
-        pthread_mutex_unlock(&g_FslocalMutex);
+        LfsUnlock();
 
         return &g_nameValue;
     }
@@ -560,8 +604,10 @@ int LfsClosedir(DIR *dir)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(dirInfo->fileOpInfo);
     ret = lfs_dir_close(dirInfo->lfsHandle, (lfs_dir_t *)(&(dirInfo->dir)));
 
+    LfsPartitionUnlock(dirInfo->fileOpInfo);
     FreeDirInfo(dirInfo->dirName);
 
     if (ret != 0) {
@@ -601,7 +647,9 @@ int LfsOpen(const char *pathName, int openFlag, int mode)
     }
 
     int lfsOpenFlag = ConvertFlagToLfsOpenFlag(openFlag);
+    LfsPartitionLock(fileOpInfo);
     err = lfs_file_open(&(fileOpInfo->lfsInfo), &(fsHandle->file), pathName, lfsOpenFlag);
+    LfsPartitionUnlock(fileOpInfo);
     if (err != 0) {
         LfsFreeFd(fd);
         errno = LittlefsErrno(err);
@@ -609,6 +657,7 @@ int LfsOpen(const char *pathName, int openFlag, int mode)
     }
 
     g_handle[fd].lfsHandle = &(fileOpInfo->lfsInfo);
+    g_handle[fd].fileOpInfo = fileOpInfo;
     return fd;
 
 errout:
@@ -629,7 +678,9 @@ int LfsRead(int fd, void *buf, unsigned int len)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(g_handle[fd].fileOpInfo);
     ret = lfs_file_read(g_handle[fd].lfsHandle, &(g_handle[fd].file), buf, len);
+    LfsPartitionUnlock(g_handle[fd].fileOpInfo);
     if (ret < 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
@@ -651,7 +702,9 @@ int LfsWrite(int fd, const void *buf, unsigned int len)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(g_handle[fd].fileOpInfo);
     ret = lfs_file_write(g_handle[fd].lfsHandle, &(g_handle[fd].file), buf, len);
+    LfsPartitionUnlock(g_handle[fd].fileOpInfo);
     if (ret < 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
@@ -668,7 +721,9 @@ off_t LfsSeek(int fd, off_t offset, int whence)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(g_handle[fd].fileOpInfo);
     ret = (off_t)lfs_file_seek(g_handle[fd].lfsHandle, &(g_handle[fd].file), offset, whence);
+    LfsPartitionUnlock(g_handle[fd].fileOpInfo);
     if (ret < 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
@@ -686,9 +741,9 @@ int LfsClose(int fd)
         return VFS_ERROR;
     }
 
-    pthread_mutex_lock(&g_FslocalMutex);
+    LfsLock();
     ret = lfs_file_close(g_handle[fd].lfsHandle, &(g_handle[fd].file));
-    pthread_mutex_unlock(&g_FslocalMutex);
+    LfsUnlock();
 
     LfsFreeFd(fd);
 
@@ -715,7 +770,9 @@ int LfsRename(const char *oldName, const char *newName)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(fileOpInfo);
     ret = lfs_rename(&(fileOpInfo->lfsInfo), oldName, newName);
+    LfsPartitionUnlock(fileOpInfo);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
@@ -740,7 +797,9 @@ int LfsStat(const char *path, struct stat *buf)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(fileOpInfo);
     ret = lfs_stat(&(fileOpInfo->lfsInfo), path, &info);
+    LfsPartitionUnlock(fileOpInfo);
     if (ret == 0) {
         buf->st_size = info.size;
         if (info.type == LFS_TYPE_REG) {
@@ -765,7 +824,9 @@ int LfsFsync(int fd)
         return VFS_ERROR;
     }
 
+    LfsPartitionLock(g_handle[fd].fileOpInfo);
     ret = lfs_file_sync(g_handle[fd].lfsHandle, &(g_handle[fd].file));
+    LfsPartitionUnlock(g_handle[fd].fileOpInfo);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
         ret = VFS_ERROR;
