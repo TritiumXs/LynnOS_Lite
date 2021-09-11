@@ -73,6 +73,7 @@ typedef struct {
 
 typedef enum {
     EXC_REBOOT,
+    EXC_POWEROFF,
     EXC_ASSERT,
     EXC_STACKOVERFLOW,
     EXC_INTERRUPT,

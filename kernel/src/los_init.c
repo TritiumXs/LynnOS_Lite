@@ -79,6 +79,19 @@ LITE_OS_SEC_TEXT_INIT VOID LOS_Reboot(VOID)
     HalSysExit();
 }
 
+/*****************************************************************************
+ Function    : LOS_PowerOff
+ Description : If "PowerOff" has registed through LOS_RegExcHook, do "Poweroff", else do like LOS_Reboot.
+ Input       : None
+ Output      : None
+ Return      : None
+ *****************************************************************************/
+LITE_OS_SEC_TEXT_INIT VOID LOS_PowerOff(VOID)
+{
+    OsDoExcHook(EXC_POWEROFF);
+    HalSysExit();
+}
+
 LITE_OS_SEC_TEXT_INIT VOID LOS_Panic(const CHAR *fmt, ...)
 {
     va_list ap;
