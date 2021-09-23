@@ -58,8 +58,12 @@ HalTaskContextSwitch:
     rsync
     call0   SpillWindow
     mov     a2, a4
+    l32i    a0, a2, CONTEXT_OFF_PS
+    wsr     a0, EPS5
+    l32i    a0, a2, CONTEXT_OFF_PC
+    wsr     a0, EPC5
     POP_ALL_REG a2
-    rfe
+    rfi     5
 
 .switchdone:
     retw
@@ -111,8 +115,12 @@ OsStartToRun:
     call0   SpillWindow
 
     mov     a2, a5
+    l32i    a0, a2, CONTEXT_OFF_PS
+    wsr     a0, EPS5
+    l32i    a0, a2, CONTEXT_OFF_PC
+    wsr     a0, EPC5
     POP_ALL_REG a2
-    rfe
+    rfi     5
 
 .global SaveRetAddr
 .type   SaveRetAddr, @function
