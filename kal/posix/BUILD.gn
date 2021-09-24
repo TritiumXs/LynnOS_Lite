@@ -43,6 +43,7 @@ static_library("posix") {
     "src/pthread_attr.c",
     "src/pthread_cond.c",
     "src/pthread_mutex.c",
+    "src/reboot.c",
     "src/semaphore.c",
     "src/time.c",
   ]

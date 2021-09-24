@@ -549,6 +549,7 @@ extern VOID LOS_Msleep(UINT32 mSecs);
  */
 extern UINT32 LOS_Start(VOID);
 extern NORETURN VOID LOS_Reboot(VOID);
+extern NORETURN VOID LOS_PowerOff(VOID);
 extern NORETURN VOID LOS_Panic(const CHAR *fmt, ...);
 
 /**
