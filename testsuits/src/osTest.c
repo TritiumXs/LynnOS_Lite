@@ -166,6 +166,7 @@ void TestCmsis2(void)
 
 VOID TestTaskEntry()
 {
+    PRINTF("test\n");
     PRINTF("\t\n --- Test Start --- \n\n");
     ICunitInit();
 

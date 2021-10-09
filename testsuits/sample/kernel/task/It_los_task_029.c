@@ -77,6 +77,11 @@ static UINT32 TestCase(VOID)
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 3, g_testCount); // 3, Here, assert that g_testCount is equal to 3.
 
+    int *test = NULL;
+    *test = 0;
+
+    ret = LOS_OK;
+    ICUNIT_GOTO_EQUAL(ret, LOS_NOK, ret, EXIT);
     return LOS_OK;
 
 EXIT:
