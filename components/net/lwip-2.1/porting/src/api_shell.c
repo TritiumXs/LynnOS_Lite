@@ -1,39 +1,33 @@
-/**********************************************************************************
-
-* Copyright (c) <2013-2015>, <Huawei Technologies Co., Ltd>
-* All rights reserved.
-* Redistribution and use in source and binary forms, with or without modification,
-* are permitted provided that the following conditions are met:
-* Redistributions of source code must retain the above copyright notice, this
-* list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice,
-* this list of conditions and the following disclaimer in the documentation and/or
-* other materials provided with the distribution.
-* Neither the name of the copyright holder nor the names of its contributors
-* may be used to endorse or promote products derived from this software without
-* specific prior written permission.
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-* OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-* NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-* EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-***********************************************************************************/
-/**********************************************************************************
-
-* Notice of Export Control Law
-===============================================
-* Huawei LiteOS may be subject to applicable export control laws and regulations, which
-* might include those applicable to Huawei LiteOS of U.S. and the country in which you
-* are located.
-* Import, export and usage of Huawei LiteOS in any manner by you shall be in compliance
-* with such applicable export control laws and regulations.
-***********************************************************************************/
-
+/*
+ * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this list of
+ *    conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
+ *    provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used
+ *    to endorse or promote products derived from this software without specific prior written
+ *    permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #define LWIP_STATIC static
 #define DHCP_STATE_OFF 0
@@ -102,10 +96,10 @@ int print_netif(struct netif *netif, char *print_buf, unsigned int buf_len)
     if (buf_len < 1) {
         goto out;
     }
-    if(netif->link_layer_type == LOOPBACK_IF){
-      ret = snprintf_s(tmp, buf_len, (buf_len-1), "%s\t", netif->name);
+    if (netif->link_layer_type == LOOPBACK_IF) {
+        ret = snprintf_s(tmp, buf_len, (buf_len - 1), "%s\t", netif->name);
     } else {
-      ret = snprintf_s(tmp, buf_len, (buf_len-1), "%s%u\t", netif->name, netif->num);
+        ret = snprintf_s(tmp, buf_len, (buf_len - 1), "%s%u\t", netif->name, netif->num);
     }
 
     if ((ret <= 0) || ((unsigned int)ret >= buf_len))
@@ -329,11 +323,11 @@ LWIP_STATIC int OsPingFunc(u32_t *parg)
     u32_t iecho_len;
     s16_t ip_hlen;
     u32_t forever;
-    u32_t i = 0;
+    u32_t i;
     u32_t succ_cnt = 0;
     u32_t failed_cnt = 0;
     struct timespec start, end;
-    long timout_ms = 0;
+    long timout_ms;
     struct pollfd pfd;
     long rtt;
     int ret = 0;

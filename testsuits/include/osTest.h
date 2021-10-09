@@ -68,8 +68,8 @@ extern "C" {
 
 #define LITEOS_BASE_TEST 1
 
-#ifndef LOS_KERNEL_TEST_NOT_SMOKE
-#define LOS_KERNEL_TEST_NOT_SMOKE 1
+#ifndef LOS_KERNEL_TEST_FULL
+#define LOS_KERNEL_TEST_FULL  0
 #endif
 #define LOS_KERNEL_CORE_TASK_TEST 1
 #define LOS_KERNEL_IPC_MUX_TEST 1
@@ -82,7 +82,9 @@ extern "C" {
 #endif
 #define LOS_KERNEL_FS_TEST 0
 #define LOS_KERNEL_MEM_TEST 1
+#define LOS_KERNEL_DYNLINK_TEST 0
 #define LOS_KERNEL_TICKLESS_TEST 0
+#define LOS_KERNEL_PM_TEST 1
 
 #define LITEOS_CMSIS_TEST 0
 #define LOS_CMSIS2_CORE_TASK_TEST 0
@@ -197,7 +199,6 @@ extern EVENT_CB_S g_exampleEvent;
 #define TASK_PRIO_TEST 25
 #define TASK_PRIO_TEST_NORMAL 20
 
-#define TASK_STACK_SIZE_TEST 0x400
 #define TASK_LOOP_NUM 0x100000
 #define QUEUE_LOOP_NUM 100
 #define HWI_LOOP_NUM 100
@@ -206,7 +207,6 @@ extern EVENT_CB_S g_exampleEvent;
 #define TEST_TASK_RUNTIME 0x100000
 #define TEST_SWTMR_RUNTIME 0x1000000
 #define TEST_HWI_RUNTIME 0x100000
-#define TEST_TASK_STACK_SIZE LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE
 #define TEST_TASK_PRIORITY_LOW osPriorityBelowNormal  // tskIDLE_PRIORITY + 10
 #define TEST_TASK_PRIORITY_NORMAL osPriorityNormal    // tskIDLE_PRIORITY + 11
 #define TEST_TASK_PRIORITY_HIGH osPriorityAboveNormal // tskIDLE_PRIORITY + 12
@@ -224,6 +224,8 @@ extern EVENT_CB_S g_exampleEvent;
 #else
 #define OS_TSK_TEST_STACK_SIZE 0x1000
 #endif
+#define TASK_STACK_SIZE_TEST OS_TSK_TEST_STACK_SIZE
+#define TEST_TASK_STACK_SIZE OS_TSK_TEST_STACK_SIZE
 #define TASK_CMSIS_STACK_SIZE_TEST 0x600
 
 #define OS_EVENT_TIMEOUT_MAX_VAL 0xFFFFFFFF
@@ -333,6 +335,7 @@ extern VOID ItSuiteLosSem(void);
 extern VOID ItSuiteLosSwtmr(void);
 extern VOID ItSuiteLosHwi(void);
 extern VOID ItSuiteLosMem(void);
+extern VOID ItSuiteLosDynlink(void);
 extern VOID ItSuite_Los_FatFs(void);
 
 extern VOID ItSuite_Cmsis_Lostask(void);

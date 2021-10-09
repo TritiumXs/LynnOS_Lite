@@ -232,10 +232,12 @@ LITE_OS_SEC_TEXT UINT32 LOS_SemPend(UINT32 semHandle, UINT32 timeout)
         goto ERROR_SEM_PEND;
     }
 
+    runningTask = (LosTaskCB *)g_losTask.runTask;
+
     if (semPended->semCount > 0) {
         semPended->semCount--;
         LOS_IntRestore(intSave);
-        OsHookCall(LOS_HOOK_TYPE_SEM_PEND, semPended, runningTask);
+        OsHookCall(LOS_HOOK_TYPE_SEM_PEND, semPended, runningTask, timeout);
         return LOS_OK;
     }
 
@@ -244,11 +246,10 @@ LITE_OS_SEC_TEXT UINT32 LOS_SemPend(UINT32 semHandle, UINT32 timeout)
         goto ERROR_SEM_PEND;
     }
 
-    runningTask = (LosTaskCB *)g_losTask.runTask;
     runningTask->taskSem = (VOID *)semPended;
     OsSchedTaskWait(&semPended->semList, timeout);
     LOS_IntRestore(intSave);
-    OsHookCall(LOS_HOOK_TYPE_SEM_PEND, semPended, runningTask);
+    OsHookCall(LOS_HOOK_TYPE_SEM_PEND, semPended, runningTask, timeout);
     LOS_Schedule();
 
     intSave = LOS_IntLock();

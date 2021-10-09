@@ -104,7 +104,13 @@ VOID ItSuiteLosMem(void)
 #endif
     ItLosMem040();
     ItLosMem045();
-    ItLosTick001();
+#if (LOSCFG_MEM_MUL_REGIONS == 1)
+    ItLosMem046();
+    ItLosMem047();
+#endif
 
+#if (LOS_KERNEL_TEST_FULL == 1)
+    ItLosTick001();
+#endif
     MemEnd();
 }

@@ -32,6 +32,7 @@
 #include "los_config.h"
 #include "los_context.h"
 
+#if (LOSCFG_MPU_ENABLE == 1)
 
 #define SIZE_4G_BYTE        0x100000000
 #define MPU_MAX_REGION_NUM  8
@@ -96,7 +97,7 @@ STATIC UINT32 HalMpuEncodeSize(UINT64 size)
     if (size > SIZE_4G_BYTE) {
         return 0;
     }
-    if ((size & 0x1F) != 0) { /* size sould aligned to 32 byte at least. */
+    if ((size & 0x1F) != 0) { /* size should aligned to 32 byte at least. */
         return 0;
     }
     size = (size >> 2);
@@ -233,4 +234,4 @@ INT32 HalMpuUnusedRegionGet(VOID)
         return id;
     }
 }
-
+#endif

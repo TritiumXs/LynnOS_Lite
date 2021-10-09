@@ -62,6 +62,10 @@
 #include "los_pm.h"
 #endif
 
+#if (LOSCFG_DYNLINK == 1)
+#include "los_dynlink.h"
+#endif
+
 /*****************************************************************************
  Function    : LOS_Reboot
  Description : system exception, die in here, wait for watchdog.
@@ -101,7 +105,7 @@ LITE_OS_SEC_TEXT_INIT static VOID OsRegister(VOID)
 
 LITE_OS_SEC_TEXT_INIT UINT32 LOS_Start(VOID)
 {
-    return HalStartSchedule(OsTickHandler);
+    return HalStartSchedule();
 }
 
 /*****************************************************************************
@@ -117,7 +121,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_KernelInit(VOID)
     PRINTK("entering kernel init...\n");
 
 #if (LOSCFG_BACKTRACE_TYPE != 0)
-    OSBackTraceInit();
+    OsBackTraceInit();
 #endif
 
     OsRegister();
@@ -182,6 +186,14 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_KernelInit(VOID)
         return ret;
     }
 
+#if (LOSCFG_KERNEL_TRACE == 1)
+    ret = LOS_TraceInit(NULL, LOSCFG_TRACE_BUFFER_SIZE);
+    if (ret != LOS_OK) {
+        PRINT_ERR("LOS_TraceInit error\n");
+        return ret;
+    }
+#endif
+
 #if (LOSCFG_KERNEL_PM == 1)
     ret = OsPmInit();
     if (ret != LOS_OK) {
@@ -200,6 +212,13 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_KernelInit(VOID)
 
 #if (LOSCFG_PLATFORM_EXC == 1)
     OsExcMsgDumpInit();
+#endif
+
+#if (LOSCFG_DYNLINK == 1)
+    ret = LOS_DynlinkInit();
+    if (ret != LOS_OK) {
+        return ret;
+    }
 #endif
 
     return LOS_OK;

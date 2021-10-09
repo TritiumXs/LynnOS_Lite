@@ -126,6 +126,13 @@ void TestKernel(void)
 #if (LOS_KERNEL_MEM_TEST == 1)
     ItSuiteLosMem();
 #endif
+#if (LOS_KERNEL_DYNLINK_TEST == 1)
+    ItSuiteLosDynlink();
+#endif
+
+#if (LOS_KERNEL_PM_TEST == 1)
+    ItSuiteLosPm();
+#endif
 }
 
 
@@ -170,20 +177,21 @@ VOID TestTaskEntry()
     TestCmsis2();
 #endif
 
-    PRINTF("\t\n --- Test End --- \n");
-    PRINTF("\nfailed count : %d, success count:%d\n", g_failResult, g_passResult);
+    /* The log is used for testing entrance guard, please do not make any changes. */
+    PRINTF("\nfailed count:%d, success count:%d\n", g_failResult, g_passResult);
+    PRINTF("--- Test End ---\n");
 }
 
 UINT32 los_TestInit(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S osTaskInitParam;
+    TSK_INIT_PARAM_S osTaskInitParam = { 0 };
 
     osTaskInitParam.pfnTaskEntry = (TSK_ENTRY_FUNC)TestTaskEntry;
     osTaskInitParam.uwStackSize = OS_TSK_TEST_STACK_SIZE;
     osTaskInitParam.pcName = "IT_TST_INI";
     osTaskInitParam.usTaskPrio = TASK_PRIO_TEST;
-    osTaskInitParam.uwResved = LOS_TASK_STATUS_DETACHED;
+    osTaskInitParam.uwResved = LOS_TASK_ATTR_JOINABLE;
 
     ret = LOS_TaskCreate(&g_testTskHandle, &osTaskInitParam);
     if (LOS_OK != ret) {

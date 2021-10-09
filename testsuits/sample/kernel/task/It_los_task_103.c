@@ -50,7 +50,7 @@ static VOID TaskF01(VOID)
     task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
     task1.uwStackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk103B";
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.usTaskPrio = TASK_PRIO_TEST - 1; // 1, set new task priority, it is higher than the current task.
     task1.uwResved = LOS_TASK_STATUS_DETACHED;
 
     ret = LOS_TaskCreate(&g_testTaskID02, &task1);
@@ -59,7 +59,7 @@ static VOID TaskF01(VOID)
     ret = LOS_TaskPriGet(g_testTaskID02);
 
     // 2, Assert this result is consistent with the priority that has been set.
-    ICUNIT_ASSERT_EQUAL_VOID(ret, TASK_PRIO_TEST - 2, ret);
+    ICUNIT_ASSERT_EQUAL_VOID(ret, TASK_PRIO_TEST - 1, ret);
 
     ret = LOS_TaskPriGet(g_testTaskID01);
 
@@ -86,13 +86,14 @@ static UINT32 TestCase(VOID)
     task1.uwStackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk103A";
     task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.uwResved = LOS_TASK_ATTR_JOINABLE;
 
     g_testCount = 0;
     ret = LOS_TaskCreate(&g_testTaskID01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    LOS_TaskDelay(20); // 20, set delay time
+    ret = LOS_TaskJoin(g_testTaskID01, NULL);
+    ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // 2, Here, assert that g_testCount is equal to 2.
 
@@ -100,7 +101,7 @@ static UINT32 TestCase(VOID)
 
 EXIT:
     LOS_TaskDelete(g_testTaskID01);
-
+    LOS_TaskJoin(g_testTaskID01, NULL);
     return LOS_OK;
 }
 

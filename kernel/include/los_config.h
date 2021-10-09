@@ -65,6 +65,22 @@ extern "C" {
 #define LOSCFG_BASE_CORE_TICK_PER_SECOND                    (100UL)
 #endif
 
+/**
+ * @ingroup los_config
+ * Minimum response error accuracy of tick interrupts, number of ticks in one second.
+ */
+#ifndef LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI
+#define LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI               (1000UL) /* 1ms */
+#endif
+
+#if (LOSCFG_BASE_CORE_TICK_PER_SECOND > LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI)
+    #error "LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI must be greater than LOSCFG_BASE_CORE_TICK_PER_SECOND"
+#endif
+
+#if (LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI > 1000UL)
+    #error "LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI must be less than or equal to 1000"
+#endif
+
 #if defined(LOSCFG_BASE_CORE_TICK_PER_SECOND) && \
     ((LOSCFG_BASE_CORE_TICK_PER_SECOND < 1UL) || (LOSCFG_BASE_CORE_TICK_PER_SECOND > 1000000000UL))
     #error "LOSCFG_BASE_CORE_TICK_PER_SECOND SHOULD big than 0, and less than 1000000000UL"
@@ -467,7 +483,7 @@ extern UINT8 *m_aucSysMem0;
  * Configuration memory leak detection
  * @attention
  * Need to enable backtrace module synchronously by configuration LOSCFG_BACKTRACE_TYPE,
- * and call OSBackTraceInit to complete initialization before the memory pool is initialized.
+ * and call OsBackTraceInit to complete initialization before the memory pool is initialized.
  */
 #ifndef LOSCFG_MEM_LEAKCHECK
 #define LOSCFG_MEM_LEAKCHECK                                0
@@ -536,6 +552,14 @@ extern UINT8 *m_aucSysMem0;
  */
 #if (OS_SYS_NOCACHEMEM_SIZE > 0)
 #define OS_SYS_NOCACHEMEM_ADDR                              (&g_sysNoCacheMem0[0])
+#endif
+
+/**
+ * @ingroup los_config
+ * Configuration of multiple non-continuous memory regions as one memory pool
+ */
+#ifndef LOSCFG_MEM_MUL_REGIONS
+#define LOSCFG_MEM_MUL_REGIONS                              0
 #endif
 
 /* =============================================================================
@@ -613,6 +637,52 @@ extern UINT8 *m_aucSysMem0;
 #define LOSCFG_DEBUG_HOOK                                   0
 #endif
 
+#if (LOSCFG_DEBUG_HOOK == 1)
+#ifndef LOSCFG_KERNEL_TRACE
+#define LOSCFG_KERNEL_TRACE                                 0
+#endif
+#endif
+
+#if (LOSCFG_KERNEL_TRACE == 1)
+
+#ifndef LOSCFG_TRACE_FRAME_MAX_PARAMS
+#define LOSCFG_TRACE_FRAME_MAX_PARAMS                       3
+#endif
+
+#ifndef LOSCFG_TRACE_FRAME_EVENT_COUNT
+#define LOSCFG_TRACE_FRAME_EVENT_COUNT                      0
+#endif
+
+#ifndef LOSCFG_RECORDER_MODE_OFFLINE
+#define LOSCFG_RECORDER_MODE_OFFLINE                        1
+#endif
+
+#ifndef LOSCFG_RECORDER_MODE_ONLINE
+#define LOSCFG_RECORDER_MODE_ONLINE                         0
+#endif
+
+#if (!(LOSCFG_RECORDER_MODE_OFFLINE ^ LOSCFG_RECORDER_MODE_ONLINE))
+#error One of LOSCFG_RECORDER_MODE_OFFLINE and LOSCFG_RECORDER_MODE_ONLINE should be set to 1 and only.
+#endif
+
+#ifndef LOSCFG_TRACE_CLIENT_INTERACT
+#define LOSCFG_TRACE_CLIENT_INTERACT                        1
+#endif
+
+#ifndef LOSCFG_TRACE_BUFFER_SIZE
+#define LOSCFG_TRACE_BUFFER_SIZE                            2048
+#endif
+
+#ifndef NUM_HAL_INTERRUPT_UART
+#define NUM_HAL_INTERRUPT_UART                              0xff
+#endif
+
+#ifndef OS_TICK_INT_NUM
+#define OS_TICK_INT_NUM                                     0xff
+#endif
+
+#endif
+
 /* =============================================================================
                                        PM module configuration
 ============================================================================= */
@@ -669,6 +739,9 @@ extern UINT8 *m_aucSysMem0;
  * 1: Call stack analysis for cortex-m series by scanning the stack.
  * 2: Call stack analysis for risc-v by using frame pointer.
  * 3: Call stack analysis for risc-v by scanning the stack.
+ * 4: Call stack analysis for xtensa by scanning the stack.
+ * 5: Call stack analysis for c-sky by scanning the stack.
+ * 6: Call stack analysis for arm9 by scanning the stack.
  * others: Not currently supported.
  */
 #ifndef LOSCFG_BACKTRACE_TYPE
@@ -701,6 +774,45 @@ extern UINT8 *m_aucSysMem0;
  */
 #ifndef LOSCFG_SECURE_STACK_DEFAULT_SIZE
 #define LOSCFG_SECURE_STACK_DEFAULT_SIZE                     512
+#endif
+
+/**
+ * @ingroup los_config
+ * Configuration item for mpu.
+ */
+#ifndef LOSCFG_MPU_ENABLE
+#define LOSCFG_MPU_ENABLE                                    0
+#endif
+
+#if (LOSCFG_EXC_HARDWARE_STACK_PROTECTION == 1) && (LOSCFG_MPU_ENABLE == 0)
+#error "if hardware stack protection is enabled, then MPU should be supported and enabled"
+#endif
+
+/*=============================================================================
+                                       shell module configuration
+=============================================================================*/
+/**
+ * @ingroup los_config
+ * Configuration item for shell.
+ */
+#ifndef LOSCFG_USE_SHELL
+#define LOSCFG_USE_SHELL                                     0
+#endif
+
+/**
+ * @ingroup los_config
+ * Configuration shell task priority.
+ */
+#ifndef LOSCFG_SHELL_PRIO
+#define LOSCFG_SHELL_PRIO                                    3
+#endif
+
+/**
+ * @ingroup los_config
+ * Configuration item to get task used memory.
+ */
+#ifndef LOSCFG_TASK_MEM_USED
+#define LOSCFG_TASK_MEM_USED                                 0
 #endif
 
 #ifdef __cplusplus

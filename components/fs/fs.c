@@ -30,7 +30,7 @@
  */
 #include "fs_operations.h"
 #include "los_config.h"
-#ifdef LOSCFG_SUPPORT_FATFS
+#if (LOSCFG_SUPPORT_FATFS == 1)
 #include "fatfs.h"
 #endif
 #include "dirent.h"
@@ -331,7 +331,7 @@ ssize_t read(int fd, void *buf, size_t nbyte)
             errno = EINVAL;
             return FS_FAILURE;
         }
-        if (nbyte > 1024) {
+        if (nbyte > 1024) { /* 1024, max random_size */
             nbyte = 1024; /* hks_generate_random: random_size must <= 1024 */
         }
         struct hks_blob key = {HKS_BLOB_TYPE_RAW, (uint8_t *)buf, nbyte};

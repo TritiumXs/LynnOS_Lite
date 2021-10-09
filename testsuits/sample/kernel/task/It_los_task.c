@@ -32,7 +32,6 @@
 #include "osTest.h"
 #include "It_los_task.h"
 
-
 VOID ItSuiteLosTask()
 {
     ItLosTask001();
@@ -72,11 +71,8 @@ VOID ItSuiteLosTask()
     ItLosTask036();
     ItLosTask037();
     ItLosTask038();
-    ItLosTask039();
-    ItLosTask040();
     ItLosTask041();
     ItLosTask042();
-    ItLosTask043();
     ItLosTask046();
     ItLosTask047();
     ItLosTask048();
@@ -84,59 +80,25 @@ VOID ItSuiteLosTask()
     ItLosTask050();
     ItLosTask051();
     ItLosTask052();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask053();
-    ItLosTask054();
-#endif
     ItLosTask055();
-    ItLosTask056();
     ItLosTask057();
     ItLosTask058();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask059();
-#endif
     ItLosTask060();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask061();
-#endif
     ItLosTask062();
-    ItLosTask063();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask064();
-#endif
     ItLosTask065();
     ItLosTask066();
     ItLosTask067();
     ItLosTask068();
     ItLosTask069();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask070();
-#endif
     ItLosTask071();
     ItLosTask072();
     ItLosTask073();
     ItLosTask074();
-    ItLosTask075();
     ItLosTask076();
     ItLosTask077();
     ItLosTask078();
-    ItLosTask079();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask080();
-#endif
-    ItLosTask081();
-    ItLosTask082();
-    ItLosTask083();
-    ItLosTask085();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask086();
-#endif
-    ItLosTask087();
-    ItLosTask088();
     ItLosTask089();
-    ItLosTask090();
     ItLosTask092();
-    ItLosTask093();
     ItLosTask094();
     ItLosTask095();
     ItLosTask097();
@@ -144,15 +106,9 @@ VOID ItSuiteLosTask()
     ItLosTask099();
     ItLosTask100();
     ItLosTask101();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask102();
-#endif
     ItLosTask103();
     ItLosTask104();
     ItLosTask105();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask106();
-#endif
     ItLosTask107();
     ItLosTask108();
     ItLosTask109();
@@ -160,13 +116,44 @@ VOID ItSuiteLosTask()
     ItLosTask111();
     ItLosTask112();
     ItLosTask113();
-#if (LOS_KERNEL_HWI_TEST == 1)
-    ItLosTask114();
-#endif
     ItLosTask115();
+    ItLosTask118();
+    ItLosTask119();
+    ItLosTask120();
+    ItLosTask121();
+    ItLosTask122();
+
+#if (LOS_KERNEL_TEST_FULL == 1)
+    ItLosTask039();
+    ItLosTask040();
+    ItLosTask043();
+    ItLosTask056();
+    ItLosTask063();
+    ItLosTask075();
+    ItLosTask079();
+    ItLosTask081();
+    ItLosTask082();
+    ItLosTask083();
+    ItLosTask085();
+    ItLosTask087();
+    ItLosTask088();
+    ItLosTask090();
+    ItLosTask093();
     ItLosTask116();
 #if (LOS_KERNEL_HWI_TEST == 1)
+    ItLosTask053();
+    ItLosTask054();
+    ItLosTask059();
+    ItLosTask061();
+    ItLosTask064();
+    ItLosTask070();
+    ItLosTask080();
+    ItLosTask086();
+    ItLosTask102();
+    ItLosTask106();
+    ItLosTask114();
     ItLosTask117();
+#endif
 #endif
 }
 

@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <securec.h>
+#include <limits.h>
 #include "los_config.h"
 #include "los_task.h"
 
@@ -43,7 +44,7 @@ typedef struct {
     void *(*startRoutine)(void *);
     void *param;
     char name[PTHREAD_NAMELEN];
-}PthreadData;
+} PthreadData;
 
 static void *PthreadEntry(UINT32 param)
 {
@@ -56,34 +57,39 @@ static void *PthreadEntry(UINT32 param)
 
 static inline int IsPthread(pthread_t thread)
 {
-    return ((UINT32)thread <= LOSCFG_BASE_CORE_TSK_LIMIT) &&
-           (OS_TCB_FROM_TID((UINT32)thread)->taskEntry == PthreadEntry);
+    return ((UINT32)thread <= LOSCFG_BASE_CORE_TSK_LIMIT);
 }
 
-int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
-                   void *(*startRoutine)(void *), void *arg)
+static int PthreadCreateAttrInit(const pthread_attr_t *attr, void *(*startRoutine)(void *), void *arg,
+    TSK_INIT_PARAM_S *taskInitParam)
 {
-    TSK_INIT_PARAM_S taskInitParam = {0};
+    const pthread_attr_t *threadAttr = attr;
+    struct sched_param schedParam = { 0 };
     PthreadData *pthreadData = NULL;
-    UINT32 taskID;
+    INT32 policy = 0;
+    pthread_attr_t attrTmp;
+    INT32 ret;
 
-    if ((thread == NULL) || (startRoutine == NULL)) {
-        return EINVAL;
+    if (!attr) {
+        (VOID)pthread_attr_init(&attrTmp);
+        threadAttr = &attrTmp;
     }
 
-    taskInitParam.usTaskPrio = LOSCFG_BASE_CORE_TSK_DEFAULT_PRIO;
-    taskInitParam.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    if (attr) {
-        if (attr->detachstate == PTHREAD_CREATE_DETACHED) {
-            return ENOTSUP;
+    if (threadAttr->stackaddr_set != 0) {
+        return ENOTSUP;
+    }
+    if (threadAttr->stacksize < PTHREAD_STACK_MIN) {
+        return EINVAL;
+    }
+    taskInitParam->uwStackSize = threadAttr->stacksize;
+    if (threadAttr->inheritsched == PTHREAD_EXPLICIT_SCHED) {
+        taskInitParam->usTaskPrio = (UINT16)threadAttr->schedparam.sched_priority;
+    } else {
+        ret = pthread_getschedparam(pthread_self(), &policy, &schedParam);
+        if (ret != 0) {
+            return ret;
         }
-        if (attr->stackaddr_set) {
-            return ENOTSUP;
-        }
-        if (attr->stacksize_set) {
-            taskInitParam.uwStackSize = attr->stacksize;
-        }
-        taskInitParam.usTaskPrio = (UINT16)attr->schedparam.sched_priority;
+        taskInitParam->usTaskPrio = (UINT16)schedParam.sched_priority;
     }
 
     pthreadData = (PthreadData *)malloc(sizeof(PthreadData));
@@ -91,14 +97,35 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
         return ENOMEM;
     }
 
-    pthreadData->startRoutine  = startRoutine;
-    pthreadData->param         = arg;
-    taskInitParam.pcName       = pthreadData->name;
-    taskInitParam.pfnTaskEntry = PthreadEntry;
-    taskInitParam.uwArg   = (UINT32)(UINTPTR)pthreadData;
+    pthreadData->startRoutine   = startRoutine;
+    pthreadData->param          = arg;
+    taskInitParam->pcName       = pthreadData->name;
+    taskInitParam->pfnTaskEntry = PthreadEntry;
+    taskInitParam->uwArg        = (UINT32)(UINTPTR)pthreadData;
+    if (threadAttr->detachstate != PTHREAD_CREATE_DETACHED) {
+        taskInitParam->uwResved = LOS_TASK_ATTR_JOINABLE;
+    }
+    return 0;
+}
+
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+    void *(*startRoutine)(void *), void *arg)
+{
+    TSK_INIT_PARAM_S taskInitParam = { 0 };
+    UINT32 taskID;
+    UINT32 ret;
+
+    if ((thread == NULL) || (startRoutine == NULL)) {
+        return EINVAL;
+    }
+
+    ret = PthreadCreateAttrInit(attr, startRoutine, arg, &taskInitParam);
+    if (ret != 0) {
+        return ret;
+    }
 
     if (LOS_TaskCreateOnly(&taskID, &taskInitParam) != LOS_OK) {
-        free(pthreadData);
+        free((VOID *)(UINTPTR)taskInitParam.uwArg);
         return EINVAL;
     }
 
@@ -164,55 +191,62 @@ int pthread_cancel(pthread_t thread)
 
 int pthread_join(pthread_t thread, void **retval)
 {
-    UINT32 taskStatus;
-
-    if (!IsPthread(thread)) {
+    UINTPTR result;
+    UINT32 ret = LOS_TaskJoin((UINT32)thread, &result);
+    if (ret == LOS_ERRNO_TSK_NOT_JOIN_SELF) {
+        return EDEADLK;
+    } else if (ret != LOS_OK) {
         return EINVAL;
     }
 
-    if (retval) {
-        /* retrieve thread exit code is not supported currently */
-        return ENOTSUP;
+    if (retval != NULL) {
+        *retval = (VOID *)result;
     }
-
-    if (thread == pthread_self()) {
-        return EDEADLK;
-    }
-
-    while (LOS_TaskStatusGet((UINT32)thread, &taskStatus) == LOS_OK) {
-        (void)LOS_TaskDelay(10); /* 10: Waiting for the end of thread execution. */
-    }
-
     return 0;
 }
 
 int pthread_detach(pthread_t thread)
 {
-    if (!IsPthread(thread)) {
+    UINT32 ret = LOS_TaskDetach((UINT32)thread);
+    if (ret == LOS_ERRNO_TSK_NOT_JOIN) {
+        return ESRCH;
+    } else if (ret != LOS_OK) {
         return EINVAL;
     }
 
-    return ENOSYS;
+    return 0;
 }
 
 void pthread_exit(void *retVal)
 {
-    (void)retVal;
     LosTaskCB *tcb = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
+    tcb->joinRetval = (UINTPTR)retVal;
     free((PthreadData *)(UINTPTR)tcb->arg);
-    (void)LOS_TaskDelete(LOS_CurTaskIDGet());
+    (void)LOS_TaskDelete(tcb->taskID);
 }
 
 int pthread_setname_np(pthread_t thread, const char *name)
 {
+    UINT32 intSave;
+    LosTaskCB *taskCB = NULL;
     char *taskName = LOS_TaskNameGet((UINT32)thread);
     if (taskName == NULL || !IsPthread(thread)) {
         return EINVAL;
     }
+
     if (strnlen(name, PTHREAD_NAMELEN) >= PTHREAD_NAMELEN) {
         return ERANGE;
     }
-    (void)strcpy_s(taskName, PTHREAD_NAMELEN, name);
+
+    taskCB = OS_TCB_FROM_TID((UINT32)thread);
+    intSave = LOS_IntLock();
+    if (taskCB->taskEntry == PthreadEntry) {
+        (void)strcpy_s(taskName, PTHREAD_NAMELEN, name);
+    } else {
+        LOS_IntRestore(intSave);
+        return EINVAL;
+    }
+    LOS_IntRestore(intSave);
     return 0;
 }
 

@@ -23,6 +23,7 @@ The directory structure is listed as below, for the detailed directories, please
 │   ├── backtrace        # Backtrace support
 │   ├── cppsupport       # C++ support
 │   ├── cpup             # CPU possession (CPUP)
+│   ├── dynlink          # Dynamic loader & linker
 │   ├── exchook          # Exception hook
 │   ├── fs               # File system
 │   └── net              # Network support
@@ -70,7 +71,7 @@ After the compilation is successful, the executable file  **NUCLEO-F767.hex**  i
 
 ## Repositories Involved<a name="section1371113476307"></a>
 
-[Kernel subsystem](https://gitee.com/openharmony/docs/blob/master/en/readme/kernel.md)
+[Kernel subsystem](https://gitee.com/openharmony/docs/blob/HEAD/en/readme/kernel.md)
 
 **kernel\_liteos\_m**
 

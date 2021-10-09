@@ -58,7 +58,7 @@ Input       : none
 output      : none
 return      : LOS_OK - Success , or LOS_ERRNO_TICK_CFG_INVALID - failed
 **************************************************************************** */
-WEAK UINT32 HalTickStart(OS_TICK_HANDLER *handler)
+WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
 {
     UINT32 intSave = LOS_IntLock();
     UINT32 value;
@@ -67,7 +67,7 @@ WEAK UINT32 HalTickStart(OS_TICK_HANDLER *handler)
     value &= ~(OS_TIMER_32K_CLK_BIT);
     WRITE_UINT32(value, OS_TIMER_CLK_PWD_ADDR);
 
-    value = OS_SYS_CLOCK / LOSCFG_BASE_CORE_TICK_PER_SECOND;
+    value = LOSCFG_BASE_CORE_TICK_RESPONSE_MAX;
     WRITE_UINT32(value, OS_TIMER_PERIOD_REG_ADDR);
 
     READ_UINT32(value, OS_TIMER_CTL_REG_ADDR);
@@ -140,15 +140,11 @@ WEAK VOID HalTickUnlock(VOID)
     WRITE_UINT32(value, OS_TIMER_CTL_REG_ADDR);
 }
 
-VOID HalEnterSleep(LOS_SysSleepEnum sleep)
+UINT32 HalEnterSleep(VOID)
 {
-#if (LOSCFG_BASE_CORE_SCHED_SLEEP == 1)
-    if (sleep == OS_SYS_DEEP_SLEEP) {
-        OsSchedToSleep();
-    }
-#endif
-
     dsb();
     wfi();
     isb();
+
+    return LOS_OK;
 }
