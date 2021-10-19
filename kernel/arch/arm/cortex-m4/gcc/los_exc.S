@@ -32,6 +32,7 @@
  .syntax unified
  .arch armv7e-m
  .thumb
+.fpu fpv4-d16
 .section .text
 
 
@@ -46,20 +47,20 @@
     .extern g_uwExcTbl
     .extern g_taskScheduled
 
-.equ OS_FLG_BGD_ACTIVE,   0x0002
+.equ OS_FLG_BGD_ACTIVE           ,   0x0002
 
-.equ OS_EXC_CAUSE_NMI,   16
-.equ OS_EXC_CAUSE_HARDFAULT,   17
+.equ OS_EXC_CAUSE_NMI            ,   16
+.equ OS_EXC_CAUSE_HARDFAULT      ,   17
 
-.equ HF_DEBUGEVT,   20
-.equ HF_VECTBL,   21
+.equ HF_DEBUGEVT                 ,   20
+.equ HF_VECTBL                   ,   21
 
-.equ FLAG_ADDR_VALID,   0x10000
-.equ FLAG_HWI_ACTIVE,   0x20000
-.equ FLAG_NO_FLOAT,   0x10000000
+.equ FLAG_ADDR_VALID             ,   0x10000
+.equ FLAG_HWI_ACTIVE             ,   0x20000
+.equ FLAG_NO_FLOAT               ,   0x10000000
 
-.equ OS_NVIC_FSR                 ,   0xE000ED28      //include BusFault/MemFault/UsageFault State Register
-.equ OS_NVIC_HFSR                ,   0xE000ED2C      //HardFault State Register
+.equ OS_NVIC_FSR                 ,   0xE000ED28      // include BusFault/MemFault/UsageFault State Register
+.equ OS_NVIC_HFSR                ,   0xE000ED2C      // HardFault State Register
 .equ OS_NVIC_BFAR                ,   0xE000ED38
 .equ OS_NVIC_MMAR                ,   0xE000ED34
 .equ OS_NVIC_ACT_BASE            ,   0xE000E300
@@ -96,7 +97,7 @@ HalExcHardFault:
     TST  R2, #0x00000002
     BNE  osExcDispatch     // VECTBL
 
-    //if not DEBUGEVT and VECTBL then is FORCED
+    // if not DEBUGEVT and VECTBL then is FORCED
     AND  R0, R0, #0x000000FF
 
     LDR  R2, =OS_NVIC_FSR
@@ -242,8 +243,8 @@ osExcCommonBMU:
     LDRB R0, [R3]
     ORR  R0, R0, R12
     .fnend
-// R0 -- EXCCAUSE(bit 16 is 1 if EXCADDR valid),  R1 -- EXCADDR
 
+// R0 -- EXCCAUSE(bit 16 is 1 if EXCADDR valid),  R1 -- EXCADDR
     .type osExcDispatch, %function
     .global osExcDispatch
 osExcDispatch:
@@ -262,12 +263,12 @@ _hwiActiveCheck:
     CMP   R3, #0
     BEQ   _hwiActiveCheckNext
 
-    // exc occured in IRQ
+    // exc occurred in IRQ
     ORR   R0, R0, #FLAG_HWI_ACTIVE
     RBIT  R2, R3
     CLZ   R2, R2
     AND   R12, R12, #1
-    ADD   R2, R2, R12, LSL #5               // calculate R2 (hwi number) as uwPid
+    ADD   R2, R2, R12, LSL #5               // calculate R2 (hwi number) as pid
     .fnend
 
     .type _ExcInMSP, %function
@@ -275,13 +276,13 @@ _hwiActiveCheck:
 _ExcInMSP:
     .fnstart
     .cantunwind
-    CMP   LR, #0XFFFFFFED
+    CMP   LR, #0xFFFFFFE9
     BNE   _NoFloatInMsp
     ADD   R3, R13, #104
     PUSH  {R3}
     MRS   R12, PRIMASK                  // store message-->exc: disable int?
     PUSH {R4-R12}                       // store message-->exc: {R4-R12}
-    #VPUSH {D8-D15}                     // FPU
+    VPUSH {D8-D15}
     B     _handleEntry
   .fnend
 
@@ -291,10 +292,10 @@ _NoFloatInMsp:
     .fnstart
     .cantunwind
     ADD   R3, R13, #32
-    PUSH  {R3}                           // store message-->exc: MSP(R13)
+    PUSH  {R3} // save IRQ SP            // store message-->exc: MSP(R13)
 
-    MRS   R12, PRIMASK                   // store message-->exc: disable int?
-    PUSH {R4-R12}                        // store message-->exc: {R4-R12}
+    MRS   R12, PRIMASK                  // store message-->exc: disable int?
+    PUSH {R4-R12}                       // store message-->exc: {R4-R12}
     ORR   R0, R0, #FLAG_NO_FLOAT
     B     _handleEntry
   .fnend
@@ -308,26 +309,26 @@ _hwiActiveCheckNext:
     SUBS  R12, R12, #1
     BNE   _hwiActiveCheck
 
-    /*NMI interrupt excption*/
+    // NMI interrupt exception
     LDR   R2, =OS_NVIC_SHCSRS
     LDRH  R2,[R2]
     LDR   R3,=OS_NVIC_SHCSR_MASK
     AND   R2, R2,R3
     CMP   R2,#0
     BNE   _ExcInMSP
-    // exc occured in Task or Init or exc
+    // exc occurred in Task or Init or exc
     // reserved for register info from task stack
 
     LDR  R2, =g_taskScheduled
     LDR  R2, [R2]
     TST  R2, #1                         // OS_FLG_BGD_ACTIVE
-    BEQ  _ExcInMSP                      // if exc occured in Init then branch
+    BEQ  _ExcInMSP                      // if exc occurred in Init then branch
 
 
     CMP   LR, #0xFFFFFFED               //auto push floating registers
     BNE   _NoFloatInPsp
 
-    // exc occured in Task
+    // exc occurred in Task
     MOV   R2,  R13
     SUB   R13, #96                      // add 8 Bytes reg(for STMFD)
 
@@ -337,12 +338,12 @@ _hwiActiveCheckNext:
 
     MRS   R12, PRIMASK
     PUSH {R4-R12}
+    VPUSH {D8-D15}
 
     // copy auto saved task register
-
     LDMFD R3!, {R4-R11}                  // R4-R11 store PSP reg(auto push when exc in task)
-    #VLDMIA  R3!, {D8-D15}               // FPU
-    #VSTMDB  R2!, {D8-D15}               // FPU
+    VLDMIA  R3!, {D8-D15}
+    VSTMDB  R2!, {D8-D15}
     STMFD R2!, {R4-R11}
     B     _handleEntry
   .fnend
