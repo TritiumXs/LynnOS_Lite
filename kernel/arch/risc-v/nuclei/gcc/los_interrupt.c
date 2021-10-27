@@ -39,8 +39,8 @@
 
 UINT32 g_intCount = 0;
 
-// LosExcInfo g_excInfo;
-LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
+// LOsExcInfo g_excInfo;
+LITE_OS_SEC_TEXT_INIT VOID ArchHwiInit(VOID)
 {
     // already setup interrupt vectors
 }
@@ -106,20 +106,20 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
 LITE_OS_SEC_TEXT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
 {
     // change func to default func
-    ECLIC_SetVector(hwiNum, (rv_csr_t)HalHwiDefaultHandler);
+    ECLIC_SetVector(hwiNum, (rv_csr_t)ArchHwiDefaultHandler);
     // disable interrupt
     ECLIC_DisableIRQ(hwiNum);
     return LOS_OK;
 }
 
 /* ****************************************************************************
- Function    : HalHwiDefaultHandler
+ Function    : ArchHwiDefaultHandler
  Description : default handler of the hardware interrupt
  Input       : None
  Output      : None
  Return      : None
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT VOID HalHwiDefaultHandler(VOID)
+LITE_OS_SEC_TEXT_INIT VOID ArchHwiDefaultHandler(VOID)
 {
     PRINT_ERR("default handler\n");
     while (1) {
@@ -177,7 +177,7 @@ __attribute__((always_inline)) inline VOID HalIntExit(VOID)
     g_intCount -= 1;
 }
 
-__attribute__((always_inline)) inline UINT32 HalIsIntActive(VOID)
+__attribute__((always_inline)) inline UINT32 ArchIsIntActive(VOID)
 {
     return (g_intCount > 0);
 }

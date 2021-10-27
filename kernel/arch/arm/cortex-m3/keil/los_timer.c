@@ -39,13 +39,13 @@
 #include "los_debug.h"
 
 /* ****************************************************************************
-Function    : HalTickStart
+Function    : ArchTickStart
 Description : Configure Tick Interrupt Start
 Input       : none
 output      : none
 return      : LOS_OK - Success , or LOS_ERRNO_TICK_CFG_INVALID - failed
 **************************************************************************** */
-WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
+WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
 {
     UINT32 ret;
 

@@ -67,20 +67,20 @@ extern UINT32 __stack_chk_guard;
 
 extern VOID __stack_chk_fail(VOID);
 
-UINT32 HalIsIntActive(VOID);
-#define OS_INT_ACTIVE    (HalIsIntActive())
+UINT32 ArchIsIntActive(VOID);
+#define OS_INT_ACTIVE    (ArchIsIntActive())
 #define OS_INT_INACTIVE  (!(OS_INT_ACTIVE))
 #define LOS_HwiCreate HalHwiCreate
 #define LOS_HwiDelete HalHwiDelete
 
-UINT32 HalIntLock(VOID);
-#define LOS_IntLock HalIntLock
+UINT32 ArchIntLock(VOID);
+#define LOS_IntLock ArchIntLock
 
-VOID HalIntRestore(UINT32 intSave);
-#define LOS_IntRestore HalIntRestore
+VOID ArchIntRestore(UINT32 intSave);
+#define LOS_IntRestore ArchIntRestore
 
-UINT32 HalIntUnLock(VOID);
-#define LOS_IntUnLock HalIntUnLock
+UINT32 ArchIntUnLock(VOID);
+#define LOS_IntUnLock ArchIntUnLock
 
 /**
  * @ingroup  los_interrupt

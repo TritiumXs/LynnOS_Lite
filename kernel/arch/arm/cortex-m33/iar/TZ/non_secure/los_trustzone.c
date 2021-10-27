@@ -59,7 +59,7 @@ VOID HalSecureSVCHandler(UINT32 svcID, UINTPTR arg)
     }
 }
 
-VOID HalStartToRun(VOID)
+VOID OsStartToRun(VOID)
 {
     HalSVCStartSchedule();
 }

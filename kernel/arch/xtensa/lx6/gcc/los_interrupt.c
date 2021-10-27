@@ -70,7 +70,7 @@ STATIC HWI_HANDLER_FUNC g_hwiHandlerForm[OS_VECTOR_CNT] = {{ (HWI_PROC_FUNC)0, (
 VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg)
 {
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
-        g_hwiForm[num + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)HalInterrupt;
+        g_hwiForm[num + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)ArchInterrupt;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT].pfnHandler = vector;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT].pParm = arg;
     }
@@ -90,7 +90,7 @@ STATIC HWI_PROC_FUNC g_hwiHandlerForm[OS_VECTOR_CNT] = {0};
 VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector)
 {
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
-        g_hwiForm[num + OS_SYS_VECTOR_CNT] = HalInterrupt;
+        g_hwiForm[num + OS_SYS_VECTOR_CNT] = ArchInterrupt;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT] = vector;
     }
 }
@@ -105,7 +105,7 @@ UINT32 HwiNumValid(UINT32 num)
  * @ingroup los_hwi
  * Lock all interrupt.
  */
-UINT32 HalIntLock(VOID)
+UINT32 ArchIntLock(VOID)
 {
     UINT32 ret;
 
@@ -117,7 +117,7 @@ UINT32 HalIntLock(VOID)
  * @ingroup los_hwi
  * Restore interrupt status.
  */
-VOID HalIntRestore(UINT32 intSave)
+VOID ArchIntRestore(UINT32 intSave)
 {
     __asm__ volatile("wsr.ps %0; rsync" : : "r"(intSave) : "memory");
 }
@@ -126,7 +126,7 @@ VOID HalIntRestore(UINT32 intSave)
  * @ingroup los_hwi
  * Unlock interrupt.
  */
-UINT32 HalIntUnLock(VOID)
+UINT32 ArchIntUnLock(VOID)
 {
     UINT32 intSave;
 
@@ -139,7 +139,7 @@ UINT32 HalIntUnLock(VOID)
  * @ingroup los_hwi
  * Determine if the interrupt is locked
  */
-STATIC INLINE UINT32 HalIntLocked(VOID)
+STATIC INLINE UINT32 ArchIntLocked(VOID)
 {
     UINT32 intSave;
     __asm__ volatile("rsr %0, ps " : "=r"(intSave) : : "memory");
@@ -199,13 +199,13 @@ UINT32 HalIrqMask(HWI_HANDLE_T hwiNum)
 }
 
 /* ****************************************************************************
- Function    : HalIntNumGet
+ Function    : ArchIntNumGet
  Description : Get an interrupt number
  Input       : None
  Output      : None
  Return      : Interrupt Indexes number
  **************************************************************************** */
-UINT32 HalIntNumGet(VOID)
+UINT32 ArchIntNumGet(VOID)
 {
     UINT32 ier;
     UINT32 intenable;
@@ -234,43 +234,43 @@ UINT32 HalIrqClear(HWI_HANDLE_T vector)
     return LOS_OK;
 }
 
-INLINE UINT32 HalIsIntActive(VOID)
+INLINE UINT32 ArchIsIntActive(VOID)
 {
     return (g_intCount == TRUE);
 }
 
 /* ****************************************************************************
- Function    : HalHwiDefaultHandler
+ Function    : ArchHwiDefaultHandler
  Description : default handler of the hardware interrupt
  Input       : None
  Output      : None
  Return      : None
  **************************************************************************** */
-VOID HalHwiDefaultHandler(VOID)
+VOID ArchHwiDefaultHandler(VOID)
 {
-    UINT32 irqNum = HalIntNumGet();
+    UINT32 irqNum = ArchIntNumGet();
     PRINT_ERR("%s irqnum:%d\n", __FUNCTION__, irqNum);
     while (1) {}
 }
 
-WEAK VOID HalPreInterruptHandler(UINT32 arg)
+WEAK VOID ArchPreInterruptHandler(UINT32 arg)
 {
     return;
 }
 
-WEAK VOID HalAftInterruptHandler(UINT32 arg)
+WEAK VOID ArchAftInterruptHandler(UINT32 arg)
 {
     return;
 }
 
 /* ****************************************************************************
- Function    : HalInterrupt
+ Function    : ArchInterrupt
  Description : Hardware interrupt entry function
  Input       : None
  Output      : None
  Return      : None
  **************************************************************************** */
-VOID HalInterrupt(VOID)
+VOID ArchInterrupt(VOID)
 {
     UINT32 hwiIndex;
     UINT32 intSave;
@@ -279,12 +279,12 @@ VOID HalInterrupt(VOID)
     g_intCount = TRUE;
     LOS_IntRestore(intSave);
 
-    hwiIndex = HalIntNumGet();
+    hwiIndex = ArchIntNumGet();
     HalIrqClear(hwiIndex);
 
     OsHookCall(LOS_HOOK_TYPE_ISR_ENTER, hwiIndex);
 
-    HalPreInterruptHandler(hwiIndex);
+    ArchPreInterruptHandler(hwiIndex);
 
 #if (OS_HWI_WITH_ARG == 1)
     if (g_hwiHandlerForm[hwiIndex].pfnHandler != 0) {
@@ -296,7 +296,7 @@ VOID HalInterrupt(VOID)
     }
 #endif
 
-    HalAftInterruptHandler(hwiIndex);
+    ArchAftInterruptHandler(hwiIndex);
 
     OsHookCall(LOS_HOOK_TYPE_ISR_EXIT, hwiIndex);
 
@@ -333,7 +333,7 @@ UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
         return OS_ERRNO_HWI_NUM_INVALID;
     }
 
-    if (g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] != (HWI_PROC_FUNC)HalHwiDefaultHandler) {
+    if (g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] != (HWI_PROC_FUNC)ArchHwiDefaultHandler) {
         return OS_ERRNO_HWI_ALREADY_CREATED;
     }
 
@@ -373,7 +373,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
 
     intSave = LOS_IntLock();
 
-    g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)HalHwiDefaultHandler;
+    g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)ArchHwiDefaultHandler;
 
     LOS_IntRestore(intSave);
 
@@ -499,7 +499,7 @@ STATIC VOID OsExcInfoDisplay(const ExcInfo *excInfo)
 #endif
 }
 
-VOID HalExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type)
+VOID OsExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type)
 {
     g_excInfo.nestCnt++;
     g_excInfo.faultAddr = faultAddr;
@@ -510,9 +510,9 @@ VOID HalExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type
     if ((taskCB == NULL) || (taskCB == OS_TCB_FROM_TID(g_taskMaxNum))) {
         g_excInfo.phase = OS_EXC_IN_INIT;
         g_excInfo.thrdPid = OS_NULL_INT;
-    } else if (HalIntNumGet() != OS_NULL_INT) {
+    } else if (ArchIntNumGet() != OS_NULL_INT) {
         g_excInfo.phase = OS_EXC_IN_HWI;
-        g_excInfo.thrdPid = HalIntNumGet();
+        g_excInfo.thrdPid = ArchIntNumGet();
     } else {
         g_excInfo.phase = OS_EXC_IN_TASK;
         g_excInfo.thrdPid = g_losTask.runTask->taskID;
@@ -522,7 +522,7 @@ VOID HalExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type
 
     OsDoExcHook(EXC_INTERRUPT);
     OsExcInfoDisplay(&g_excInfo);
-    HalSysExit();
+    OsSysExit();
 }
 
 /* Stack protector */
@@ -536,17 +536,17 @@ WEAK VOID __stack_chk_fail(VOID)
 }
 
 /* ****************************************************************************
- Function    : HalHwiInit
+ Function    : ArchHwiInit
  Description : initialization of the hardware interrupt
  Input       : None
  Output      : None
  Return      : None
  **************************************************************************** */
-VOID HalHwiInit(VOID)
+VOID ArchHwiInit(VOID)
 {
     EnableExceptionInterface();
     for (UINT32 i = 0; i < OS_HWI_MAX_NUM; i++) {
-        g_hwiForm[i + OS_SYS_VECTOR_CNT] = HalHwiDefaultHandler;
+        g_hwiForm[i + OS_SYS_VECTOR_CNT] = ArchHwiDefaultHandler;
         HalIrqMask(i);
     }
     asm volatile ("wsr %0, vecbase" : : "r"(INIT_VECTOR_START));

@@ -39,7 +39,7 @@
 #include "riscv_hal.h"
 
 
-WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
+WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
 {
     g_sysClock = OS_SYS_CLOCK;
     g_cyclesPerTick = g_sysClock / LOSCFG_BASE_CORE_TICK_PER_SECOND;

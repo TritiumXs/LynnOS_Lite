@@ -33,14 +33,14 @@
     SECTION    .text:CODE(2)
     THUMB
 
-    EXPORT  HalExcNMI
-    EXPORT  HalExcHardFault
-    EXPORT  HalExcMemFault
-    EXPORT  HalExcBusFault
-    EXPORT  HalExcUsageFault
+    EXPORT  OsExcNMI
+    EXPORT  OsExcHardFault
+    EXPORT  OsExcMemFault
+    EXPORT  OsExcBusFault
+    EXPORT  OsExcUsageFault
     EXPORT  HalSVCHandler
 
-    IMPORT HalExcHandleEntry
+    IMPORT OsExcHandleEntry
     IMPORT g_uwExcTbl
     IMPORT g_taskScheduled
 
@@ -64,12 +64,12 @@ OS_NVIC_ACT_BASE            EQU   0xE000E300
 OS_NVIC_SHCSRS              EQU   0xE000ED24
 OS_NVIC_SHCSR_MASK          EQU   0xC00
 
-HalExcNMI
+OsExcNMI
     MOV  R0, #OS_EXC_CAUSE_NMI
     MOV  R1, #0
-    B  osExcDispatch
+    B  OsExcDispatch
 
-HalExcHardFault
+OsExcHardFault
     MOV  R0, #OS_EXC_CAUSE_HARDFAULT
     LDR  R2, =OS_NVIC_HFSR
     LDR  R2, [R2]
@@ -77,13 +77,13 @@ HalExcHardFault
     MOV  R1, #HF_DEBUGEVT
     ORR  R0, R0, R1, LSL #0x8
     TST  R2, #0x80000000
-    BNE  osExcDispatch     ; DEBUGEVT
+    BNE  OsExcDispatch     ; DEBUGEVT
 
     AND  R0, R0 , #0x000000FF
     MOV  R1, #HF_VECTBL
     ORR  R0, R0, R1, LSL #0x8
     TST  R2, #0x00000002
-    BNE  osExcDispatch     ; VECTBL
+    BNE  OsExcDispatch     ; VECTBL
 
     ;if not DEBUGEVT and VECTBL then is FORCED
     AND  R0, R0, #0x000000FF
@@ -92,33 +92,33 @@ HalExcHardFault
     LDR  R2, [R2]
 
     TST  R2, #0x8000     ; BFARVALID
-    BNE  _HFBusFault     ; BusFault
+    BNE  HFBusFault     ; BusFault
 
     TST  R2, #0x80       ; MMARVALID
-    BNE  _HFMemFault     ; MemFault
+    BNE  HFMemFault     ; MemFault
 
     MOV  R12,#0
-    B    osHFExcCommonBMU
+    B    OsHFExcCommonBMU
 
-_HFBusFault
+HFBusFault
     LDR  R1, =OS_NVIC_BFAR
     LDR  R1, [R1]
     MOV  R12, #FLAG_ADDR_VALID
-    B    osHFExcCommonBMU
+    B    OsHFExcCommonBMU
 
-_HFMemFault
+HFMemFault
     LDR  R1, =OS_NVIC_MMAR
     LDR  R1, [R1]
     MOV  R12, #FLAG_ADDR_VALID
 
-osHFExcCommonBMU
+OsHFExcCommonBMU
     CLZ  R2, R2
     LDR  R3, =g_uwExcTbl
     ADD  R3, R3, R2
     LDRB R2, [R3]
     ORR  R0, R0, R2, LSL #0x8
     ORR  R0, R0 ,R12
-    B    osExcDispatch
+    B    OsExcDispatch
 
 HalSVCHandler
     TST   LR, #0x4
@@ -128,43 +128,43 @@ HalSVCHandler
     LDR   R1, [R0,#24]
     LDRB  R0, [R1,#-2]
     MOV   R1, #0
-    B     osExcDispatch
+    B     OsExcDispatch
 
-HalExcBusFault
+OsExcBusFault
     LDR  R0, =OS_NVIC_FSR
     LDR  R0, [R0]
 
     TST  R0, #0x8000 ; BFARVALID
-    BEQ  _ExcBusNoADDR
+    BEQ  ExcBusNoADDR
     LDR  R1, =OS_NVIC_BFAR
     LDR  R1, [R1]
     MOV  R12, #FLAG_ADDR_VALID
     AND  R0, R0, #0x1F00
 
-    B    osExcCommonBMU
+    B    OsExcCommonBMU
 
-_ExcBusNoADDR
+ExcBusNoADDR
     MOV  R12,#0
-    B    osExcCommonBMU
+    B    OsExcCommonBMU
 
-HalExcMemFault
+OsExcMemFault
     LDR  R0, =OS_NVIC_FSR
     LDR  R0, [R0]
 
     TST  R0, #0x80 ; MMARVALID
-    BEQ  _ExcMemNoADDR
+    BEQ  ExcMemNoADDR
     LDR  R1, =OS_NVIC_MMAR
     LDR  R1, [R1]
     MOV  R12, #FLAG_ADDR_VALID
     AND  R0, R0, #0x1B
 
-    B    osExcCommonBMU
+    B    OsExcCommonBMU
 
-_ExcMemNoADDR
+ExcMemNoADDR
     MOV  R12,#0
-    B    osExcCommonBMU
+    B    OsExcCommonBMU
 
-HalExcUsageFault
+OsExcUsageFault
     LDR  R0, =OS_NVIC_FSR
     LDR  R0, [R0]
 
@@ -173,7 +173,7 @@ HalExcUsageFault
     AND  R0, R0, R1
     MOV  R12, #0
 
-osExcCommonBMU
+OsExcCommonBMU
     CLZ  R0, R0
     LDR  R3, =g_uwExcTbl
     ADD  R3, R3, R0
@@ -181,14 +181,14 @@ osExcCommonBMU
     ORR  R0, R0, R12
 
 ; R0 -- EXCCAUSE(bit 16 is 1 if EXCADDR valid),  R1 -- EXCADDR
-osExcDispatch
+OsExcDispatch
     LDR   R2, =OS_NVIC_ACT_BASE
     MOV   R12, #8                       ; R12 is hwi check loop counter
 
-_hwiActiveCheck
+HwiActiveCheck
     LDR   R3, [R2]                      ; R3 store active hwi register when exc
     CMP   R3, #0
-    BEQ   _hwiActiveCheckNext
+    BEQ   HwiActiveCheckNext
 
     ; exc occured in IRQ
     ORR   R0, R0, #FLAG_HWI_ACTIVE
@@ -197,29 +197,29 @@ _hwiActiveCheck
     AND   R12, R12, #1
     ADD   R2, R2, R12, LSL #5               ; calculate R2 (hwi number) as uwPid
 
-_ExcInMSP
+ExcInMSP
     CMP   LR, #0xFFFFFFE9
-    BNE   _NoFloatInMsp
+    BNE   NoFloatInMsp
     ADD   R3, R13, #104
     PUSH  {R3}
     MRS   R12, PRIMASK                  ; store message-->exc: disable int?
     PUSH {R4-R12}                       ; store message-->exc: {R4-R12}
     VPUSH {D8-D15}
-    B     _handleEntry
+    B     HandleEntry
 
-_NoFloatInMsp
+NoFloatInMsp
     ADD   R3, R13, #32
     PUSH  {R3} ; save IRQ SP            ; store message-->exc: MSP(R13)
 
     MRS   R12, PRIMASK                  ; store message-->exc: disable int?
     PUSH {R4-R12}                       ; store message-->exc: {R4-R12}
     ORR   R0, R0, #FLAG_NO_FLOAT
-    B     _handleEntry
+    B     HandleEntry
 
-_hwiActiveCheckNext
+HwiActiveCheckNext
     ADD   R2, R2, #4                        ; next NVIC ACT ADDR
     SUBS  R12, R12, #1
-    BNE   _hwiActiveCheck
+    BNE   HwiActiveCheck
 
     ;/*NMI interrupt excption*/
     LDR   R2, =OS_NVIC_SHCSRS
@@ -227,18 +227,18 @@ _hwiActiveCheckNext
     LDR   R3,=OS_NVIC_SHCSR_MASK
     AND   R2, R2,R3
     CMP   R2,#0
-    BNE   _ExcInMSP
+    BNE   ExcInMSP
     ; exc occured in Task or Init or exc
     ; reserved for register info from task stack
 
     LDR  R2, =g_taskScheduled
     LDR  R2, [R2]
     TST  R2, #1         ; OS_FLG_BGD_ACTIVE
-    BEQ  _ExcInMSP                      ; if exc occured in Init then branch
+    BEQ  ExcInMSP                      ; if exc occured in Init then branch
 
 
     CMP   LR, #0xFFFFFFED               ;auto push floating registers
-    BNE   _NoFloatInPsp
+    BNE   NoFloatInPsp
 
     ; exc occured in Task
     MOV   R2,  R13
@@ -258,9 +258,9 @@ _hwiActiveCheckNext
     VLDMIA  R3!, {D8-D15}
     VSTMDB  R2!, {D8-D15}
     STMFD R2!, {R4-R11}
-    B     _handleEntry
+    B     HandleEntry
 
-_NoFloatInPsp
+NoFloatInPsp
     MOV   R2,  R13                           ;no auto push floating registers
     SUB   R13, #32                      ; add 8 Bytes reg(for STMFD)
 
@@ -275,11 +275,11 @@ _NoFloatInPsp
     STMFD R2!, {R4-R11}
     ORR   R0, R0, #FLAG_NO_FLOAT
 
-_handleEntry
+HandleEntry
     MOV R3, R13                         ; R13:the 4th param
     CPSID I
     CPSID F
-    B  HalExcHandleEntry
+    B  OsExcHandleEntry
 
     NOP
     END

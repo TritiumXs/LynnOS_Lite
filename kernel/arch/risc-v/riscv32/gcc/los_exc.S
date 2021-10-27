@@ -129,7 +129,7 @@
 .endm
 
 .section .interrupt.text
-.extern HalExcEntry
+.extern OsExcEntry
 .extern g_excInfo
 .global HalTrapEntry
 .align 4
@@ -151,7 +151,7 @@ HalTrapEntry:
 1:
     addi  t1, t1, 0x1
     sh    t1, 0(t0)
-    call  HalExcEntry
+    call  OsExcEntry
     la    t0, g_excInfo
     sh    zero, 0(t0)
     csrr  sp, mscratch

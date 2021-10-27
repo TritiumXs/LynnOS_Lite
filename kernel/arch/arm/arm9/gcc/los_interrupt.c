@@ -84,7 +84,7 @@ STATIC HWI_HANDLER_FUNC g_hwiHandlerForm[OS_VECTOR_CNT] = {{ (HWI_PROC_FUNC)0, (
 VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg)
 {
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
-        g_hwiForm[num + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)HalInterrupt;
+        g_hwiForm[num + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)ArchInterrupt;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT].pfnHandler = vector;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT].pParm = arg;
     }
@@ -104,7 +104,7 @@ STATIC HWI_PROC_FUNC g_hwiHandlerForm[OS_VECTOR_CNT] = {0};
 VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector)
 {
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
-        g_hwiForm[num + OS_SYS_VECTOR_CNT] = HalInterrupt;
+        g_hwiForm[num + OS_SYS_VECTOR_CNT] = ArchInterrupt;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT] = vector;
     }
 }
@@ -112,13 +112,13 @@ VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector)
 
 
 /* ****************************************************************************
- Function    : HalIntNumGet
+ Function    : ArchIntNumGet
  Description : Get an interrupt number
  Input       : None
  Output      : None
  Return      : Interrupt Indexes number
  **************************************************************************** */
-LITE_OS_SEC_TEXT_MINOR UINT32 HalIntNumGet(VOID)
+LITE_OS_SEC_TEXT_MINOR UINT32 ArchIntNumGet(VOID)
 {
     UINT32 status;
 
@@ -126,43 +126,43 @@ LITE_OS_SEC_TEXT_MINOR UINT32 HalIntNumGet(VOID)
     return (31 - CLZ(status));
 }
 
-inline UINT32 HalIsIntActive(VOID)
+inline UINT32 ArchIsIntActive(VOID)
 {
     return (g_intCount > 0);
 }
 /* ****************************************************************************
- Function    : HalHwiDefaultHandler
+ Function    : ArchHwiDefaultHandler
  Description : default handler of the hardware interrupt
  Input       : None
  Output      : None
  Return      : None
  **************************************************************************** */
 /*lint -e529*/
-LITE_OS_SEC_TEXT_MINOR VOID HalHwiDefaultHandler(VOID)
+LITE_OS_SEC_TEXT_MINOR VOID ArchHwiDefaultHandler(VOID)
 {
-    UINT32 irqNum = HalIntNumGet();
+    UINT32 irqNum = ArchIntNumGet();
     PRINT_ERR("%s irqnum:%d\n", __FUNCTION__, irqNum);
     while (1) {}
 }
 
-WEAK VOID HalPreInterruptHandler(UINT32 arg)
+WEAK VOID ArchPreInterruptHandler(UINT32 arg)
 {
     return;
 }
 
-WEAK VOID HalAftInterruptHandler(UINT32 arg)
+WEAK VOID ArchAftInterruptHandler(UINT32 arg)
 {
     return;
 }
 
 /* ****************************************************************************
- Function    : HalInterrupt
+ Function    : ArchInterrupt
  Description : Hardware interrupt entry function
  Input       : None
  Output      : None
  Return      : None
  **************************************************************************** */
-LITE_OS_SEC_TEXT VOID HalInterrupt(VOID)
+LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
 {
     UINT32 intSave;
     UINT32 hwiIndex;
@@ -175,11 +175,11 @@ LITE_OS_SEC_TEXT VOID HalInterrupt(VOID)
     OsSchedUpdateSleepTime();
 #endif
 
-    hwiIndex = HalIntNumGet();
+    hwiIndex = ArchIntNumGet();
 
     OsHookCall(LOS_HOOK_TYPE_ISR_ENTER, hwiIndex);
 
-    HalPreInterruptHandler(hwiIndex);
+    ArchPreInterruptHandler(hwiIndex);
 
 #if (OS_HWI_WITH_ARG == 1)
     if (g_hwiHandlerForm[hwiIndex].pfnHandler != 0) {
@@ -191,7 +191,7 @@ LITE_OS_SEC_TEXT VOID HalInterrupt(VOID)
     }
 #endif
 
-    HalAftInterruptHandler(hwiIndex);
+    ArchAftInterruptHandler(hwiIndex);
 
     OsHookCall(LOS_HOOK_TYPE_ISR_EXIT, hwiIndex);
 
@@ -227,7 +227,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
         return OS_ERRNO_HWI_NUM_INVALID;
     }
 
-    if (g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] != (HWI_PROC_FUNC)HalHwiDefaultHandler) {
+    if (g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] != (HWI_PROC_FUNC)ArchHwiDefaultHandler) {
         return OS_ERRNO_HWI_ALREADY_CREATED;
     }
 
@@ -261,7 +261,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
     OS_INT_DISABLE(hwiNum);
 
     intSave = LOS_IntLock();
-    g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)HalHwiDefaultHandler;
+    g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)ArchHwiDefaultHandler;
     LOS_IntRestore(intSave);
 
     return LOS_OK;
@@ -387,7 +387,7 @@ STATIC VOID OsExcInfoDisplay(const ExcInfo *excInfo)
 #endif
 }
 
-LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, UINT32 pid, EXC_CONTEXT_S *excBufAddr)
+LITE_OS_SEC_TEXT_INIT VOID OsExcHandleEntry(UINT32 excType, UINT32 faultAddr, UINT32 pid, EXC_CONTEXT_S *excBufAddr)
 {
     g_intCount++;
     g_excInfo.nestCnt++;
@@ -414,17 +414,17 @@ LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, U
 
     OsDoExcHook(EXC_INTERRUPT);
     OsExcInfoDisplay(&g_excInfo);
-    HalSysExit();
+    OsSysExit();
 }
 
 /* ****************************************************************************
- Function    : HalHwiInit
+ Function    : ArchHwiInit
  Description : initialization of the hardware interrupt
  Input       : None
  Output      : None
  Return      : None
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
+LITE_OS_SEC_TEXT_INIT VOID ArchHwiInit(VOID)
 {
 #if (LOSCFG_USE_SYSTEM_DEFINED_INTERRUPT == 1)
     UINT32 reg;
@@ -432,10 +432,10 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
 
     for (val = OS_SYS_VECTOR_CNT; val < OS_VECTOR_CNT; val++) {
 #if (OS_HWI_WITH_ARG == 1)
-        g_hwiForm[val].pfnHook = HalHwiDefaultHandler;
+        g_hwiForm[val].pfnHook = ArchHwiDefaultHandler;
         g_hwiForm[val].uwParam = 0;
 #else
-        g_hwiForm[val] = (HWI_PROC_FUNC)HalHwiDefaultHandler;
+        g_hwiForm[val] = (HWI_PROC_FUNC)ArchHwiDefaultHandler;
 #endif
     }
 
@@ -447,7 +447,7 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
     return;
 }
 
-UINT32 HalIntLock(VOID)
+UINT32 ArchIntLock(VOID)
 {
     UINT32 ret;
     UINT32 temp;
@@ -461,12 +461,12 @@ UINT32 HalIntLock(VOID)
     return ret;
 }
 
-VOID HalIntRestore(UINT32 intSave)
+VOID ArchIntRestore(UINT32 intSave)
 {
     __asm__ __volatile__("MSR CPSR_c, %0" : : "r"(intSave));
 }
 
-UINT32 HalIntUnLock(VOID)
+UINT32 ArchIntUnLock(VOID)
 {
     UINT32 intSave;
 

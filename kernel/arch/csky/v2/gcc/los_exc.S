@@ -29,7 +29,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-.import HalExcHandleEntry
+.import OsExcHandleEntry
 .extern g_trapStackBase
 
 .section .text
@@ -50,6 +50,6 @@ HandleEntry:
     mfcr   r1, epc
 
     mov    sp, r10
-    lrw    r2, HalExcHandleEntry
+    lrw    r2, OsExcHandleEntry
     jmp    r2
 

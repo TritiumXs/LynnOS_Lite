@@ -42,16 +42,16 @@
     .equ    OS_PSR_MODE_UND,    0x1B
     .equ    OS_PSR_MODE_SYS,    0x1F
 
-    .global HalStartToRun
+    .global OsStartToRun
     .global OsTaskEntryArm
     .global OsTaskEntryThumb
-    .global HalExceptSwiHdl
-    .global HalExceptFiqHdl
-    .global HalExceptIrqHdl
+    .global OsExceptSwiHdl
+    .global OsExceptFiqHdl
+    .global OsExceptIrqHdl
 
     .extern OsTaskEntry
     .extern OsSchedTaskSwitch
-    .extern HalInterrupt
+    .extern ArchInterrupt
     .extern g_losTask
 
     .code 32
@@ -129,7 +129,7 @@
 4:
 .endm
 
-HalStartToRun:
+OsStartToRun:
     LDR     R1, =g_losTask
     LDR     R0, [R1, #4]
     LDR     LR, [R0]
@@ -141,27 +141,27 @@ HalStartToRun:
     ADD     LR, LR, #60
     LDMFD   LR!, {PC}^
 
-HalExceptSwiHdl:
+OsExceptSwiHdl:
     SAVE_CONTEXT
 
     TASK_SWITCH
 
     RETSORE_CONTEXT
 
-HalExceptFiqHdl:
+OsExceptFiqHdl:
     SUB     LR, LR, #4
     SAVE_CONTEXT
 
-    BLX     HalInterrupt
+    BLX     ArchInterrupt
 
     RETSORE_CONTEXT
 
-HalExceptIrqHdl:
+OsExceptIrqHdl:
     SUB     LR, LR, #4
 
     SAVE_CONTEXT
 
-    BLX     HalInterrupt
+    BLX     ArchInterrupt
 
     RETSORE_CONTEXT
 

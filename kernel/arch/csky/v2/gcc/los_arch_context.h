@@ -63,8 +63,8 @@ typedef struct TagTskContext {
     UINT32 EPC;
 } TaskContext;
 
-VOID HalStartToRun(VOID);
-VOID HalTaskContextSwitch(VOID);
+VOID OsStartToRun(VOID);
+VOID OsTaskContextSwitch(VOID);
 VOID HalIrqEndCheckNeedSched(VOID);
 
 #ifdef __cplusplus

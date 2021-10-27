@@ -76,7 +76,7 @@
 LITE_OS_SEC_TEXT_INIT VOID LOS_Reboot(VOID)
 {
     OsDoExcHook(EXC_REBOOT);
-    HalSysExit();
+    OsSysExit();
 }
 
 LITE_OS_SEC_TEXT_INIT VOID LOS_Panic(const CHAR *fmt, ...)
@@ -85,7 +85,7 @@ LITE_OS_SEC_TEXT_INIT VOID LOS_Panic(const CHAR *fmt, ...)
     va_start(ap, fmt);
     PRINT_ERR(fmt, ap);
     va_end(ap);
-    HalSysExit();
+    OsSysExit();
 }
 
 
@@ -131,7 +131,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_KernelInit(VOID)
         return ret;
     }
 
-    HalArchInit();
+    ArchInit();
 
     ret = OsTaskInit();
     if (ret != LOS_OK) {

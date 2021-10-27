@@ -53,13 +53,13 @@
     .global __undef_stack
     .global main
 
-    .extern HalExceptFiqHdl
-    .extern HalExceptAddrAbortHdl
-    .extern HalExceptDataAbortHdl
-    .extern HalExceptPrefetchAbortHdl
-    .extern HalExceptSwiHdl
-    .extern HalExceptUndefInstrHdl
-    .extern HalExceptIrqHdl
+    .extern OsExceptFiqHdl
+    .extern OsExceptAddrAbortHdl
+    .extern OsExceptDataAbortHdl
+    .extern OsExceptPrefetchAbortHdl
+    .extern OsExceptSwiHdl
+    .extern OsExceptUndefInstrHdl
+    .extern OsExceptIrqHdl
     .extern _bss_start
     .extern _bss_end
 
@@ -71,13 +71,13 @@
 
 _vector_start:
     B     HalResetVector
-    B     HalExceptUndefInstrHdl
-    B     HalExceptSwiHdl
-    B     HalExceptPrefetchAbortHdl
-    B     HalExceptDataAbortHdl
-    B     HalExceptAddrAbortHdl
-    B     HalExceptIrqHdl
-    B     HalExceptFiqHdl
+    B     OsExceptUndefInstrHdl
+    B     OsExceptSwiHdl
+    B     OsExceptPrefetchAbortHdl
+    B     OsExceptDataAbortHdl
+    B     OsExceptAddrAbortHdl
+    B     OsExceptIrqHdl
+    B     OsExceptFiqHdl
 
     .globl  HalResetVector
     .section ".boot", "ax"

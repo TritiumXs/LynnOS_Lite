@@ -58,14 +58,14 @@ typedef struct {
     UINT32      medeleg;
     UINT32      gp;
     TaskContext taskContext;
-} LosExcContext;
+} LOsExcContext;
 
 typedef struct {
     UINT16 nestCnt;
     UINT16 type;
     UINT32 thrID;
-    LosExcContext *context;
-} LosExcInfo;
+    LOsExcContext *context;
+} LOsExcInfo;
 
 /**
  * @ingroup los_arch_interrupt
@@ -137,11 +137,11 @@ typedef struct {
 
 extern HWI_HANDLE_FORM_S g_hwiForm[OS_HWI_MAX_NUM];
 
-extern VOID HalHwiInit(VOID);
+extern VOID ArchHwiInit(VOID);
 extern UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum);
 extern HWI_HANDLE_FORM_S *HalGetHwiForm(VOID);
 extern VOID HalHwiInterruptDone(HWI_HANDLE_T hwiNum);
-extern VOID HalHwiDefaultHandler(VOID *arg);
+extern VOID ArchHwiDefaultHandler(VOID *arg);
 
 extern UINT32 g_intCount;
 

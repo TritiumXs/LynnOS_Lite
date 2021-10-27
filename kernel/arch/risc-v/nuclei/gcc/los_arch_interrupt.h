@@ -66,7 +66,7 @@ extern "C" {
  */
 #define OS_HWI_MAX_NUM        (OS_RISCV_VECTOR_CNT-1)
 
-extern VOID HalHwiDefaultHandler(VOID);
+extern VOID ArchHwiDefaultHandler(VOID);
 
 /**
  * @ingroup los_hwi

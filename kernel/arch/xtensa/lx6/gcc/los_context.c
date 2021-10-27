@@ -96,19 +96,19 @@ UINT32 g_stackDefault[] = {
     0x00000000,     /* REG_OFF_SPILL_RESERVED */
 };
 
-LITE_OS_SEC_TEXT_INIT VOID HalArchInit(VOID)
+LITE_OS_SEC_TEXT_INIT VOID ArchInit(VOID)
 {
-    HalHwiInit();
+    ArchHwiInit();
 }
 
-LITE_OS_SEC_TEXT_MINOR VOID HalSysExit(VOID)
+LITE_OS_SEC_TEXT_MINOR VOID OsSysExit(VOID)
 {
     LOS_IntLock();
     while (1) {
     }
 }
 
-LITE_OS_SEC_TEXT_INIT VOID *HalTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack)
+LITE_OS_SEC_TEXT_INIT VOID *OsTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack)
 {
     TaskContext *context = NULL;
     errno_t result;
@@ -136,9 +136,9 @@ LITE_OS_SEC_TEXT_INIT VOID *HalTskStackInit(UINT32 taskID, UINT32 stackSize, VOI
     return (VOID *)context;
 }
 
-VOID HalStartToRun(VOID)
+VOID OsStartToRun(VOID)
 {
-    __asm__ volatile ("call0 OsStartToRun");
+    __asm__ volatile ("call0 ArchStartToRun");
 }
 
 LITE_OS_SEC_TEXT_INIT UINT32 HalStartSchedule(VOID)
@@ -147,17 +147,17 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalStartSchedule(VOID)
 
     (VOID)LOS_IntLock();
 
-    ret = HalTickStart(OsTickHandler);
+    ret = ArchTickStart(OsTickHandler);
     if (ret != LOS_OK) {
         PRINT_ERR("Tick start failed!\n");
     }
 
     OsSchedStart();
-    HalStartToRun();
+    OsStartToRun();
     return LOS_OK;
 }
 
-VOID HalTaskSchedule(VOID)
+VOID OsTaskSchedule(VOID)
 {
     UINT32 intSave;
 
@@ -170,7 +170,7 @@ VOID HalTaskSchedule(VOID)
     g_sysNeedSched = FALSE;
     BOOL isSwitch = OsSchedTaskSwitch();
     if (isSwitch) {
-        HalTaskContextSwitch();
+        OsTaskContextSwitch();
     }
 
     LOS_IntRestore(intSave);
@@ -180,6 +180,6 @@ VOID HalTaskSchedule(VOID)
 VOID HalIrqEndCheckNeedSched(VOID)
 {
     if (g_sysNeedSched && g_taskScheduled && LOS_CHECK_SCHEDULE) {
-        HalTaskSchedule();
+        OsTaskSchedule();
     }
 }

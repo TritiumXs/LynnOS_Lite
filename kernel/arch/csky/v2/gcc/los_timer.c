@@ -57,13 +57,13 @@ typedef struct {
 #define TIM_INT_NUM          1
 
 /* ****************************************************************************
-Function    : HalTickStart
+Function    : ArchTickStart
 Description : Configure Tick Interrupt Start
 Input       : none
 output      : none
 return      : LOS_OK - Success , or LOS_ERRNO_TICK_CFG_INVALID - failed
 **************************************************************************** */
-WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
+WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
 {
     if ((OS_SYS_CLOCK == 0) || (LOSCFG_BASE_CORE_TICK_PER_SECOND == 0) ||
         (LOSCFG_BASE_CORE_TICK_PER_SECOND > OS_SYS_CLOCK)) {

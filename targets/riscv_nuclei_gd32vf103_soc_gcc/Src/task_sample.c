@@ -100,7 +100,7 @@ VOID TaskSample(VOID)
         printf("Task2 create failed\n");
     }
 
-    HalHwiInit();
+    ArchHwiInit();
     HalHwiCreate(EXTI0_IRQn, 9, ECLIC_NON_VECTOR_INTERRUPT, EXTI0_IRQHandler, ECLIC_LEVEL_TRIGGER);
 }
 

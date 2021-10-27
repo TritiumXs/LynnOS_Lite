@@ -93,7 +93,7 @@ typedef struct TagTskContext {
  * <ul><li>los_config.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern VOID HalStartToRun(VOID);
+extern VOID OsStartToRun(VOID);
 
 /**
  * @ingroup los_arch_context

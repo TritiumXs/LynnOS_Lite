@@ -50,47 +50,47 @@
     .equ OS_EXCEPT_ADDR_ABORT,      0x06
     .equ OS_EXCEPT_IRQ,             0x07
 
-    .global HalExceptAddrAbortHdl
-    .global HalExceptDataAbortHdl
-    .global HalExceptPrefetchAbortHdl
-    .global HalExceptUndefInstrHdl
+    .global OsExceptAddrAbortHdl
+    .global OsExceptDataAbortHdl
+    .global OsExceptPrefetchAbortHdl
+    .global OsExceptUndefInstrHdl
 
-    .extern HalExcHandleEntry
+    .extern OsExcHandleEntry
     .extern __exc_stack_top
 
     .code 32
     .text
 
-HalExceptUndefInstrHdl:
+OsExceptUndefInstrHdl:
     STMFD   SP!, {R0-R5}
     MOV     R0, #OS_EXCEPT_UNDEF_INSTR
-    B       _osExceptDispatch
+    B       _OsExceptDispatch
 
-HalExceptPrefetchAbortHdl:
+OsExceptPrefetchAbortHdl:
     SUB     LR, LR, #4
     STMFD   SP!, {R0-R5}
 
     MOV     R0, #OS_EXCEPT_PREFETCH_ABORT
 
-    B       _osExceptDispatch
+    B       _OsExceptDispatch
 
-HalExceptDataAbortHdl:
+OsExceptDataAbortHdl:
     SUB     LR, LR, #4
     STMFD   SP!, {R0-R5}
 
     MOV     R0, #OS_EXCEPT_DATA_ABORT
 
-    B       _osExceptDispatch
+    B       _OsExceptDispatch
 
-HalExceptAddrAbortHdl:
+OsExceptAddrAbortHdl:
     SUB     LR, LR, #8
     STMFD   SP!, {R0-R5}
 
     MOV     R0, #OS_EXCEPT_ADDR_ABORT
 
-    B       _osExceptDispatch
+    B       _OsExceptDispatch
 
-_osExceptDispatch:
+_OsExceptDispatch:
     MRS     R1, SPSR
     MOV     R2, LR
     MOV     R4, SP
@@ -109,9 +109,9 @@ _osExceptDispatch:
     STMFD   SP!, {R1}
     MOV     R3, SP
 
-_osExceptionGetSP:
+_OsExceptionGetSP:
     STMFD   SP!, {R1}
-    LDR     R2, =HalExcHandleEntry
+    LDR     R2, =OsExcHandleEntry
 
     MOV     LR, PC
     BX      R2

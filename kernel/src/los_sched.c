@@ -598,7 +598,7 @@ VOID LOS_SchedTickHandler(VOID)
 
     g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
     if (needSched && LOS_CHECK_SCHEDULE) {
-        HalTaskSchedule();
+        OsTaskSchedule();
     } else {
         OsTimeSliceUpdate(g_losTask.runTask, g_tickStartTime);
         OsSchedUpdateExpireTime(g_tickStartTime, TRUE);
@@ -610,7 +610,7 @@ VOID LOS_SchedTickHandler(VOID)
 VOID LOS_Schedule(VOID)
 {
     if (g_taskScheduled && LOS_CHECK_SCHEDULE) {
-        HalTaskSchedule();
+        OsTaskSchedule();
     }
 }
 

@@ -43,7 +43,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 VOID SysTick_Handler(VOID);
-UINT32 HalTickStart(OS_TICK_HANDLER handler);
+UINT32 ArchTickStart(OS_TICK_HANDLER handler);
 
 #define TIM0_GROUP0             0x3FF5F000
 #define TIM0_GROUP1             0x3FF60000

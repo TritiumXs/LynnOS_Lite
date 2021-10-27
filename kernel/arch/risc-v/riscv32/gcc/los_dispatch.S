@@ -33,11 +33,11 @@
 
 .global  HalEnableIRQ
 .global  HalDisableIRQ
-.global  HalIntLock
-.global  HalIntUnLock
-.global  HalIntRestore
-.global  HalStartToRun
-.global  HalTaskContextSwitch
+.global  ArchIntLock
+.global  ArchIntUnLock
+.global  ArchIntRestore
+.global  OsStartToRun
+.global  OsTaskContextSwitch
 .extern  __irq_stack_top
 .section .interrupt.text
 
@@ -105,7 +105,7 @@
     addi  sp, sp, 32 * REGBYTES
 .endm
 
-HalTaskContextSwitch:
+OsTaskContextSwitch:
     PUSH_ALL_REG
 
     // clear mpie
@@ -136,7 +136,7 @@ HalTaskContextSwitch:
     lw   a0, 4(a1)
     sw   a0, 0(a1)
 
-HalStartToRun:
+OsStartToRun:
     la   a1, g_losTask
     lw   a0, 4(a1)
 
@@ -166,18 +166,18 @@ HalEnableIRQ:
     csrsi  mstatus, RISCV_MSTATUS_MIE
     ret
 
-HalIntLock:
+ArchIntLock:
     csrr    a0, mstatus           // return value
     li      t0, RISCV_MSTATUS_MIE   // mie
     csrrc   zero, mstatus, t0
     ret
 
-HalIntUnLock:
+ArchIntUnLock:
     csrr    a0, mstatus           // return value
     li      t0, RISCV_MSTATUS_MIE   // mie
     csrrs   zero, mstatus, t0
     ret
 
-HalIntRestore:
+ArchIntRestore:
     csrw mstatus, a0
     ret

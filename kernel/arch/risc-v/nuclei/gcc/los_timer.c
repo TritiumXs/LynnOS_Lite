@@ -47,7 +47,7 @@ static OS_TICK_HANDLER systick_handler = (OS_TICK_HANDLER)NULL;
 
 extern UINT32 g_intCount;
 
-WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
+WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
 {
     SysTick_Config(SYSTICK_TICK_CONST);
     ECLIC_DisableIRQ(SysTimer_IRQn);
@@ -72,7 +72,7 @@ WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
 
 void HalTickSysTickHandler( void )
 {
-    /* Do systick handler registered in HalTickStart. */
+    /* Do systick handler registered in ArchTickStart. */
     if ((void *)systick_handler != NULL) {
         systick_handler();
     }
