@@ -98,11 +98,11 @@ WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
     __asm__ __volatile__("wsr %0, ccompare1; rsync" : : "a"(0));
     __asm__ __volatile__("wsr %0, ccompare2; rsync" : : "a"(0));
 
-    HalIrqUnmask(OS_TICK_INT_NUM);
+    ArchIrqUnmask(OS_TICK_INT_NUM);
     return LOS_OK;
 }
 
-WEAK VOID HalSysTickReload(UINT64 nextResponseTime)
+WEAK VOID ArchSysTickReload(UINT64 nextResponseTime)
 {
     UINT32 timerL;
     timerL = GetCcount();
@@ -110,7 +110,7 @@ WEAK VOID HalSysTickReload(UINT64 nextResponseTime)
     SetCcompare(timerL);
 }
 
-WEAK UINT64 HalGetTickCycle(UINT32 *period)
+WEAK UINT64 ArchGetTickCycle(UINT32 *period)
 {
     UINT32 tickCycleH;
     UINT32 tickCycleL;
@@ -132,14 +132,14 @@ WEAK UINT64 HalGetTickCycle(UINT32 *period)
     return tickCycle;
 }
 
-WEAK VOID HalTickLock(VOID)
+WEAK VOID ArchTickLock(VOID)
 {
-    HalIrqMask(OS_TICK_INT_NUM);
+    ArchIrqMask(OS_TICK_INT_NUM);
 }
 
-WEAK VOID HalTickUnlock(VOID)
+WEAK VOID ArchTickUnlock(VOID)
 {
-    HalIrqUnmask(OS_TICK_INT_NUM);
+    ArchIrqUnmask(OS_TICK_INT_NUM);
 }
 
 VOID Wfi(VOID)

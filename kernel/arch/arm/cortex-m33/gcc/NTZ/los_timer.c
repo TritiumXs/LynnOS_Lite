@@ -73,7 +73,7 @@ WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
     return LOS_OK;
 }
 
-WEAK VOID HalSysTickReload(UINT64 nextResponseTime)
+WEAK VOID ArchSysTickReload(UINT64 nextResponseTime)
 {
     SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
     SysTick->LOAD = (UINT32)(nextResponseTime - 1UL); /* set reload register */
@@ -82,7 +82,7 @@ WEAK VOID HalSysTickReload(UINT64 nextResponseTime)
     SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 }
 
-WEAK UINT64 HalGetTickCycle(UINT32 *period)
+WEAK UINT64 ArchGetTickCycle(UINT32 *period)
 {
     UINT32 hwCycle;
     UINT32 intSave = LOS_IntLock();
@@ -92,12 +92,12 @@ WEAK UINT64 HalGetTickCycle(UINT32 *period)
     return (UINT64)hwCycle;
 }
 
-WEAK VOID HalTickLock(VOID)
+WEAK VOID ArchTickLock(VOID)
 {
     SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
 }
 
-WEAK VOID HalTickUnlock(VOID)
+WEAK VOID ArchTickUnlock(VOID)
 {
     SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 }

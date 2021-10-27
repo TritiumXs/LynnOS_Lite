@@ -281,7 +281,7 @@ ExcInMSP:
     PUSH  {R3}
     MRS   R12, PRIMASK                  // store message-->exc: disable int?
     PUSH {R4-R12}                       // store message-->exc: {R4-R12}
-    #VPUSH {D8-D15}                     // FPU
+    VPUSH {D8-D15}                      // FPU
     B     HandleEntry
   .fnend
 

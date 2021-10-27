@@ -70,8 +70,8 @@ extern VOID __stack_chk_fail(VOID);
 UINT32 ArchIsIntActive(VOID);
 #define OS_INT_ACTIVE    (ArchIsIntActive())
 #define OS_INT_INACTIVE  (!(OS_INT_ACTIVE))
-#define LOS_HwiCreate HalHwiCreate
-#define LOS_HwiDelete HalHwiDelete
+#define LOS_HwiCreate ArchHwiCreate
+#define LOS_HwiDelete ArchHwiDelete
 
 UINT32 ArchIntLock(VOID);
 #define LOS_IntLock ArchIntLock
@@ -105,7 +105,7 @@ UINT32 ArchIntUnLock(VOID);
  * <ul><li>los_interrupt.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum);
+extern UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum);
 
 /**
  * @ingroup  los_interrupt
@@ -137,11 +137,11 @@ extern UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum);
  * <ul><li>los_interrupt.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
-                           HWI_PRIOR_T hwiPrio,
-                           HWI_MODE_T mode,
-                           HWI_PROC_FUNC handler,
-                           HWI_ARG_T arg);
+extern UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
+                            HWI_PRIOR_T hwiPrio,
+                            HWI_MODE_T mode,
+                            HWI_PROC_FUNC handler,
+                            HWI_ARG_T arg);
 
 #ifdef __cplusplus
 #if __cplusplus

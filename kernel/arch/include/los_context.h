@@ -106,7 +106,7 @@ LITE_OS_SEC_TEXT_MINOR NORETURN VOID OsSysExit(VOID);
 extern VOID OsTaskSchedule(VOID);
 
 typedef VOID (*OS_TICK_HANDLER)(VOID);
-UINT32 HalStartSchedule(VOID);
+UINT32 ArchStartSchedule(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

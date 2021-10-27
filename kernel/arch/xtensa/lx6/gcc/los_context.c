@@ -141,7 +141,7 @@ VOID OsStartToRun(VOID)
     __asm__ volatile ("call0 ArchStartToRun");
 }
 
-LITE_OS_SEC_TEXT_INIT UINT32 HalStartSchedule(VOID)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 {
     UINT32 ret;
 
@@ -177,7 +177,7 @@ VOID OsTaskSchedule(VOID)
     return;
 }
 
-VOID HalIrqEndCheckNeedSched(VOID)
+VOID ArchIrqEndCheckNeedSched(VOID)
 {
     if (g_sysNeedSched && g_taskScheduled && LOS_CHECK_SCHEDULE) {
         OsTaskSchedule();

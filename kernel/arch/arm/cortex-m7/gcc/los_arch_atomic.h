@@ -32,6 +32,7 @@
 #ifndef _LOS_ARCH_ATOMIC_H
 #define _LOS_ARCH_ATOMIC_H
 
+#include "los_interrupt.h"
 #include "los_compiler.h"
 
 #ifdef __cplusplus
@@ -43,44 +44,11 @@ extern "C" {
 typedef volatile INT32 Atomic;
 typedef volatile INT64 Atomic64;
 
-/**
- * @ingroup  los_arch_atomic
- * @brief Atomic exchange for 32-bit variable.
- *
- * @par Description:
- * This API is used to implement the atomic read for 32-bit variable and return the previous value of the atomic variable.
- * @attention
- * <ul>The pointer v must not be NULL.</ul>
- *
- * @param  v       [IN] The variable pointer.
- *
- * @retval #INT32       The previous value of the atomic variable
- * @par Dependency:
- * <ul><li>los_arch_atomic.h: the header file that contains the API declaration.</li></ul>
- * @see
- */
 STATIC INLINE INT32 ArchAtomicRead(const Atomic *v)
 {
     return *v;
 }
 
-/**
- * @ingroup  los_arch_atomic
- * @brief Atomic exchange for 32-bit variable.
- *
- * @par Description:
- * This API is used to implement the atomic set for 32-bit variable and return the previous value of the atomic variable.
- * @attention
- * <ul>The pointer v must not be NULL.</ul>
- *
- * @param  v       [IN] The variable pointer.
- * @param  setVal  [IN] The set value.
- *
- * @retval #INT32       The previous value of the atomic variable
- * @par Dependency:
- * <ul><li>los_arch_atomic.h: the header file that contains the API declaration.</li></ul>
- * @see
- */
 STATIC INLINE VOID ArchAtomicSet(Atomic *v, INT32 setVal)
 {
     *v = setVal;
@@ -173,7 +141,8 @@ STATIC INLINE VOID ArchAtomicDec(Atomic *v)
  * @brief Atomic exchange for 32-bit variable.
  *
  * @par Description:
- * This API is used to implement the atomic exchange for 32-bit variable and return the previous value of the atomic variable.
+ * This API is used to implement the atomic exchange for 32-bit variable
+ * and return the previous value of the atomic variable.
  * @attention
  * <ul>The pointer v must not be NULL.</ul>
  *
@@ -316,12 +285,12 @@ STATIC INLINE VOID ArchAtomicDec(Atomic *v)
 
 STATIC INLINE INT32 ArchAtomicIncRet(Atomic *v)
 {
-    return ArchAtomicAdd(v, 1);;
+    return ArchAtomicAdd(v, 1);
 }
 
 STATIC INLINE INT32 ArchAtomicDecRet(Atomic *v)
 {
-    return ArchAtomicSub(v, 1);;
+    return ArchAtomicSub(v, 1);
 }
 
 STATIC INLINE INT32 ArchAtomicXchg32bits(Atomic *v, INT32 val)
@@ -352,6 +321,7 @@ STATIC INLINE BOOL ArchAtomicCmpXchg32bits(Atomic *v, INT32 val, INT32 oldVal)
     return prevVal != oldVal;
 }
 #endif
+
 STATIC INLINE INT64 ArchAtomic64Read(const Atomic64 *v)
 {
     INT64 val;

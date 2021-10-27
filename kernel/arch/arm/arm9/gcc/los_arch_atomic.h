@@ -45,7 +45,8 @@ extern "C" {
  * @brief Atomic exchange for 32-bit variable.
  *
  * @par Description:
- * This API is used to implement the atomic exchange for 32-bit variable and return the previous value of the atomic variable.
+ * This API is used to implement the atomic exchange for 32-bit variable
+ * and return the previous value of the atomic variable.
  * @attention
  * <ul>The pointer v must not be NULL.</ul>
  *

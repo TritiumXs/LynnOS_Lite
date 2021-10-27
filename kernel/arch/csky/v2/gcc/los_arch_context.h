@@ -65,7 +65,7 @@ typedef struct TagTskContext {
 
 VOID OsStartToRun(VOID);
 VOID OsTaskContextSwitch(VOID);
-VOID HalIrqEndCheckNeedSched(VOID);
+VOID ArchIrqEndCheckNeedSched(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

@@ -116,7 +116,7 @@ LITE_OS_SEC_TEXT_INIT VOID *OsTskStackInit(UINT32 taskID, UINT32 stackSize, VOID
     return (VOID *)context;
 }
 
-LITE_OS_SEC_TEXT_INIT UINT32 HalStartSchedule(VOID)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 {
     (VOID)LOS_IntLock();
     OsSchedStart();
@@ -124,7 +124,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalStartSchedule(VOID)
     return LOS_OK; /* never return */
 }
 
-VOID HalIrqEndCheckNeedSched(VOID)
+VOID ArchIrqEndCheckNeedSched(VOID)
 {
     if (g_sysNeedSched && g_taskScheduled && LOS_CHECK_SCHEDULE) {
         OsTaskSchedule();

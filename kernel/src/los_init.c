@@ -105,7 +105,7 @@ LITE_OS_SEC_TEXT_INIT static VOID OsRegister(VOID)
 
 LITE_OS_SEC_TEXT_INIT UINT32 LOS_Start(VOID)
 {
-    return HalStartSchedule();
+    return ArchStartSchedule();
 }
 
 /*****************************************************************************

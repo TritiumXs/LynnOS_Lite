@@ -130,7 +130,7 @@ __attribute__((section(".interrupt.text"))) VOID HalHwiInterruptDone(HWI_HANDLE_
     g_intCount--;
 }
 
-LITE_OS_SEC_TEXT UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT UINT32 ArchGetHwiFormCnt(HWI_HANDLE_T hwiNum)
 {
     if (hwiNum < OS_HWI_MAX_NUM) {
         return g_hwiFormCnt[hwiNum];
@@ -139,7 +139,7 @@ LITE_OS_SEC_TEXT UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum)
     return LOS_NOK;
 }
 
-LITE_OS_SEC_TEXT HWI_HANDLE_FORM_S *HalGetHwiForm(VOID)
+LITE_OS_SEC_TEXT HWI_HANDLE_FORM_S *ArchGetHwiForm(VOID)
 {
     return g_hwiForm;
 }
@@ -151,7 +151,7 @@ inline UINT32 ArchIsIntActive(VOID)
 }
 
 /*****************************************************************************
- Function    : HalHwiCreate
+ Function    : ArchHwiCreate
  Description : create hardware interrupt
  Input       : hwiNum     --- hwi num to create
                hwiPrio    --- priority of the hwi
@@ -161,7 +161,7 @@ inline UINT32 ArchIsIntActive(VOID)
  Output      : None
  Return      : LOS_OK on success or error code on failure
  *****************************************************************************/
-LITE_OS_SEC_TEXT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
+LITE_OS_SEC_TEXT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
                                       HWI_PRIOR_T hwiPrio,
                                       HWI_MODE_T hwiMode,
                                       HWI_PROC_FUNC hwiHandler,
@@ -198,12 +198,12 @@ LITE_OS_SEC_TEXT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
 }
 
 /*****************************************************************************
- Function    : HalHwiDelete
+ Function    : ArchHwiDelete
  Description : Delete hardware interrupt
  Input       : hwiNum   --- hwi num to delete
  Return      : LOS_OK on success or error code on failure
  *****************************************************************************/
-LITE_OS_SEC_TEXT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
 {
     UINT32 intSave;
 

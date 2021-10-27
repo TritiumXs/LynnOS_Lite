@@ -117,7 +117,7 @@ UINT32 ArchIntLocked(VOID)
     return !(intSave & (1 << INT_OFFSET));
 }
 
-UINT32 HalIrqUnmask(UINT32 hwiNum)
+UINT32 ArchIrqUnmask(UINT32 hwiNum)
 {
     UINT32 intSave;
     if (!HwiNumValid(hwiNum)) {
@@ -130,7 +130,7 @@ UINT32 HalIrqUnmask(UINT32 hwiNum)
     return LOS_OK;
 }
 
-UINT32 HalIrqSetPriority(UINT32 hwiNum, UINT8 priority)
+UINT32 ArchIrqSetPriority(UINT32 hwiNum, UINT8 priority)
 {
     UINT32 intSave;
     if (!HwiNumValid(hwiNum)) {
@@ -145,7 +145,7 @@ UINT32 HalIrqSetPriority(UINT32 hwiNum, UINT8 priority)
     return LOS_OK;
 }
 
-UINT32 HalIrqMask(HWI_HANDLE_T hwiNum)
+UINT32 ArchIrqMask(HWI_HANDLE_T hwiNum)
 {
     UINT32 intSave;
     if (!HwiNumValid(hwiNum)) {
@@ -157,7 +157,7 @@ UINT32 HalIrqMask(HWI_HANDLE_T hwiNum)
     return LOS_OK;
 }
 
-UINT32 HalIrqPending(UINT32 hwiNum)
+UINT32 ArchIrqPending(UINT32 hwiNum)
 {
     UINT32 intSave;
     if (!HwiNumValid(hwiNum)) {
@@ -169,7 +169,7 @@ UINT32 HalIrqPending(UINT32 hwiNum)
     return LOS_OK;
 }
 
-UINT32 HalIrqClear(UINT32 hwiNum)
+UINT32 ArchIrqClear(UINT32 hwiNum)
 {
     if (!HwiNumValid(hwiNum)) {
         return LOS_ERRNO_HWI_NUM_INVALID;
@@ -207,7 +207,7 @@ VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg)
         g_hwiForm[num + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)IrqEntry;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT].pfnHandler = vector;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT].pParm = arg;
-        HalIrqUnmask(num);
+        ArchIrqUnmask(num);
     }
 }
 
@@ -227,19 +227,19 @@ VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector)
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
         g_hwiForm[num + OS_SYS_VECTOR_CNT] = IrqEntry;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT] = vector;
-        HalIrqUnmask(num);
+        ArchIrqUnmask(num);
     }
 }
 #endif
 
 /* ****************************************************************************
- Function    : ArchIntNumGet
+ Function    : ArchHwiNumGet
  Description : Get an interrupt number
  Input       : None
  Output      : None
  Return      : Interrupt Indexes number
  **************************************************************************** */
-LITE_OS_SEC_TEXT_MINOR UINT32 ArchIntNumGet(VOID)
+LITE_OS_SEC_TEXT_MINOR UINT32 ArchHwiNumGet(VOID)
 {
     return HalGetPsr();
 }
@@ -258,7 +258,7 @@ inline UINT32 ArchIsIntActive(VOID)
  **************************************************************************** */
 LITE_OS_SEC_TEXT_MINOR VOID ArchHwiDefaultHandler(VOID)
 {
-    UINT32 irqNum = ArchIntNumGet();
+    UINT32 irqNum = ArchHwiNumGet();
     irqNum = (irqNum >> PSR_VEC_OFFSET) & MASK_8_BITS;
     PRINT_ERR("%s irqnum:%x\n", __FUNCTION__, irqNum);
     while (1) {}
@@ -290,7 +290,7 @@ LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
     g_intCount = TRUE;
     LOS_IntRestore(intSave);
 
-    hwiIndex = ArchIntNumGet();
+    hwiIndex = ArchHwiNumGet();
     hwiIndex = (hwiIndex >> PSR_VEC_OFFSET) & MASK_8_BITS;
     OsHookCall(LOS_HOOK_TYPE_ISR_ENTER, hwiIndex);
 
@@ -311,12 +311,12 @@ LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
 
     intSave = LOS_IntLock();
     g_intCount = FALSE;
-    HalIrqEndCheckNeedSched();
+    ArchIrqEndCheckNeedSched();
     LOS_IntRestore(intSave);
 }
 
 /* ****************************************************************************
- Function    : HalHwiCreate
+ Function    : ArchHwiCreate
  Description : create hardware interrupt
  Input       : hwiNum   --- hwi num to create
                hwiPrio  --- priority of the hwi
@@ -326,11 +326,11 @@ LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
  Output      : None
  Return      : LOS_OK on success or error code on failure
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
-                                          HWI_PRIOR_T hwiPrio,
-                                          HWI_MODE_T mode,
-                                          HWI_PROC_FUNC handler,
-                                          HWI_ARG_T arg)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
+                                           HWI_PRIOR_T hwiPrio,
+                                           HWI_MODE_T mode,
+                                           HWI_PROC_FUNC handler,
+                                           HWI_ARG_T arg)
 {
     UINT32 intSave;
 
@@ -355,28 +355,28 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
 #else
     OsSetVector(hwiNum, handler);
 #endif
-    HalIrqUnmask(hwiNum);
-    (VOID)HalIrqSetPriority(hwiNum, (UINT8)hwiPrio);
+    ArchIrqUnmask(hwiNum);
+    (VOID)ArchIrqSetPriority(hwiNum, (UINT8)hwiPrio);
     LOS_IntRestore(intSave);
 
     return LOS_OK;
 }
 
 /* ****************************************************************************
- Function    : HalHwiDelete
+ Function    : ArchHwiDelete
  Description : Delete hardware interrupt
  Input       : hwiNum   --- hwi num to delete
  Output      : None
  Return      : LOS_OK on success or error code on failure
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
 {
     UINT32 intSave;
 
     if (hwiNum >= OS_HWI_MAX_NUM) {
         return OS_ERRNO_HWI_NUM_INVALID;
     }
-    HalIrqMask(hwiNum);
+    ArchIrqMask(hwiNum);
     intSave = LOS_IntLock();
     g_hwiHandlerForm[hwiNum + OS_SYS_VECTOR_CNT] = 0;
     LOS_IntRestore(intSave);

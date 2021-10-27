@@ -214,7 +214,7 @@ extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector);
 #endif
 
 VOID ArchInterrupt(VOID);
-UINT32 ArchIntNumGet(VOID);
+UINT32 ArchHwiNumGet(VOID);
 VOID ArchHwiDefaultHandler(VOID);
 VOID OsExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type);
 VOID ArchHwiInit(VOID);

@@ -221,7 +221,7 @@ extern VOID ArchInterrupt(VOID);
  * <ul><li>los_arch_interrupt.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern UINT32 ArchIntNumGet(VOID);
+extern UINT32 ArchHwiNumGet(VOID);
 
 /* *
  * @ingroup  los_arch_interrupt

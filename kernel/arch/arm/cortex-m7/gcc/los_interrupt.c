@@ -98,13 +98,13 @@ VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector)
 #endif
 
 /* ****************************************************************************
- Function    : ArchIntNumGet
+ Function    : ArchHwiNumGet
  Description : Get an interrupt number
  Input       : None
  Output      : None
  Return      : Interrupt Indexes number
  **************************************************************************** */
-LITE_OS_SEC_TEXT_MINOR UINT32 ArchIntNumGet(VOID)
+LITE_OS_SEC_TEXT_MINOR UINT32 ArchHwiNumGet(VOID)
 {
     return __get_IPSR();
 }
@@ -123,7 +123,7 @@ inline UINT32 ArchIsIntActive(VOID)
 /*lint -e529*/
 LITE_OS_SEC_TEXT_MINOR VOID ArchHwiDefaultHandler(VOID)
 {
-    UINT32 irqNum = ArchIntNumGet();
+    UINT32 irqNum = ArchHwiNumGet();
     PRINT_ERR("%s irqnum:%d\n", __FUNCTION__, irqNum);
     while (1) {}
 }
@@ -158,7 +158,7 @@ LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
     g_intCount++;
     LOS_IntRestore(intSave);
 
-    hwiIndex = ArchIntNumGet();
+    hwiIndex = ArchHwiNumGet();
 
     OsHookCall(LOS_HOOK_TYPE_ISR_ENTER, hwiIndex);
 
@@ -184,7 +184,7 @@ LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
 }
 
 /* ****************************************************************************
- Function    : HalHwiCreate
+ Function    : ArchHwiCreate
  Description : create hardware interrupt
  Input       : hwiNum   --- hwi num to create
                hwiPrio  --- priority of the hwi
@@ -194,11 +194,11 @@ LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
  Output      : None
  Return      : LOS_OK on success or error code on failure
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
-                                          HWI_PRIOR_T hwiPrio,
-                                          HWI_MODE_T mode,
-                                          HWI_PROC_FUNC handler,
-                                          HWI_ARG_T arg)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
+                                           HWI_PRIOR_T hwiPrio,
+                                           HWI_MODE_T mode,
+                                           HWI_PROC_FUNC handler,
+                                           HWI_ARG_T arg)
 {
     UINT32 intSave;
 
@@ -233,13 +233,13 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
 }
 
 /* ****************************************************************************
- Function    : HalHwiDelete
+ Function    : ArchHwiDelete
  Description : Delete hardware interrupt
  Input       : hwiNum   --- hwi num to delete
  Output      : None
  Return      : LOS_OK on success or error code on failure
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
 {
     UINT32 intSave;
 

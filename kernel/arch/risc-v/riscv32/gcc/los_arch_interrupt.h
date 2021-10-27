@@ -138,8 +138,8 @@ typedef struct {
 extern HWI_HANDLE_FORM_S g_hwiForm[OS_HWI_MAX_NUM];
 
 extern VOID ArchHwiInit(VOID);
-extern UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum);
-extern HWI_HANDLE_FORM_S *HalGetHwiForm(VOID);
+extern UINT32 ArchGetHwiFormCnt(HWI_HANDLE_T hwiNum);
+extern HWI_HANDLE_FORM_S *ArchGetHwiForm(VOID);
 extern VOID HalHwiInterruptDone(HWI_HANDLE_T hwiNum);
 extern VOID ArchHwiDefaultHandler(VOID *arg);
 
@@ -243,7 +243,7 @@ extern UINT32 g_intCount;
  *
  * Value: 0x02000909
  *
- * * Solution:check the input params hwiMode and irqParam of HalHwiCreate or HalHwiDelete whether adapt the current
+ * * Solution:check the input params hwiMode and irqParam of ArchHwiCreate or ArchHwiDelete whether adapt the current
  * hwi.
  */
 #define OS_ERRNO_HWI_SHARED_ERROR LOS_ERRNO_OS_ERROR(LOS_MOD_HWI, 0x09)

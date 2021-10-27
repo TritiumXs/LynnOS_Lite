@@ -78,7 +78,7 @@ LITE_OS_SEC_TEXT_INIT VOID *OsTskStackInit(UINT32 taskID, UINT32 stackSize, VOID
 }
 
 extern LosTask g_losTask;
-LITE_OS_SEC_TEXT_INIT UINT32 HalStartSchedule(VOID)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 {
     (VOID)LOS_IntLock();
     OsSchedStart();

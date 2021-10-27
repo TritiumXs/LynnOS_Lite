@@ -64,7 +64,7 @@
 OsExceptUndefInstrHdl:
     STMFD   SP!, {R0-R5}
     MOV     R0, #OS_EXCEPT_UNDEF_INSTR
-    B       _OsExceptDispatch
+    B       OsExceptDispatch
 
 OsExceptPrefetchAbortHdl:
     SUB     LR, LR, #4
@@ -72,7 +72,7 @@ OsExceptPrefetchAbortHdl:
 
     MOV     R0, #OS_EXCEPT_PREFETCH_ABORT
 
-    B       _OsExceptDispatch
+    B       OsExceptDispatch
 
 OsExceptDataAbortHdl:
     SUB     LR, LR, #4
@@ -80,7 +80,7 @@ OsExceptDataAbortHdl:
 
     MOV     R0, #OS_EXCEPT_DATA_ABORT
 
-    B       _OsExceptDispatch
+    B       OsExceptDispatch
 
 OsExceptAddrAbortHdl:
     SUB     LR, LR, #8
@@ -88,9 +88,9 @@ OsExceptAddrAbortHdl:
 
     MOV     R0, #OS_EXCEPT_ADDR_ABORT
 
-    B       _OsExceptDispatch
+    B       OsExceptDispatch
 
-_OsExceptDispatch:
+OsExceptDispatch:
     MRS     R1, SPSR
     MOV     R2, LR
     MOV     R4, SP
@@ -109,7 +109,7 @@ _OsExceptDispatch:
     STMFD   SP!, {R1}
     MOV     R3, SP
 
-_OsExceptionGetSP:
+OsExceptionGetSP:
     STMFD   SP!, {R1}
     LDR     R2, =OsExcHandleEntry
 
