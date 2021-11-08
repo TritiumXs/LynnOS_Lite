@@ -32,6 +32,7 @@
 #define _GNU_SOURCE
 #include <time.h>
 #include <sys/time.h>
+#include <sys/times.h>
 #include <stdint.h>
 #include <errno.h>
 #include <signal.h>
@@ -425,6 +426,21 @@ time_t time(time_t *timer)
         *timer = ts.tv_sec;
     }
     return ts.tv_sec;
+}
+
+clock_t times(struct tms *buf)
+{
+    clock_t clockTick;
+
+    clockTick = (clock_t)LOS_TickCountGet();
+    if (buf != NULL) {
+        buf->tms_cstime = clockTick;
+        buf->tms_cutime = clockTick;
+        buf->tms_stime  = clockTick;
+        buf->tms_utime  = clockTick;
+    }
+
+    return clockTick;
 }
 
 /*
