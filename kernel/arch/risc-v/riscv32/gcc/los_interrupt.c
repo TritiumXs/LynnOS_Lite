@@ -41,7 +41,7 @@
 #include "riscv_hal.h"
 
 
-LosExcInfo g_excInfo;
+LOsExcInfo g_excInfo;
 #define RISCV_EXC_TYPE_NUM 16
 #define RISCV_EXC_LOAD_MISALIGNED 4
 #define RISCV_EXC_STORE_MISALIGNED 6
@@ -70,16 +70,16 @@ LITE_OS_SEC_DATA_INIT HWI_HANDLE_FORM_S g_hwiForm[OS_HWI_MAX_NUM] = {
     { .pfnHook = NULL, .uwParam = 0 }, // 0 User software interrupt handler
     { .pfnHook = NULL, .uwParam = 0 }, // 1 Supervisor software interrupt handler
     { .pfnHook = NULL, .uwParam = 0 }, // 2 Reserved
-    { .pfnHook = HalHwiDefaultHandler, .uwParam = 0 }, // 3 Machine software interrupt handler
+    { .pfnHook = ArchHwiDefaultHandler, .uwParam = 0 }, // 3 Machine software interrupt handler
     { .pfnHook = NULL, .uwParam = 0 }, // 4 User timer interrupt handler
     { .pfnHook = NULL, .uwParam = 0 }, // 5 Supervisor timer interrupt handler
     { .pfnHook = NULL, .uwParam = 0 }, // 6  Reserved
-    { .pfnHook = HalHwiDefaultHandler, .uwParam = 0 }, // 7 Machine timer interrupt handler
+    { .pfnHook = ArchHwiDefaultHandler, .uwParam = 0 }, // 7 Machine timer interrupt handler
     { .pfnHook = NULL, .uwParam = 0 }, // 8  User external interrupt handler
     { .pfnHook = NULL, .uwParam = 0 }, // 9 Supervisor external interrupt handler
     { .pfnHook = NULL, .uwParam = 0 }, // 10 Reserved
-    { .pfnHook = HalHwiDefaultHandler, .uwParam = 0 }, // 11 Machine external interrupt handler
-    { .pfnHook = HalHwiDefaultHandler, .uwParam = 0 }, // 12 NMI handler
+    { .pfnHook = ArchHwiDefaultHandler, .uwParam = 0 }, // 11 Machine external interrupt handler
+    { .pfnHook = ArchHwiDefaultHandler, .uwParam = 0 }, // 12 NMI handler
     { .pfnHook = NULL, .uwParam = 0 }, // 13 Reserved
     { .pfnHook = NULL, .uwParam = 0 }, // 14 Reserved
     { .pfnHook = NULL, .uwParam = 0 }, // 15 Reserved
@@ -95,7 +95,7 @@ LITE_OS_SEC_DATA_INIT HWI_HANDLE_FORM_S g_hwiForm[OS_HWI_MAX_NUM] = {
     { .pfnHook = NULL, .uwParam = 0 }, // 25 Reserved
 };
 
-LITE_OS_SEC_TEXT_INIT VOID HalHwiDefaultHandler(VOID *arg)
+LITE_OS_SEC_TEXT_INIT VOID ArchHwiDefaultHandler(VOID *arg)
 {
     (VOID)arg;
     PRINT_ERR("default handler\n");
@@ -103,11 +103,11 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiDefaultHandler(VOID *arg)
     }
 }
 
-LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
+LITE_OS_SEC_TEXT_INIT VOID ArchHwiInit(VOID)
 {
     UINT32 index;
     for (index = OS_RISCV_SYS_VECTOR_CNT; index < OS_HWI_MAX_NUM; index++) {
-        g_hwiForm[index].pfnHook = HalHwiDefaultHandler;
+        g_hwiForm[index].pfnHook = ArchHwiDefaultHandler;
         g_hwiForm[index].uwParam = 0;
     }
 }
@@ -130,7 +130,7 @@ __attribute__((section(".interrupt.text"))) VOID HalHwiInterruptDone(HWI_HANDLE_
     g_intCount--;
 }
 
-LITE_OS_SEC_TEXT UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT UINT32 ArchGetHwiFormCnt(HWI_HANDLE_T hwiNum)
 {
     if (hwiNum < OS_HWI_MAX_NUM) {
         return g_hwiFormCnt[hwiNum];
@@ -139,19 +139,19 @@ LITE_OS_SEC_TEXT UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum)
     return LOS_NOK;
 }
 
-LITE_OS_SEC_TEXT HWI_HANDLE_FORM_S *HalGetHwiForm(VOID)
+LITE_OS_SEC_TEXT HWI_HANDLE_FORM_S *ArchGetHwiForm(VOID)
 {
     return g_hwiForm;
 }
 
 
-inline UINT32 HalIsIntActive(VOID)
+inline UINT32 ArchIsIntActive(VOID)
 {
     return (g_intCount > 0);
 }
 
 /*****************************************************************************
- Function    : HalHwiCreate
+ Function    : ArchHwiCreate
  Description : create hardware interrupt
  Input       : hwiNum     --- hwi num to create
                hwiPrio    --- priority of the hwi
@@ -161,7 +161,7 @@ inline UINT32 HalIsIntActive(VOID)
  Output      : None
  Return      : LOS_OK on success or error code on failure
  *****************************************************************************/
-LITE_OS_SEC_TEXT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
+LITE_OS_SEC_TEXT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
                                       HWI_PRIOR_T hwiPrio,
                                       HWI_MODE_T hwiMode,
                                       HWI_PROC_FUNC hwiHandler,
@@ -177,7 +177,7 @@ LITE_OS_SEC_TEXT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
     }
     if (g_hwiForm[hwiNum].pfnHook == NULL) {
         return OS_ERRNO_HWI_NUM_INVALID;
-    } else if (g_hwiForm[hwiNum].pfnHook != HalHwiDefaultHandler) {
+    } else if (g_hwiForm[hwiNum].pfnHook != ArchHwiDefaultHandler) {
         return OS_ERRNO_HWI_NUM_INVALID;
     }
     if ((hwiPrio < OS_HWI_PRIO_LOWEST) || (hwiPrio > OS_HWI_PRIO_HIGHEST)) {
@@ -198,12 +198,12 @@ LITE_OS_SEC_TEXT UINT32 HalHwiCreate(HWI_HANDLE_T hwiNum,
 }
 
 /*****************************************************************************
- Function    : HalHwiDelete
+ Function    : ArchHwiDelete
  Description : Delete hardware interrupt
  Input       : hwiNum   --- hwi num to delete
  Return      : LOS_OK on success or error code on failure
  *****************************************************************************/
-LITE_OS_SEC_TEXT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
 {
     UINT32 intSave;
 
@@ -212,7 +212,7 @@ LITE_OS_SEC_TEXT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
     }
 
     intSave = LOS_IntLock();
-    g_hwiForm[hwiNum].pfnHook = HalHwiDefaultHandler;
+    g_hwiForm[hwiNum].pfnHook = ArchHwiDefaultHandler;
     g_hwiForm[hwiNum].uwParam = 0;
     LOS_IntRestore(intSave);
     return LOS_OK;
@@ -235,7 +235,7 @@ STATIC VOID ExcBackTrace(UINTPTR fp)
     PRINTK("----- traceback end -----\n");
 }
 
-STATIC VOID ExcInfoDisplayContext(const LosExcInfo *exc)
+STATIC VOID ExcInfoDisplayContext(const LOsExcInfo *exc)
 {
     const TaskContext *taskContext = &(exc->context->taskContext);
 
@@ -278,7 +278,7 @@ STATIC VOID ExcInfoDisplayContext(const LosExcInfo *exc)
     ExcBackTrace(taskContext->s0);
 }
 
-STATIC VOID ExcInfoDisplay(const LosExcContext *excBufAddr)
+STATIC VOID ExcInfoDisplay(const LOsExcContext *excBufAddr)
 {
     PRINTK("\nException Information     \n");
 
@@ -305,11 +305,11 @@ WEAK UINT32 HalUnalignedAccessFix(UINTPTR mcause, UINTPTR mepc, UINTPTR mtval, V
     return LOS_NOK;
 }
 
-VOID HalExcEntry(const LosExcContext *excBufAddr)
+VOID OsExcEntry(const LOsExcContext *excBufAddr)
 {
     UINT32 ret;
     g_excInfo.type = excBufAddr->mcause & 0x1FF;
-    g_excInfo.context = (LosExcContext *)excBufAddr;
+    g_excInfo.context = (LOsExcContext *)excBufAddr;
     if (g_excInfo.nestCnt > 2) { /* 2: Number of layers of exception nesting */
         PRINTK("hard fault!\n");
         goto SYSTEM_DEATH;

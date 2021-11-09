@@ -46,9 +46,9 @@
     .section .text
     .thumb
 
-    .type HalStartToRun, %function
-    .global HalStartToRun
-HalStartToRun:
+    .type OsStartToRun, %function
+    .global OsStartToRun
+OsStartToRun:
     .fnstart
     .cantunwind
 
@@ -86,9 +86,9 @@ HalStartToRun:
     .fnend
 
 
-    .type HalIntLock, %function
-    .global HalIntLock
-HalIntLock:
+    .type ArchIntLock, %function
+    .global ArchIntLock
+ArchIntLock:
     .fnstart
     .cantunwind
 
@@ -97,9 +97,9 @@ HalIntLock:
     BX LR
     .fnend
 
-    .type HalIntUnLock, %function
-    .global HalIntUnLock
-HalIntUnLock:
+    .type ArchIntUnLock, %function
+    .global ArchIntUnLock
+ArchIntUnLock:
     .fnstart
     .cantunwind
 
@@ -108,9 +108,9 @@ HalIntUnLock:
     BX LR
     .fnend
 
-    .type HalIntRestore, %function
-    .global HalIntRestore
-HalIntRestore:
+    .type ArchIntRestore, %function
+    .global ArchIntRestore
+ArchIntRestore:
     .fnstart
     .cantunwind
 
@@ -118,9 +118,9 @@ HalIntRestore:
     BX LR
     .fnend
 
-    .type HalTaskSchedule, %function
-    .global HalTaskSchedule
-HalTaskSchedule:
+    .type OsTaskSchedule, %function
+    .global OsTaskSchedule
+OsTaskSchedule:
     .fnstart
     .cantunwind
 
@@ -132,16 +132,16 @@ HalTaskSchedule:
     bx      lr
    .fnend
 
-    .type HalPendSV, %function
-    .global HalPendSV
-HalPendSV:
+    .type OsPendSV, %function
+    .global OsPendSV
+OsPendSV:
     .fnstart
     .cantunwind
 
     mrs     r12, PRIMASK
     cpsid   I
 
-HalTaskSwitch:
+OsTaskSwitch:
     push    {r12, lr}
     blx     OsSchedTaskSwitch
     pop     {r12, lr}

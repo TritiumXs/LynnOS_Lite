@@ -52,13 +52,13 @@
 #define OS_TIMER_READ_VAL_ADDR      (OS_TIMER_REG_BASE + 20)
 
 /* ****************************************************************************
-Function    : HalTickStart
+Function    : ArchTickStart
 Description : Configure Tick Interrupt Start
 Input       : none
 output      : none
 return      : LOS_OK - Success , or LOS_ERRNO_TICK_CFG_INVALID - failed
 **************************************************************************** */
-WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
+WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
 {
     UINT32 intSave = LOS_IntLock();
     UINT32 value;
@@ -77,7 +77,7 @@ WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
     value |= OS_TIMER_ENABLE; // Enable timer.
     WRITE_UINT32(value, OS_TIMER_CTL_REG_ADDR);
 
-    (VOID)HalHwiCreate(OS_TIMER_IRQ_NUM, 0, 0, (HWI_PROC_FUNC)handler, 0);
+    (VOID)ArchHwiCreate(OS_TIMER_IRQ_NUM, 0, 0, (HWI_PROC_FUNC)handler, 0);
     LOS_IntRestore(intSave);
 
     return LOS_OK;
@@ -94,15 +94,15 @@ STATIC VOID HalClockIrqClear(VOID)
     } while (status & mask);
 }
 
-WEAK VOID HalSysTickReload(UINT64 nextResponseTime)
+WEAK VOID ArchSysTickReload(UINT64 nextResponseTime)
 {
-    HalTickLock();
+    ArchTickLock();
     WRITE_UINT32(nextResponseTime, OS_TIMER_PERIOD_REG_ADDR);
     HalClockIrqClear();
-    HalTickUnlock();
+    ArchTickUnlock();
 }
 
-WEAK UINT64 HalGetTickCycle(UINT32 *period)
+WEAK UINT64 ArchGetTickCycle(UINT32 *period)
 {
     UINT32 val;
 
@@ -118,7 +118,7 @@ WEAK UINT64 HalGetTickCycle(UINT32 *period)
     return (UINT64)val;
 }
 
-WEAK VOID HalTickLock(VOID)
+WEAK VOID ArchTickLock(VOID)
 {
     UINT32 value;
 
@@ -129,7 +129,7 @@ WEAK VOID HalTickLock(VOID)
     WRITE_UINT32(value, OS_TIMER_CTL_REG_ADDR);
 }
 
-WEAK VOID HalTickUnlock(VOID)
+WEAK VOID ArchTickUnlock(VOID)
 {
     UINT32 value;
 

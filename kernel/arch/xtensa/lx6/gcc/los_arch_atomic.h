@@ -32,6 +32,7 @@
 #ifndef _LOS_ARCH_ATOMIC_H
 #define _LOS_ARCH_ATOMIC_H
 
+#include "los_interrupt.h"
 #include "los_compiler.h"
 
 #ifdef __cplusplus
@@ -39,6 +40,19 @@
 extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
+
+typedef volatile INT32 Atomic;
+typedef volatile INT64 Atomic64;
+
+STATIC INLINE INT32 ArchAtomicRead(const Atomic *v)
+{
+    return *v;
+}
+
+STATIC INLINE VOID ArchAtomicSet(Atomic *v, INT32 setVal)
+{
+    *v = setVal;
+}
 
 /**
  * @ingroup  los_arch_atomic
@@ -57,7 +71,7 @@ extern "C" {
  * <ul><li>los_arch_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE INT32 HalAtomicXchg32bits(volatile INT32 *v, INT32 val)
+STATIC INLINE INT32 ArchAtomicXchg32bits(volatile INT32 *v, INT32 val)
 {
     UINT32 intSave;
     INT32 prevVal;
@@ -89,15 +103,17 @@ STATIC INLINE INT32 HalAtomicXchg32bits(volatile INT32 *v, INT32 val)
  * <ul><li>los_arch_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE INT32 HalAtomicDecRet(volatile INT32 *v)
+STATIC INLINE INT32 ArchAtomicDecRet(volatile INT32 *v)
 {
+    INT32 val;
     UINT32 intSave;
 
     intSave = LOS_IntLock();
     *v -= 1;
+    val = *v;
     LOS_IntRestore(intSave);
 
-    return intSave;
+    return val;
 }
 
 /**
@@ -119,7 +135,7 @@ STATIC INLINE INT32 HalAtomicDecRet(volatile INT32 *v)
  * <ul><li>los_arch_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE BOOL HalAtomicCmpXchg32bits(volatile INT32 *v, INT32 val, INT32 oldVal)
+STATIC INLINE BOOL ArchAtomicCmpXchg32bits(volatile INT32 *v, INT32 val, INT32 oldVal)
 {
     UINT32 intSave;
     INT32 prevVal;
@@ -132,6 +148,142 @@ STATIC INLINE BOOL HalAtomicCmpXchg32bits(volatile INT32 *v, INT32 val, INT32 ol
     LOS_IntRestore(intSave);
 
     return (prevVal != oldVal);
+}
+
+STATIC INLINE INT32 ArchAtomicAdd(Atomic *v, INT32 addVal)
+{
+    INT32 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v += addVal;
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE INT32 ArchAtomicSub(Atomic *v, INT32 subVal)
+{
+    INT32 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v -= subVal;
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE VOID ArchAtomicInc(Atomic *v)
+{
+    (VOID)ArchAtomicAdd(v, 1);
+}
+
+STATIC INLINE VOID ArchAtomicDec(Atomic *v)
+{
+    (VOID)ArchAtomicSub(v, 1);
+}
+
+STATIC INLINE INT32 ArchAtomicIncRet(Atomic *v)
+{
+    return ArchAtomicAdd(v, 1);
+}
+
+STATIC INLINE INT64 ArchAtomic64Read(const Atomic64 *v)
+{
+    INT64 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE VOID ArchAtomic64Set(Atomic64 *v, INT64 setVal)
+{
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v = setVal;
+    LOS_IntRestore(intSave);
+}
+
+STATIC INLINE INT64 ArchAtomic64Add(Atomic64 *v, INT64 addVal)
+{
+    INT64 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v += addVal;
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE INT64 ArchAtomic64Sub(Atomic64 *v, INT64 subVal)
+{
+    INT64 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v -= subVal;
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE VOID ArchAtomic64Inc(Atomic64 *v)
+{
+    (VOID)ArchAtomic64Add(v, 1);
+}
+
+STATIC INLINE INT64 ArchAtomic64IncRet(Atomic64 *v)
+{
+    return ArchAtomic64Add(v, 1);
+}
+
+STATIC INLINE VOID ArchAtomic64Dec(Atomic64 *v)
+{
+    (VOID)ArchAtomic64Sub(v, 1);
+}
+
+STATIC INLINE INT64 ArchAtomic64DecRet(Atomic64 *v)
+{
+    return ArchAtomic64Sub(v, 1);
+}
+
+STATIC INLINE INT64 ArchAtomicXchg64bits(Atomic64 *v, INT64 val)
+{
+    INT64 prevVal;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    prevVal = *v;
+    *v = val;
+    LOS_IntRestore(intSave);
+
+    return prevVal;
+}
+
+STATIC INLINE BOOL ArchAtomicCmpXchg64bits(Atomic64 *v, INT64 val, INT64 oldVal)
+{
+    INT64 prevVal;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    prevVal = *v;
+    if (prevVal == oldVal) {
+        *v = val;
+    }
+    LOS_IntRestore(intSave);
+
+    return prevVal != oldVal;
 }
 
 #ifdef __cplusplus

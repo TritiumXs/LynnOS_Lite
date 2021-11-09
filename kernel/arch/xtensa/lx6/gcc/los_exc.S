@@ -32,7 +32,7 @@
 #include "los_arch_regs.h"
 #include "los_arch_macro.h"
 
-.extern HalInterrupt
+.extern ArchInterrupt
 .extern UserException
 
 .section    .iram,"ax"
@@ -65,7 +65,7 @@ HandleEntry:
     rsr     a6, EPC1
     mov     a7, sp
     rsr     a8, EXCCAUSE
-    call4   HalExcHandleEntry
+    call4   OsExcHandleEntry
 1:
     j       1b
 
@@ -175,7 +175,7 @@ InterruptEntry1:
     wsr     a0, PS
     rsync
 
-    call4   HalInterrupt
+    call4   ArchInterrupt
     mov     a2, a1
     POP_ALL_REG a2 EPC1 PS
     rfe    

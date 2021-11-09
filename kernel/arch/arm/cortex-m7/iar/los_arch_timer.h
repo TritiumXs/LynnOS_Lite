@@ -42,7 +42,7 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-UINT32 HalTickStart(OS_TICK_HANDLER handler);
+UINT32 ArchTickStart(OS_TICK_HANDLER handler);
 
 #ifdef __cplusplus
 #if __cplusplus

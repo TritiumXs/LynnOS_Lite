@@ -129,9 +129,9 @@ STATIC INLINE UINTPTR GetFp(VOID)
     return fpSave;
 }
 
-extern VOID HalStartToRun(VOID);
+extern VOID OsStartToRun(VOID);
 
-extern VOID HalTaskContextSwitch(UINT32 intSave);
+extern VOID OsTaskContextSwitch(UINT32 intSave);
 
 /**
  * @ingroup los_arch_context

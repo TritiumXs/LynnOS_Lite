@@ -57,13 +57,13 @@ typedef struct {
 #define TIM_INT_NUM          1
 
 /* ****************************************************************************
-Function    : HalTickStart
+Function    : ArchTickStart
 Description : Configure Tick Interrupt Start
 Input       : none
 output      : none
 return      : LOS_OK - Success , or LOS_ERRNO_TICK_CFG_INVALID - failed
 **************************************************************************** */
-WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
+WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
 {
     if ((OS_SYS_CLOCK == 0) || (LOSCFG_BASE_CORE_TICK_PER_SECOND == 0) ||
         (LOSCFG_BASE_CORE_TICK_PER_SECOND > OS_SYS_CLOCK)) {
@@ -88,7 +88,7 @@ WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
     return LOS_OK;
 }
 
-WEAK VOID HalSysTickReload(UINT64 nextResponseTime)
+WEAK VOID ArchSysTickReload(UINT64 nextResponseTime)
 {
     SysTick->CTRL &= ~CORETIM_ENABLE;
     SysTick->LOAD = (UINT32)(nextResponseTime - 1UL); /* set reload register */
@@ -96,7 +96,7 @@ WEAK VOID HalSysTickReload(UINT64 nextResponseTime)
     SysTick->CTRL |= CORETIM_ENABLE;
 }
 
-WEAK UINT64 HalGetTickCycle(UINT32 *period)
+WEAK UINT64 ArchGetTickCycle(UINT32 *period)
 {
     UINT32 hwCycle;
     UINT32 intSave = LOS_IntLock();
@@ -106,12 +106,12 @@ WEAK UINT64 HalGetTickCycle(UINT32 *period)
     return (UINT64)hwCycle;
 }
 
-WEAK VOID HalTickLock(VOID)
+WEAK VOID ArchTickLock(VOID)
 {
     SysTick->CTRL &= ~CORETIM_ENABLE;
 }
 
-WEAK VOID HalTickUnlock(VOID)
+WEAK VOID ArchTickUnlock(VOID)
 {
     SysTick->CTRL |= CORETIM_ENABLE;
 }

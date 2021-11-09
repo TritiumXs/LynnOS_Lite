@@ -340,7 +340,7 @@ extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector);
  * <ul><li>los_hwi.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern VOID HalInterrupt(VOID);
+extern VOID ArchInterrupt(VOID);
 
 /* *
  * @ingroup  los_hwi
@@ -359,7 +359,7 @@ extern VOID HalInterrupt(VOID);
  * <ul><li>los_hwi.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern UINT32 HalIntNumGet(VOID);
+extern UINT32 ArchHwiNumGet(VOID);
 
 /* *
  * @ingroup  los_hwi
@@ -379,7 +379,7 @@ extern UINT32 HalIntNumGet(VOID);
 ></ul>
  * @see None.
  */
-extern VOID HalHwiDefaultHandler(VOID);
+extern VOID ArchHwiDefaultHandler(VOID);
 
 /* *
  * @ingroup  los_hwi
@@ -418,7 +418,7 @@ extern VOID Reset_Handler(VOID);
  * <ul><li>los_hwi.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern VOID HalPendSV(VOID);
+extern VOID OsPendSV(VOID);
 
 
 #define OS_EXC_IN_INIT                      0
@@ -519,15 +519,15 @@ typedef struct TagExcContext {
 }EXC_CONTEXT_S;
 
 typedef VOID (*EXC_PROC_FUNC)(UINT32, EXC_CONTEXT_S *);
-VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, UINT32 pid, EXC_CONTEXT_S *excBufAddr);
+VOID OsExcHandleEntry(UINT32 excType, UINT32 faultAddr, UINT32 pid, EXC_CONTEXT_S *excBufAddr);
 
-VOID HalExcNMI(VOID);
-VOID HalExcHardFault(VOID);
-VOID HalExcMemFault(VOID);
-VOID HalExcBusFault(VOID);
-VOID HalExcUsageFault(VOID);
+VOID OsExcNMI(VOID);
+VOID OsExcHardFault(VOID);
+VOID OsExcMemFault(VOID);
+VOID OsExcBusFault(VOID);
+VOID OsExcUsageFault(VOID);
 VOID HalSVCHandler(VOID);
-VOID HalHwiInit(VOID);
+VOID ArchHwiInit(VOID);
 
 
 /**

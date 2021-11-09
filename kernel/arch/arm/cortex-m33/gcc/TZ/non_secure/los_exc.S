@@ -36,13 +36,13 @@
 .section .text
 
 
-    .global  HalExcNMI
-    .global  HalExcHardFault
-    .global  HalExcMemFault
-    .global  HalExcBusFault
-    .global  HalExcUsageFault
+    .global  OsExcNMI
+    .global  OsExcHardFault
+    .global  OsExcMemFault
+    .global  OsExcBusFault
+    .global  OsExcUsageFault
 
-    .extern HalExcHandleEntry
+    .extern OsExcHandleEntry
     .extern g_uwExcTbl
     .extern g_taskScheduled
 
@@ -66,19 +66,19 @@
 .equ OS_NVIC_SHCSRS              ,   0xE000ED24
 .equ OS_NVIC_SHCSR_MASK          ,   0xC00
 
-    .type HalExcNMI, %function
-    .global HalExcNMI
-HalExcNMI:
+    .type OsExcNMI, %function
+    .global OsExcNMI
+OsExcNMI:
     .fnstart
     .cantunwind
     MOV  R0, #OS_EXC_CAUSE_NMI
     MOV  R1, #0
-    B  osExcDispatch
+    B  OsExcDispatch
     .fnend
 
-    .type HalExcHardFault, %function
-    .global HalExcHardFault
-HalExcHardFault:
+    .type OsExcHardFault, %function
+    .global OsExcHardFault
+OsExcHardFault:
     .fnstart
     .cantunwind
     MOV  R0, #OS_EXC_CAUSE_HARDFAULT
@@ -88,13 +88,13 @@ HalExcHardFault:
     MOV  R1, #HF_DEBUGEVT
     ORR  R0, R0, R1, LSL #0x8
     TST  R2, #0x80000000
-    BNE  osExcDispatch     // DEBUGEVT
+    BNE  OsExcDispatch     // DEBUGEVT
 
     AND  R0, R0 , #0x000000FF
     MOV  R1, #HF_VECTBL
     ORR  R0, R0, R1, LSL #0x8
     TST  R2, #0x00000002
-    BNE  osExcDispatch     // VECTBL
+    BNE  OsExcDispatch     // VECTBL
 
     //if not DEBUGEVT and VECTBL then is FORCED
     AND  R0, R0, #0x000000FF
@@ -103,29 +103,29 @@ HalExcHardFault:
     LDR  R2, [R2]
 
     TST  R2, #0x8000     // BFARVALID
-    BNE  _HFBusFault     // BusFault
+    BNE  HFBusFault     // BusFault
 
     TST  R2, #0x80       // MMARVALID
-    BNE  _HFMemFault     // MemFault
+    BNE  HFMemFault     // MemFault
 
     MOV  R12,#0
-    B    osHFExcCommonBMU
+    B    OsHFExcCommonBMU
     .fnend
 
-    .type _HFBusFault, %function
+    .type HFBusFault, %function
 
-_HFBusFault:
+HFBusFault:
     .fnstart
     .cantunwind
     LDR  R1, =OS_NVIC_BFAR
     LDR  R1, [R1]
     MOV  R12, #FLAG_ADDR_VALID
-    B    osHFExcCommonBMU
+    B    OsHFExcCommonBMU
     .fnend
 
-    .type _HFMemFault, %function
+    .type HFMemFault, %function
 
-_HFMemFault:
+HFMemFault:
     .fnstart
     .cantunwind
     LDR  R1, =OS_NVIC_MMAR
@@ -133,9 +133,9 @@ _HFMemFault:
     MOV  R12, #FLAG_ADDR_VALID
     .fnend
 
-    .type osHFExcCommonBMU, %function
-    .global osHFExcCommonBMU
-osHFExcCommonBMU:
+    .type OsHFExcCommonBMU, %function
+    .global OsHFExcCommonBMU
+OsHFExcCommonBMU:
     .fnstart
     .cantunwind
     CLZ  R2, R2
@@ -144,66 +144,66 @@ osHFExcCommonBMU:
     LDRB R2, [R3]
     ORR  R0, R0, R2, LSL #0x8
     ORR  R0, R0 ,R12
-    B    osExcDispatch
+    B    OsExcDispatch
     .fnend
 
-    .type HalExcBusFault, %function
-    .global HalExcBusFault
-HalExcBusFault:
+    .type OsExcBusFault, %function
+    .global OsExcBusFault
+OsExcBusFault:
     .fnstart
     .cantunwind
     LDR  R0, =OS_NVIC_FSR
     LDR  R0, [R0]
 
     TST  R0, #0x8000  // BFARVALID
-    BEQ  _ExcBusNoADDR
+    BEQ  ExcBusNoADDR
     LDR  R1, =OS_NVIC_BFAR
     LDR  R1, [R1]
     MOV  R12, #FLAG_ADDR_VALID
     AND  R0, R0, #0x1F00
 
-    B    osExcCommonBMU
+    B    OsExcCommonBMU
     .fnend
 
-    .type _ExcBusNoADDR, %function
-    .global _ExcBusNoADDR
-_ExcBusNoADDR:
+    .type ExcBusNoADDR, %function
+    .global ExcBusNoADDR
+ExcBusNoADDR:
     .fnstart
     .cantunwind
     MOV  R12,#0
-    B    osExcCommonBMU
+    B    OsExcCommonBMU
     .fnend
 
-    .type HalExcMemFault, %function
-    .global HalExcMemFault
-HalExcMemFault:
+    .type OsExcMemFault, %function
+    .global OsExcMemFault
+OsExcMemFault:
     .fnstart
     .cantunwind
     LDR  R0, =OS_NVIC_FSR
     LDR  R0, [R0]
 
     TST  R0, #0x80 // MMARVALID
-    BEQ  _ExcMemNoADDR
+    BEQ  ExcMemNoADDR
     LDR  R1, =OS_NVIC_MMAR
     LDR  R1, [R1]
     MOV  R12, #FLAG_ADDR_VALID
     AND  R0, R0, #0x1B
 
-    B    osExcCommonBMU
+    B    OsExcCommonBMU
     .fnend
 
-    .type _ExcMemNoADDR, %function
-    .global _ExcMemNoADDR
-_ExcMemNoADDR:
+    .type ExcMemNoADDR, %function
+    .global ExcMemNoADDR
+ExcMemNoADDR:
     .fnstart
     .cantunwind
     MOV  R12,#0
-    B    osExcCommonBMU
+    B    OsExcCommonBMU
     .fnend
 
-    .type HalExcUsageFault, %function
-    .global HalExcUsageFault
-HalExcUsageFault:
+    .type OsExcUsageFault, %function
+    .global OsExcUsageFault
+OsExcUsageFault:
     .fnstart
     .cantunwind
     LDR  R0, =OS_NVIC_FSR
@@ -216,9 +216,9 @@ HalExcUsageFault:
 
     .fnend
 
-    .type osExcCommonBMU, %function
-    .global osExcCommonBMU
-osExcCommonBMU:
+    .type OsExcCommonBMU, %function
+    .global OsExcCommonBMU
+OsExcCommonBMU:
     .fnstart
     .cantunwind
     CLZ  R0, R0
@@ -229,23 +229,23 @@ osExcCommonBMU:
     .fnend
 // R0 -- EXCCAUSE(bit 16 is 1 if EXCADDR valid),  R1 -- EXCADDR
 
-    .type osExcDispatch, %function
-    .global osExcDispatch
-osExcDispatch:
+    .type OsExcDispatch, %function
+    .global OsExcDispatch
+OsExcDispatch:
     .fnstart
     .cantunwind
     LDR   R2, =OS_NVIC_ACT_BASE
     MOV   R12, #8                       // R12 is hwi check loop counter
     .fnend
 
-    .type _hwiActiveCheck, %function
-    .global _hwiActiveCheck
-_hwiActiveCheck:
+    .type HwiActiveCheck, %function
+    .global HwiActiveCheck
+HwiActiveCheck:
     .fnstart
     .cantunwind
     LDR   R3, [R2]                      // R3 store active hwi register when exc
     CMP   R3, #0
-    BEQ   _hwiActiveCheckNext
+    BEQ   HwiActiveCheckNext
 
     // exc occured in IRQ
     ORR   R0, R0, #FLAG_HWI_ACTIVE
@@ -255,24 +255,24 @@ _hwiActiveCheck:
     ADD   R2, R2, R12, LSL #5               // calculate R2 (hwi number) as pid
     .fnend
 
-    .type _ExcInMSP, %function
-    .global _ExcInMSP
-_ExcInMSP:
+    .type ExcInMSP, %function
+    .global ExcInMSP
+ExcInMSP:
     .fnstart
     .cantunwind
     CMP   LR, #0xFFFFFFE9
-    BNE   _NoFloatInMsp
+    BNE   NoFloatInMsp
     ADD   R3, R13, #104
     PUSH  {R3}
     MRS   R12, PRIMASK                  // store message-->exc: disable int?
     PUSH {R4-R12}                       // store message-->exc: {R4-R12}
     VPUSH {D8-D15}
-    B     _handleEntry
+    B     HandleEntry
   .fnend
 
-    .type _NoFloatInMsp, %function
-    .global _NoFloatInMsp
-_NoFloatInMsp:
+    .type NoFloatInMsp, %function
+    .global NoFloatInMsp
+NoFloatInMsp:
     .fnstart
     .cantunwind
     ADD   R3, R13, #32
@@ -281,17 +281,17 @@ _NoFloatInMsp:
     MRS   R12, PRIMASK                  // store message-->exc: disable int?
     PUSH {R4-R12}                       // store message-->exc: {R4-R12}
     ORR   R0, R0, #FLAG_NO_FLOAT
-    B     _handleEntry
+    B     HandleEntry
   .fnend
 
-    .type _hwiActiveCheckNext, %function
-    .global _hwiActiveCheckNext
-_hwiActiveCheckNext:
+    .type HwiActiveCheckNext, %function
+    .global HwiActiveCheckNext
+HwiActiveCheckNext:
     .fnstart
     .cantunwind
     ADD   R2, R2, #4                        // next NVIC ACT ADDR
     SUBS  R12, R12, #1
-    BNE   _hwiActiveCheck
+    BNE   HwiActiveCheck
 
     /*NMI interrupt excption*/
     LDR   R2, =OS_NVIC_SHCSRS
@@ -299,18 +299,18 @@ _hwiActiveCheckNext:
     LDR   R3,=OS_NVIC_SHCSR_MASK
     AND   R2, R2,R3
     CMP   R2,#0
-    BNE   _ExcInMSP
+    BNE   ExcInMSP
     // exc occured in Task or Init or exc
     // reserved for register info from task stack
 
     LDR  R2, =g_taskScheduled
     LDR  R2, [R2]
     TST  R2, #1                         // OS_FLG_BGD_ACTIVE
-    BEQ  _ExcInMSP                      // if exc occured in Init then branch
+    BEQ  ExcInMSP                      // if exc occured in Init then branch
 
 
     CMP   LR, #0xFFFFFFED               //auto push floating registers
-    BNE   _NoFloatInPsp
+    BNE   NoFloatInPsp
 
     // exc occured in Task
     MOV   R2,  R13
@@ -330,12 +330,12 @@ _hwiActiveCheckNext:
     VLDMIA  R3!, {D8-D15}
     VSTMDB  R2!, {D8-D15}
     STMFD R2!, {R4-R11}
-    B     _handleEntry
+    B     HandleEntry
   .fnend
 
-    .type _NoFloatInPsp, %function
-    .global _NoFloatInPsp
-_NoFloatInPsp:
+    .type NoFloatInPsp, %function
+    .global NoFloatInPsp
+NoFloatInPsp:
     .fnstart
     .cantunwind
     MOV   R2,  R13                      // no auto push floating registers
@@ -353,15 +353,15 @@ _NoFloatInPsp:
     ORR   R0, R0, #FLAG_NO_FLOAT
   .fnend
 
-    .type _handleEntry, %function
-    .global _handleEntry
-_handleEntry:
+    .type HandleEntry, %function
+    .global HandleEntry
+HandleEntry:
     .fnstart
     .cantunwind
     MOV R3, R13                         // R13:the 4th param
     CPSID I
     CPSID F
-    B  HalExcHandleEntry
+    B  OsExcHandleEntry
 
     NOP
   .fnend

@@ -532,7 +532,7 @@ LITE_OS_SEC_TEXT STATIC VOID OsTaskStackProtect(VOID)
     STATIC INT32 id = -1;
 
     if (id == -1) {
-        id = HalMpuUnusedRegionGet();
+        id = ArchMpuUnusedRegionGet();
         if (id < 0) {
             PRINT_ERR("%s %d, get unused id failed!\n", __FUNCTION__, __LINE__);
             return;
@@ -546,10 +546,10 @@ LITE_OS_SEC_TEXT STATIC VOID OsTaskStackProtect(VOID)
     mpuAttr.shareability = MPU_NO_SHARE;
     mpuAttr.permission = MPU_RO_BY_PRIVILEGED_ONLY;
 
-    HalMpuDisable();
-    (VOID)HalMpuDisableRegion(id);
-    (VOID)HalMpuSetRegion(id, &mpuAttr);
-    HalMpuEnable(1);
+    ArchMpuDisable();
+    (VOID)ArchMpuDisableRegion(id);
+    (VOID)ArchMpuSetRegion(id, &mpuAttr);
+    ArchMpuEnable(1);
 }
 #endif
 #endif
@@ -688,7 +688,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsNewTaskInit(LosTaskCB *taskCB, TSK_INIT_PARAM_S *
     taskCB->eventMask       = 0;
     taskCB->taskName        = taskInitParam->pcName;
     taskCB->msg             = NULL;
-    taskCB->stackPointer    = HalTskStackInit(taskCB->taskID, taskInitParam->uwStackSize, topOfStack);
+    taskCB->stackPointer    = OsTskStackInit(taskCB->taskID, taskInitParam->uwStackSize, topOfStack);
     SET_SORTLIST_VALUE(&taskCB->sortList, OS_SORT_LINK_INVALID_TIME);
     LOS_EventInit(&(taskCB->event));
 

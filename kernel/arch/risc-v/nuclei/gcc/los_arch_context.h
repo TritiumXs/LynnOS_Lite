@@ -82,7 +82,7 @@ typedef struct {
     STACK_TYPE mstatus;    /*              - machine status register             */
 } TaskContext;
 
-extern VOID HalStartToRun(VOID);
+extern VOID OsStartToRun(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

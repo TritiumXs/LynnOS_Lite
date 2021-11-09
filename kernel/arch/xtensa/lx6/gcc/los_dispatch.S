@@ -35,9 +35,9 @@
 .section .text
 .literal_position
 .align      4
-.type HalTaskContextSwitch, %function
-.global HalTaskContextSwitch
-HalTaskContextSwitch:
+.type OsTaskContextSwitch, %function
+.global OsTaskContextSwitch
+OsTaskContextSwitch:
 
     entry   sp, 16
     addi    a2, sp, -CONTEXT_SIZE
@@ -91,9 +91,9 @@ HakSpillWindow:
 
     retw
 
-.type OsStartToRun, %function
-.global OsStartToRun
-OsStartToRun:
+.type ArchStartToRun, %function
+.global ArchStartToRun
+ArchStartToRun:
 
     movi    a2, g_losTask
     l32i    a3, a2, 4   /* get new task */
