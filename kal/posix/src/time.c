@@ -589,7 +589,7 @@ time_t mktime(struct tm *tmptr)
     return timeInSeconds;
 }
 
-int gettimeofday(struct timeval *tv, void *ptz)
+__attribute__((weak)) int gettimeofday(struct timeval *tv, void *ptz)
 {
     struct timespec ts;
     struct timezone *tz = (struct timezone *)ptz;
