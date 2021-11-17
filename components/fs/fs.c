@@ -45,6 +45,12 @@
 #include "sys/stat.h"
 #include "unistd.h"
 
+#ifdef __GNUC__
+#define WRAP(x) __wrap_##x
+#else
+#define WRAP(x) x
+#endif
+
 #ifdef LOSCFG_NET_LWIP_SACK
 #define _BSD_SOURCE
 #include "lwip/sockets.h"
@@ -188,7 +194,7 @@ static struct FsMap *MountFindfs(const char *fileSystemtype)
     return NULL;
 }
 
-int mount(const char *source, const char *target,
+int WRAP(mount)(const char *source, const char *target,
           const char *filesystemtype, unsigned long mountflags,
           const void *data)
 {
@@ -213,7 +219,7 @@ int mount(const char *source, const char *target,
     return g_fs->fsMops->Mount(source, target, filesystemtype, mountflags, data);
 }
 
-int umount(const char *target)
+int WRAP(umount)(const char *target)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -226,7 +232,7 @@ int umount(const char *target)
     return g_fs->fsMops->Umount(target);
 }
 
-int umount2(const char *target, int flag)
+int WRAP(umount2)(const char *target, int flag)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -239,7 +245,7 @@ int umount2(const char *target, int flag)
     return g_fs->fsMops->Umount2(target, flag);
 }
 
-int open(const char *path, int oflag, ...)
+int WRAP(open)(const char *path, int oflag, ...)
 {
 #ifdef LOSCFG_RANDOM_DEV
     unsigned flags = O_RDONLY | O_WRONLY | O_RDWR | O_APPEND | O_CREAT | O_LARGEFILE | O_TRUNC | O_EXCL | O_DIRECTORY;
@@ -294,7 +300,7 @@ int open(const char *path, int oflag, ...)
     return g_fs->fsFops->Open(path, oflag);
 }
 
-int close(int fd)
+int WRAP(close)(int fd)
 {
 #ifdef LOSCFG_RANDOM_DEV
     if (fd == RANDOM_DEV_FD) {
@@ -317,7 +323,7 @@ int close(int fd)
     return g_fs->fsFops->Close(fd);
 }
 
-ssize_t read(int fd, void *buf, size_t nbyte)
+ssize_t WRAP(read)(int fd, void *buf, size_t nbyte)
 {
 #ifdef LOSCFG_RANDOM_DEV
     if (fd == RANDOM_DEV_FD) {
@@ -355,7 +361,7 @@ ssize_t read(int fd, void *buf, size_t nbyte)
     return g_fs->fsFops->Read(fd, buf, nbyte);
 }
 
-ssize_t write(int fd, const void *buf, size_t nbyte)
+ssize_t WRAP(write)(int fd, const void *buf, size_t nbyte)
 {
 #ifdef LOSCFG_RANDOM_DEV
     if (fd == RANDOM_DEV_FD) {
@@ -379,7 +385,7 @@ ssize_t write(int fd, const void *buf, size_t nbyte)
     return g_fs->fsFops->Write(fd, buf, nbyte);
 }
 
-off_t lseek(int fd, off_t offset, int whence)
+off_t WRAP(lseek)(int fd, off_t offset, int whence)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -392,7 +398,7 @@ off_t lseek(int fd, off_t offset, int whence)
     return g_fs->fsFops->Seek(fd, offset, whence);
 }
 
-int unlink(const char *path)
+int WRAP(unlink)(const char *path)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -405,7 +411,7 @@ int unlink(const char *path)
     return g_fs->fsFops->Unlink(path);
 }
 
-int fstat(int fd, struct stat *buf)
+int WRAP(fstat)(int fd, struct stat *buf)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -418,7 +424,7 @@ int fstat(int fd, struct stat *buf)
     return g_fs->fsFops->Fstat(fd, buf);
 }
 
-int stat(const char *path, struct stat *buf)
+int WRAP(stat)(const char *path, struct stat *buf)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -431,7 +437,7 @@ int stat(const char *path, struct stat *buf)
     return g_fs->fsFops->Getattr(path, buf);
 }
 
-int fsync(int fd)
+int WRAP(fsync)(int fd)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -444,7 +450,7 @@ int fsync(int fd)
     return g_fs->fsFops->Fsync(fd);
 }
 
-int mkdir(const char *path, mode_t mode)
+int WRAP(mkdir)(const char *path, mode_t mode)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -457,7 +463,7 @@ int mkdir(const char *path, mode_t mode)
     return g_fs->fsFops->Mkdir(path, mode);
 }
 
-DIR *opendir(const char *dirName)
+DIR *WRAP(opendir)(const char *dirName)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -470,7 +476,7 @@ DIR *opendir(const char *dirName)
     return g_fs->fsFops->Opendir(dirName);
 }
 
-struct dirent *readdir(DIR *dir)
+struct dirent *WRAP(readdir)(DIR *dir)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -483,7 +489,7 @@ struct dirent *readdir(DIR *dir)
     return g_fs->fsFops->Readdir(dir);
 }
 
-int closedir(DIR *dir)
+int WRAP(closedir)(DIR *dir)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -496,7 +502,7 @@ int closedir(DIR *dir)
     return g_fs->fsFops->Closedir(dir);
 }
 
-int rmdir(const char *path)
+int WRAP(rmdir)(const char *path)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -509,7 +515,7 @@ int rmdir(const char *path)
     return g_fs->fsFops->Rmdir(path);
 }
 
-int rename(const char *oldName, const char *newName)
+int WRAP(rename)(const char *oldName, const char *newName)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -522,7 +528,7 @@ int rename(const char *oldName, const char *newName)
     return g_fs->fsFops->Rename(oldName, newName);
 }
 
-int statfs(const char *path, struct statfs *buf)
+int WRAP(statfs)(const char *path, struct statfs *buf)
 {
     if (g_fs == NULL) {
         errno = ENODEV;
@@ -535,7 +541,7 @@ int statfs(const char *path, struct statfs *buf)
     return g_fs->fsMops->Statfs(path, buf);
 }
 
-int ftruncate(int fd, off_t length)
+int WRAP(ftruncate)(int fd, off_t length)
 {
     if (g_fs == NULL) {
         errno = ENODEV;

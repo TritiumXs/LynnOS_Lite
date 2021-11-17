@@ -278,42 +278,42 @@ group("kernel") {
 group("liteos_m") {
 }
 
-executable("liteos") {
-  configs += [
-    ":public",
-    ":los_config",
-  ]
-
-  ldflags = [
-    "-static",
-    "-Wl,--gc-sections",
-    "-Wl,-Map=$liteos_name.map",
-  ]
-
-  output_dir = target_out_dir
-
-  if (liteos_kernel_only) {
-    deps = [ ":kernel" ]
-  } else {
-    deps = [ "//build/lite:ohos" ]
-  }
-}
-
-copy("copy_liteos") {
-  deps = [ ":liteos" ]
-  sources = [ "$target_out_dir/unstripped/bin/liteos" ]
-  outputs = [ "$root_out_dir/$liteos_name" ]
-}
-
-build_ext_component("build_kernel_image") {
-  deps = [ ":copy_liteos" ]
-  exec_path = rebase_path(root_out_dir)
-
-  objcopy = "${compile_prefix}objcopy$toolchain_cmd_suffix"
-  objdump = "${compile_prefix}objdump$toolchain_cmd_suffix"
-
-  command = "$objcopy -O binary $liteos_name $liteos_name.bin"
-  command +=
-      " && sh -c '$objdump -t $liteos_name | sort >$liteos_name.sym.sorted'"
-  command += " && sh -c '$objdump -d $liteos_name >$liteos_name.asm'"
-}
+# executable("liteos") {
+#   configs += [
+#     ":public",
+#     ":los_config",
+#   ]
+# 
+#   ldflags = [
+#     "-static",
+#     "-Wl,--gc-sections",
+#     "-Wl,-Map=$liteos_name.map",
+#   ]
+# 
+#   output_dir = target_out_dir
+# 
+#   if (liteos_kernel_only) {
+#     deps = [ ":kernel" ]
+#   } else {
+#     deps = [ "//build/lite:ohos" ]
+#   }
+# }
+# 
+# copy("copy_liteos") {
+#   deps = [ ":liteos" ]
+#   sources = [ "$target_out_dir/unstripped/bin/liteos" ]
+#   outputs = [ "$root_out_dir/$liteos_name" ]
+# }
+# 
+# build_ext_component("build_kernel_image") {
+#   deps = [ ":copy_liteos" ]
+#   exec_path = rebase_path(root_out_dir)
+# 
+#   objcopy = "${compile_prefix}objcopy$toolchain_cmd_suffix"
+#   objdump = "${compile_prefix}objdump$toolchain_cmd_suffix"
+# 
+#   command = "$objcopy -O binary $liteos_name $liteos_name.bin"
+#   command +=
+#       " && sh -c '$objdump -t $liteos_name | sort >$liteos_name.sym.sorted'"
+#   command += " && sh -c '$objdump -d $liteos_name >$liteos_name.asm'"
+# }
