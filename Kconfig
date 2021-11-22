@@ -217,6 +217,14 @@ endmenu
 ######################### config options of kernel #####################
 menu "Kernel"
 
+######################### config options of memory #####################
+
+config MEM_FREE_BY_TASKID
+    bool "Enable Free By Task ID"
+    default n
+    help
+      Answer Y to enable LiteOS support free by task id.
+
 ######################### config options of extended #####################
 
 config KERNEL_EXTKERNEL
@@ -351,6 +359,16 @@ config PLATFORM_EXC
     default n
     depends on KERNEL_EXTKERNEL
     select DEBUG_HOOK
+
+config KERNEL_LMK
+    bool "Enable Low Memory Killer"
+    default n
+    depends on KERNEL_EXTKERNEL
+    select MEM_FREE_BY_TASKID
+
+    help
+      Configuration item for low momery killer tailoring.
+      If you wish to build LiteOS with support for low memory killer.
 
 ######################### config options of trace #########################
 source "components/trace/Kconfig"

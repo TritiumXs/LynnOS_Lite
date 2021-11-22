@@ -47,6 +47,9 @@
 #if (LOSCFG_KERNEL_PM == 1)
 #include "los_pm.h"
 #endif
+#if (LOSCFG_KERNEL_LMK == 1)
+#include "los_lmk.h"
+#endif
 
 /**
  * @ingroup los_task
@@ -145,6 +148,11 @@ STATIC VOID OsRecycleTaskResources(LosTaskCB *taskCB, UINTPTR *stackPtr)
 #endif
         taskCB->topOfStack = (UINT32)NULL;
     }
+#if (LOSCFG_KERNEL_LMK == 1)
+     if (taskCB->taskID == g_losLmkOps.highMemTaskId){
+         g_losLmkOps.restore();
+     }
+#endif
 }
 
 STATIC VOID OsRecyleFinishedTask(VOID)
@@ -696,6 +704,13 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsNewTaskInit(LosTaskCB *taskCB, TSK_INIT_PARAM_S *
         taskCB->taskStatus |= OS_TASK_FLAG_JOINABLE;
         LOS_ListInit(&taskCB->joinList);
     }
+
+#if (LOSCFG_KERNEL_LMK == 1)
+    if (taskInitParam->uwResved & LOS_TASK_ATTR_KILLABLE) {
+        LOS_ListAdd(&g_losLmkOps.killableTaskList, &taskCB->pendList);
+    }
+#endif
+
     return LOS_OK;
 }
 

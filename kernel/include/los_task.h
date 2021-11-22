@@ -460,6 +460,12 @@ typedef struct tagTskInitParam {
 
 /**
  * @ingroup los_task
+ * Task killable attribute.
+ */
+#define LOS_TASK_ATTR_KILLABLE                      0x40000000
+
+/**
+ * @ingroup los_task
  * Task name length
  */
 #define LOS_TASK_NAMELEN                            32

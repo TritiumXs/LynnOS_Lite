@@ -37,7 +37,9 @@
 #include "los_hook.h"
 #include "los_interrupt.h"
 #include "los_task.h"
-
+#if (LOSCFG_KERNEL_LMK == 1)
+#include "los_lmk.h"
+#endif
 
 /* Used to cut non-essential functions. */
 #define OS_MEM_EXPAND_ENABLE    0
@@ -1016,7 +1018,7 @@ STATIC INLINE VOID *OsMemAlloc(struct OsMemPoolHead *pool, UINT32 size, UINT32 i
 #endif
 
     UINT32 allocSize = OS_MEM_ALIGN(size + OS_MEM_NODE_HEAD_SIZE, OS_MEM_ALIGN_SIZE);
-#if OS_MEM_EXPAND_ENABLE
+#if OS_MEM_EXPAND_ENABLE || (LOSCFG_KERNEL_LMK == 1)
 retry:
 #endif
     allocNode = OsMemFreeNodeGet(pool, allocSize);
@@ -1025,6 +1027,14 @@ retry:
         if (pool->info.attr & OS_MEM_POOL_EXPAND_ENABLE) {
             INT32 ret = OsMemPoolExpand(pool, allocSize, intSave);
             if (ret == 0) {
+                goto retry;
+            }
+        }
+#endif
+#if (LOSCFG_KERNEL_LMK == 1)
+        if (!LOS_ListEmpty(&g_losLmkOps.killableTaskList)) {
+            UINT32 ret = g_losLmkOps.release();
+            if (ret == LOS_OK) {
                 goto retry;
             }
         }
