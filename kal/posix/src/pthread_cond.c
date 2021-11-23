@@ -194,8 +194,7 @@ int pthread_cond_signal(pthread_cond_t *cond)
     if (cond->count > 0) {
         cond->count--;
         (VOID)pthread_mutex_unlock(cond->mutex);
-        // This should modify to once.
-        (VOID)LOS_EventWrite(&(cond->event), BROADCAST_EVENT);
+        (VOID)OsEventWriteOnce(&(cond->event), BROADCAST_EVENT);
 
         return ret;
     }
