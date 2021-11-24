@@ -141,9 +141,12 @@ osStatus_t osKernelStart(void)
         return osError;
     }
 
-    g_kernelState = osKernelRunning;
-    LOS_Start();
-    return osOK;
+    if (LOS_Start() == LOS_OK) {
+        g_kernelState = osKernelRunning;
+        return osOK;
+    } else {
+        return osError;
+    }
 }
 
 
