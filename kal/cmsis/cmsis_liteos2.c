@@ -447,6 +447,7 @@ osStatus_t osThreadSetPriority(osThreadId_t thread_id, osPriority_t priority)
 
         default:
             return osOK;
+    }
 }
 
 
@@ -845,7 +846,7 @@ osEventFlagsId_t osEventFlagsNew(const osEventFlagsAttr_t *attr)
     if (uwRet == LOS_OK) {
         return (osEventFlagsId_t)pstEventCB;
     } else {
-        if (LOS_MemFree(m_aucSysMem0, eventCB) != LOS_OK) {
+        if (LOS_MemFree(m_aucSysMem0, pstEventCB) != LOS_OK) {
             PRINT_ERR("[%s] memory free fail!\n", __func__);
         }
         return NULL;
@@ -980,7 +981,7 @@ osStatus_t osEventFlagsDelete(osEventFlagsId_t ef_id)
         uwRet = osOK;
     } else {
         uwRet = osErrorParameter;
-
+    }
     LOS_IntRestore(intSave);
 
     if (LOS_MemFree(m_aucSysMem0, (void *)pstEventCB) == LOS_OK) {
