@@ -436,13 +436,17 @@ osStatus_t osThreadSetPriority(osThreadId_t thread_id, osPriority_t priority)
 
     pstTaskCB = (LosTaskCB *)thread_id;
     uwRet = LOS_TaskPriSet(pstTaskCB->taskID, usPriority);
-    if (uwRet == LOS_OK) {
-        return osOK;
-    } else if ((uwRet == LOS_ERRNO_TSK_ID_INVALID) || (uwRet == LOS_ERRNO_TSK_PRIOR_ERROR)) {
-        return osErrorParameter;
-    } else {
-        return osErrorResource;
-    }
+    switch (uwRet) {
+        case LOS_ERRNO_TSK_PRIOR_ERROR:
+        case LOS_ERRNO_TSK_OPERATE_IDLE:
+        case LOS_ERRNO_TSK_ID_INVALID:
+            return osErrorParameter;
+
+        case LOS_ERRNO_TSK_NOT_CREATED:
+            return osErrorResource;
+
+        default:
+            return osOK;
 }
 
 
@@ -851,7 +855,9 @@ osEventFlagsId_t osEventFlagsNew(const osEventFlagsAttr_t *attr)
 
 const char *osEventFlagsGetName(osEventFlagsId_t ef_id)
 {
-    (VOID)ef_id;
+    if (OS_INT_ACTIVE) {
+        return NULL;
+    }
     return NULL;
 }
 
@@ -963,26 +969,27 @@ uint32_t osEventFlagsWait(osEventFlagsId_t ef_id, uint32_t flags, uint32_t optio
 
 osStatus_t osEventFlagsDelete(osEventFlagsId_t ef_id)
 {
-    PEVENT_CB_S eventCB = (PEVENT_CB_S)ef_id;
-    UINT32 ret;
-
+    PEVENT_CB_S pstEventCB = (PEVENT_CB_S)ef_id;
+    UINT32 intSave;
+    osStatus_t uwRet;
     if (OS_INT_ACTIVE) {
         return osErrorISR;
     }
-
-    ret = LOS_EventDestroy(eventCB);
-    if (ret == LOS_OK) {
-        if (LOS_MemFree(m_aucSysMem0, (VOID *)eventCB) == LOS_OK) {
-            return osOK;
-        } else {
-            PRINT_ERR("[%s] memory free fail!\n", __func__);
-            return osErrorResource;
-        }
-    } else if (ret == LOS_ERRNO_EVENT_PTR_NULL) {
-        return osErrorParameter;
+    intSave = LOS_IntLock();
+    if (LOS_EventDestroy(pstEventCB) == LOS_OK) {
+        uwRet = osOK;
     } else {
-        return osErrorResource;
+        uwRet = osErrorParameter;
+
+    LOS_IntRestore(intSave);
+
+    if (LOS_MemFree(m_aucSysMem0, (void *)pstEventCB) == LOS_OK) {
+        uwRet = osOK;
+    } else {
+        uwRet = osErrorParameter;
     }
+
+    return uwRet;
 }
 
 //  ==== Mutex Management Functions ====
@@ -1317,15 +1324,12 @@ uint32_t osMessageQueueGetMsgSize(osMessageQueueId_t mq_id)
 uint32_t osMessageQueueGetCount(osMessageQueueId_t mq_id)
 {
     uint32_t count;
-    UINT32 intSave;
     LosQueueCB *pstQueue = (LosQueueCB *)mq_id;
 
     if (pstQueue == NULL) {
         count = 0U;
     } else {
-        intSave = LOS_IntLock();
         count = (uint32_t)(pstQueue->readWriteableCnt[OS_QUEUE_READ]);
-        LOS_IntRestore(intSave);
     }
     return count;
 }
@@ -1334,15 +1338,12 @@ uint32_t osMessageQueueGetCount(osMessageQueueId_t mq_id)
 uint32_t osMessageQueueGetSpace(osMessageQueueId_t mq_id)
 {
     uint32_t space;
-    UINT32 intSave;
     LosQueueCB *pstQueue = (LosQueueCB *)mq_id;
 
     if (pstQueue == NULL) {
         space = 0U;
     } else {
-        intSave = LOS_IntLock();
         space = (uint32_t)pstQueue->readWriteableCnt[OS_QUEUE_WRITE];
-        LOS_IntRestore(intSave);
     }
     return space;
 }
