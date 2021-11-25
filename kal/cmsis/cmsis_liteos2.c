@@ -240,7 +240,7 @@ uint32_t osKernelGetTickFreq(void)
 
 uint32_t osKernelGetSysTimerCount(void)
 {
-    return (uint32_t)LOS_SysCycleGet;
+    return (uint32_t)LOS_SysCycleGet();
 }
 
 
@@ -438,7 +438,7 @@ osStatus_t osThreadSetPriority(osThreadId_t thread_id, osPriority_t priority)
     uwRet = LOS_TaskPriSet(pstTaskCB->taskID, usPriority);
     switch (uwRet) {
         case LOS_ERRNO_TSK_PRIOR_ERROR:
-        case LOS_ERRNO_TSK_OPERATE_IDLE:
+        case LOS_ERRNO_TSK_OPERATE_SYSTEM_TASK:
         case LOS_ERRNO_TSK_ID_INVALID:
             return osErrorParameter;
 
@@ -698,7 +698,7 @@ osStatus_t osDelayUntil(uint32_t ticks)
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
 osTimerId_t osTimerNew(osTimerFunc_t func, osTimerType_t type, void *argument, const osTimerAttr_t *attr)
 {
-    (VOID)attr;
+    UNUSED(attr);
     UINT32 swtmrId;
     UINT8 mode;
 
@@ -1136,7 +1136,7 @@ osSemaphoreId_t osSemaphoreNew(uint32_t max_count, uint32_t initial_count, const
 
 const char *osSemaphoreGetName(osSemaphoreId_t semaphore_id)
 {
-    (VOID)semaphore_id;
+    UNUSED(semaphore_id);
     return NULL;
 }
 
@@ -1281,14 +1281,14 @@ STATIC osStatus_t osMessageQueueOp(osMessageQueueId_t mq_id, VOID *msg_ptr, UINT
 
 osStatus_t osMessageQueuePut(osMessageQueueId_t mq_id, const void *msg_ptr, uint8_t msg_prio, uint32_t timeout)
 {
-    (VOID)msg_prio;
+    UNUSED(msg_prio);
     return osMessageQueueOp(mq_id, (VOID *)msg_ptr, (UINT32)timeout, OS_QUEUE_WRITE);
 }
 
 
 osStatus_t osMessageQueueGet(osMessageQueueId_t mq_id, void *msg_ptr, uint8_t *msg_prio, uint32_t timeout)
 {
-    (VOID)msg_prio;
+    UNUSED(msg_prio);
     return osMessageQueueOp(mq_id, (VOID *)msg_ptr, (UINT32)timeout, OS_QUEUE_READ);
 }
 
@@ -1374,7 +1374,7 @@ osStatus_t osMessageQueueDelete(osMessageQueueId_t mq_id)
 
 const char *osMessageQueueGetName(osMessageQueueId_t mq_id)
 {
-    (VOID)mq_id;
+    UNUSED(mq_id);
     return NULL;
 }
 #endif
