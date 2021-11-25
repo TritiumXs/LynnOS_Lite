@@ -47,6 +47,12 @@ extern "C" {
 
 /**
  * @ingroup los_sem
+ * Max count of counting semaphores
+ */
+#define LOS_SEM_COUNT_MAX  0xFFFE
+
+/**
+ * @ingroup los_sem
  * Semaphore error code: The memory is insufficient.
  *
  * Value: 0x02000700
