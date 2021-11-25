@@ -45,7 +45,8 @@ extern "C" {
  * @brief Atomic exchange for 32-bit variable.
  *
  * @par Description:
- * This API is used to implement the atomic exchange for 32-bit variable and return the previous value of the atomic variable.
+ * This API is used to implement the atomic exchange for 32-bit variable
+ * and return the previous value of the atomic variable.
  * @attention
  * <ul>The pointer v must not be NULL.</ul>
  *
@@ -57,7 +58,7 @@ extern "C" {
  * <ul><li>los_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE INT32 HalAtomicXchg32bits(volatile INT32 *v, INT32 val)
+STATIC INLINE INT32 ArchAtomicXchg32bits(volatile INT32 *v, INT32 val)
 {
     INT32 prevVal = 0;
     UINT32 status = 0;
@@ -92,7 +93,7 @@ STATIC INLINE INT32 HalAtomicXchg32bits(volatile INT32 *v, INT32 val)
  * <ul><li>los_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE INT32 HalAtomicDecRet(volatile INT32 *v)
+STATIC INLINE INT32 ArchAtomicDecRet(volatile INT32 *v)
 {
     INT32 val = 0;
     UINT32 status = 0;
@@ -128,7 +129,7 @@ STATIC INLINE INT32 HalAtomicDecRet(volatile INT32 *v)
  * <ul><li>los_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE BOOL HalAtomicCmpXchg32bits(volatile INT32 *v, INT32 val, INT32 oldVal)
+STATIC INLINE BOOL ArchAtomicCmpXchg32bits(volatile INT32 *v, INT32 val, INT32 oldVal)
 {
     INT32 prevVal = 0;
     UINT32 status = 0;

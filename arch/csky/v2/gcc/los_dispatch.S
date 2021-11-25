@@ -34,9 +34,9 @@
 
 .section .text
 .align  2
-.type HalStartToRun, %function
-.global HalStartToRun
-HalStartToRun:
+.type OsStartToRun, %function
+.global OsStartToRun
+OsStartToRun:
     lrw    r1, g_losTask
     lrw    r2, g_losTask + 4
 
@@ -57,9 +57,9 @@ HalStartToRun:
     rte
 
 .align  2
-.type HalTaskContextSwitch, %function
-.global HalTaskContextSwitch
-HalTaskContextSwitch:
+.type OsTaskContextSwitch, %function
+.global OsTaskContextSwitch
+OsTaskContextSwitch:
 
     subi   sp, 68
     stm    r0-r13, (sp)

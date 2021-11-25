@@ -31,12 +31,12 @@
 
     PRESERVE8
 
-    EXPORT  HalIntLock
-    EXPORT  HalIntUnLock
-    EXPORT  HalIntRestore
-    EXPORT  HalStartToRun
-    EXPORT  HalTaskSchedule
-    EXPORT  HalPendSV
+    EXPORT  ArchIntLock
+    EXPORT  ArchIntUnLock
+    EXPORT  ArchIntRestore
+    EXPORT  OsStartToRun
+    EXPORT  OsTaskSchedule
+    EXPORT  OsPendSV
     IMPORT  OsSchedTaskSwitch
     IMPORT  g_losTask
 
@@ -52,7 +52,7 @@ OS_TASK_STATUS_RUNNING      EQU     0x0010
     THUMB
     REQUIRE8
 
-HalStartToRun
+OsStartToRun
     LDR     R4, =OS_NVIC_SYSPRI2
     LDR     R5, =OS_NVIC_PENDSV_PRI
     STR     R5, [R4]
@@ -68,7 +68,7 @@ HalStartToRun
     LDR     R1, [R1]
     AND     R1, R1, #OS_FPU_CPACR_ENABLE
     CMP     R1, #OS_FPU_CPACR_ENABLE
-    BNE     __DisabledFPU
+    BNE     DisabledFPU
     ADD     R12, R12, #100
 
     LDMFD   R12!, {R0-R7}
@@ -80,7 +80,7 @@ HalStartToRun
     CPSIE   I
     BX      R6
 
-__DisabledFPU
+DisabledFPU
     ADD     R12, R12, #36
 
     LDMFD   R12!, {R0-R7}
@@ -90,21 +90,21 @@ __DisabledFPU
     BX      R6
 
 
-HalIntLock
+ArchIntLock
     MRS     R0, PRIMASK
     CPSID   I
     BX      LR
 
-HalIntUnLock
+ArchIntUnLock
     MRS     R0, PRIMASK
     CPSIE   I
     BX      LR
 
-HalIntRestore
+ArchIntRestore
     MSR     PRIMASK, R0
     BX      LR
 
-HalTaskSchedule
+OsTaskSchedule
     LDR     R0, =OS_NVIC_INT_CTRL
     LDR     R1, =OS_NVIC_PENDSVSET
     STR     R1, [R0]
@@ -112,11 +112,11 @@ HalTaskSchedule
     ISB
     BX      LR
 
-HalPendSV
+OsPendSV
     MRS     R12, PRIMASK
     CPSID   I
 
-HalTaskSwitch
+OsTaskSwitch
     PUSH    {R12, LR}
     BLX     OsSchedTaskSwitch
     POP     {R12, LR}
@@ -135,10 +135,10 @@ TaskContextSwitch
     LDR     R3, [R3]
     AND     R3, R3, #OS_FPU_CPACR_ENABLE
     CMP     R3, #OS_FPU_CPACR_ENABLE
-    BNE     __DisabledFPU1
+    BNE     DisabledFPU1
     VSTMDB  R0!, {D8-D15}
 
-__DisabledFPU1
+DisabledFPU1
     LDR     R5, =g_losTask
     LDR     R6, [R5]
     STR     R0, [R6]
@@ -149,10 +149,10 @@ __DisabledFPU1
     LDR     R1, [R0]
     AND     R3, R3, #OS_FPU_CPACR_ENABLE
     CMP     R3, #OS_FPU_CPACR_ENABLE
-    BNE     __DisabledFPU2
+    BNE     DisabledFPU2
     VLDMIA  R1!, {D8-D15}
 
-__DisabledFPU2
+DisabledFPU2
     LDMFD   R1!, {R4-R12}
     MSR     PSP,  R1
 

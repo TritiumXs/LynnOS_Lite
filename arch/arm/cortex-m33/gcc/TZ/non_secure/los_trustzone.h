@@ -48,7 +48,7 @@ extern VOID HalStartFirstTask(VOID);
 extern VOID HalSVCStartSchedule(VOID);
 extern VOID HalSVCSecureContextAlloc(UINT32 secureStackSize);
 extern VOID HalSVCSecureContextFree(VOID);
-extern VOID HalSVCHandler(VOID);
+extern VOID OsSVCHandler(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

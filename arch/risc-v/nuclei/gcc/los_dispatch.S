@@ -41,25 +41,25 @@
     .section .text
     .align 4
 
-    .type HalIntLock, %function
-    .global HalIntLock
-HalIntLock:
+    .type ArchIntLock, %function
+    .global ArchIntLock
+ArchIntLock:
     csrr    a0, mstatus           // return value
     li      t0, MSTATUS_MIE   // mie
     csrrc   zero, mstatus, t0
     ret
 
-    .type HalIntUnLock, %function
-    .global HalIntUnLock
-HalIntUnLock:
+    .type ArchIntUnLock, %function
+    .global ArchIntUnLock
+ArchIntUnLock:
     csrr    a0, mstatus           // return value
     li      t0, MSTATUS_MIE   // mie
     csrrs   zero, mstatus, t0
     ret
 
-    .type HalIntRestore, %function
-    .global HalIntRestore
-HalIntRestore:
+    .type ArchIntRestore, %function
+    .global ArchIntRestore
+ArchIntRestore:
     csrw mstatus, a0
     ret
 
@@ -68,10 +68,10 @@ HalIntRestore:
     in use in case the FPU was used before the scheduler was started - which
     would otherwise result in the unnecessary leaving of space in the stack
     for lazy saving of FPU registers. */
-    .type HalStartToRun, %function
-    .global HalStartToRun
+    .type OsStartToRun, %function
+    .global OsStartToRun
     .align 3
-HalStartToRun:
+OsStartToRun:
     /* Setup Interrupt Stack using
        The stack that was used by main()
        before the scheduler is started is
@@ -128,7 +128,7 @@ HalStartToRun:
 
     mret
 
-.extern HalTaskSwitch
+.extern OsTaskSwitch
 .align 2
 .global eclic_msip_handler
 eclic_msip_handler:
@@ -178,7 +178,7 @@ eclic_msip_handler:
     STORE t0, 0(sp)
 
     /* Switch task context */
-    jal HalTaskSwitch
+    jal OsTaskSwitch
     /* Load new task */
     la t0, g_losTask
     LOAD t0, 0(t0)

@@ -66,7 +66,7 @@ extern "C" {
  */
 #define OS_HWI_MAX_NUM        (OS_RISCV_VECTOR_CNT-1)
 
-extern VOID HalHwiDefaultHandler(VOID);
+extern VOID ArchHwiDefaultHandler(VOID);
 
 /**
  * @ingroup los_hwi
@@ -166,7 +166,7 @@ extern VOID HalHwiDefaultHandler(VOID);
  *
  * Value: 0x02000909
  *
- * * Solution:check the input params hwiMode and irqParam of HalHwiCreate or HalHwiDelete whether adapt the current
+ * * Solution:check the input params hwiMode and irqParam of ArchHwiCreate or ArchHwiDelete whether adapt the current
  * hwi.
  */
 #define OS_ERRNO_HWI_SHARED_ERROR LOS_ERRNO_OS_ERROR(LOS_MOD_HWI, 0x09)

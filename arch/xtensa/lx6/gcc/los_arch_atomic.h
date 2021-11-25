@@ -57,7 +57,7 @@ extern "C" {
  * <ul><li>los_arch_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE INT32 HalAtomicXchg32bits(volatile INT32 *v, INT32 val)
+STATIC INLINE INT32 ArchAtomicXchg32bits(volatile INT32 *v, INT32 val)
 {
     UINT32 intSave;
     INT32 prevVal;
@@ -89,15 +89,17 @@ STATIC INLINE INT32 HalAtomicXchg32bits(volatile INT32 *v, INT32 val)
  * <ul><li>los_arch_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE INT32 HalAtomicDecRet(volatile INT32 *v)
+STATIC INLINE INT32 ArchAtomicDecRet(volatile INT32 *v)
 {
+    INT32 val;
     UINT32 intSave;
 
     intSave = LOS_IntLock();
     *v -= 1;
+    val = *v;
     LOS_IntRestore(intSave);
 
-    return intSave;
+    return val;
 }
 
 /**
@@ -119,7 +121,7 @@ STATIC INLINE INT32 HalAtomicDecRet(volatile INT32 *v)
  * <ul><li>los_arch_atomic.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-STATIC INLINE BOOL HalAtomicCmpXchg32bits(volatile INT32 *v, INT32 val, INT32 oldVal)
+STATIC INLINE BOOL ArchAtomicCmpXchg32bits(volatile INT32 *v, INT32 val, INT32 oldVal)
 {
     UINT32 intSave;
     INT32 prevVal;

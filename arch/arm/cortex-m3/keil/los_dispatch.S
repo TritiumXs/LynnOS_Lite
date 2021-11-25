@@ -31,12 +31,12 @@
 
         PRESERVE8
 
-        EXPORT  HalIntLock
-        EXPORT  HalIntUnLock
-        EXPORT  HalIntRestore
-        EXPORT  HalStartToRun
-        EXPORT  HalTaskSchedule
-        EXPORT  HalPendSV
+        EXPORT  ArchIntLock
+        EXPORT  ArchIntUnLock
+        EXPORT  ArchIntRestore
+        EXPORT  OsStartToRun
+        EXPORT  OsTaskSchedule
+        EXPORT  OsPendSV
         IMPORT  OsSchedTaskSwitch
         IMPORT  g_losTask
 
@@ -50,7 +50,7 @@ OS_TASK_STATUS_RUNNING      EQU     0x0010
     THUMB
     REQUIRE8
 
-HalStartToRun
+OsStartToRun
     LDR     R4, =OS_NVIC_SYSPRI2
     LDR     R5, =OS_NVIC_PENDSV_PRI
     STR     R5, [R4]
@@ -77,21 +77,21 @@ HalStartToRun
     BX      R6
 
 
-HalIntLock
+ArchIntLock
     MRS     R0, PRIMASK
     CPSID   I
     BX      LR
 
-HalIntUnLock
+ArchIntUnLock
     MRS     R0, PRIMASK
     CPSIE   I
     BX      LR
 
-HalIntRestore
+ArchIntRestore
     MSR     PRIMASK, R0
     BX      LR
 
-HalTaskSchedule
+OsTaskSchedule
     LDR     R0, =OS_NVIC_INT_CTRL
     LDR     R1, =OS_NVIC_PENDSVSET
     STR     R1, [R0]
@@ -99,11 +99,11 @@ HalTaskSchedule
     ISB
     BX      LR
 
-HalPendSV
+OsPendSV
     MRS     R12, PRIMASK
     CPSID   I
 
-HalTaskSwitch
+OsTaskSwitch
     PUSH    {R12, LR}
     BL      OsSchedTaskSwitch
     POP     {R12, LR}

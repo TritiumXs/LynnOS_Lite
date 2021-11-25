@@ -47,9 +47,9 @@
     .section .text
     .thumb
 
-    .type HalStartToRun, %function
-    .global HalStartToRun
-HalStartToRun:
+    .type OsStartToRun, %function
+    .global OsStartToRun
+OsStartToRun:
     .fnstart
     .cantunwind
 
@@ -68,7 +68,7 @@ HalStartToRun:
     ldr     r1, [r1]
     and     r1, r1, #OS_FPU_CPACR_ENABLE
     cmp     r1, #OS_FPU_CPACR_ENABLE
-    bne     __DisabledFPU
+    bne     DisabledFPU
 
     add     r12, r12, #100
 
@@ -82,7 +82,7 @@ HalStartToRun:
     cpsie   I
     bx      r6
 
-__DisabledFPU:
+DisabledFPU:
     ADD     r12, r12, #36
 
     LDMFD   r12!, {r0-r7}
@@ -94,9 +94,9 @@ __DisabledFPU:
     .fnend
 
 
-    .type HalIntLock, %function
-    .global HalIntLock
-HalIntLock:
+    .type ArchIntLock, %function
+    .global ArchIntLock
+ArchIntLock:
     .fnstart
     .cantunwind
 
@@ -105,9 +105,9 @@ HalIntLock:
     BX LR
     .fnend
 
-    .type HalIntUnLock, %function
-    .global HalIntUnLock
-HalIntUnLock:
+    .type ArchIntUnLock, %function
+    .global ArchIntUnLock
+ArchIntUnLock:
     .fnstart
     .cantunwind
 
@@ -116,9 +116,9 @@ HalIntUnLock:
     BX LR
     .fnend
 
-    .type HalIntRestore, %function
-    .global HalIntRestore
-HalIntRestore:
+    .type ArchIntRestore, %function
+    .global ArchIntRestore
+ArchIntRestore:
     .fnstart
     .cantunwind
 
@@ -126,9 +126,9 @@ HalIntRestore:
     BX LR
     .fnend
 
-    .type HalTaskSchedule, %function
-    .global HalTaskSchedule
-HalTaskSchedule:
+    .type OsTaskSchedule, %function
+    .global OsTaskSchedule
+OsTaskSchedule:
     .fnstart
     .cantunwind
 
@@ -143,16 +143,16 @@ HalTaskSchedule:
 
 
 
-    .type HalPendSV, %function
-    .global HalPendSV
-HalPendSV:
+    .type OsPendSV, %function
+    .global OsPendSV
+OsPendSV:
     .fnstart
     .cantunwind
 
     mrs     r12, PRIMASK
     cpsid   I
 
-HalTaskSwitch:
+OsTaskSwitch:
     push    {r12, lr}
     blx     OsSchedTaskSwitch
     pop     {r12, lr}
@@ -172,10 +172,10 @@ TaskContextSwitch:
     ldr     r3, [r3]
     and     r3, r3, #OS_FPU_CPACR_ENABLE
     cmp     r3, #OS_FPU_CPACR_ENABLE
-    bne     __DisabledFPU1
+    bne     DisabledFPU1
     vstmdb   r0!, {d8-d15}
 
-__DisabledFPU1:
+DisabledFPU1:
     ldr     r5, =g_losTask
     ldr     r6, [r5]
     str     r0, [r6]
@@ -187,10 +187,10 @@ __DisabledFPU1:
 
     and     r3, r3, #OS_FPU_CPACR_ENABLE
     cmp     r3, #OS_FPU_CPACR_ENABLE
-    bne     __DisabledFPU2
+    bne     DisabledFPU2
     VLDMIA  r1!, {d8-d15}
 
-__DisabledFPU2:
+DisabledFPU2:
     ldmfd   r1!, {r4-r12}
     msr     psp,  r1
 

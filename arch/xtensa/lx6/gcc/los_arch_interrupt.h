@@ -213,11 +213,11 @@ extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg);
 extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector);
 #endif
 
-VOID HalInterrupt(VOID);
-UINT32 HalIntNumGet(VOID);
-VOID HalHwiDefaultHandler(VOID);
-VOID HalExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type);
-VOID HalHwiInit(VOID);
+VOID ArchInterrupt(VOID);
+UINT32 ArchHwiNumGet(VOID);
+VOID ArchHwiDefaultHandler(VOID);
+VOID OsExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type);
+VOID ArchHwiInit(VOID);
 
 /**
  * @ingroup los_exc

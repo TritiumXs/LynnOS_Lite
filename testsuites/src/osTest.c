@@ -225,7 +225,7 @@ UINT32 LosAppInit()
 
 VOID TestHwiTrigger(UINT32 hwiNum)
 {
-    HalIrqEnable(hwiNum);
+    ArchIrqEnable(hwiNum);
 }
 
 UINT32 TestHwiDelete(UINT32 hwiNum)
@@ -269,7 +269,7 @@ VOID TestHwiUnTrigger(UINT32 hwiNum)
 
 UINT32 TestHwiDelete(UINT32 hwiNum)
 {
-    UINT32 ret = HalHwiDelete(hwiNum);
+    UINT32 ret = ArchHwiDelete(hwiNum);
     if (ret != LOS_OK) {
         return LOS_NOK;
     }

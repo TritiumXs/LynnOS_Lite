@@ -49,25 +49,26 @@ typedef enum {
     MPU_AP_RO_USER_RO = 0x6,         /* Privileged:Read-only      Unprivileged:Read-only */
 } MpuApConfig;
 
-VOID HalMpuEnable(UINT32 defaultRegionEnable)
+VOID ArchMpuEnable(UINT32 defaultRegionEnable)
 {
-    UINT32 intSave = HalIntLock();
+    UINT32 intSave = ArchIntLock();
     MPU->CTRL = (MPU_CTRL_ENABLE_Msk | ((defaultRegionEnable << MPU_CTRL_PRIVDEFENA_Pos) & MPU_CTRL_PRIVDEFENA_Msk));
     SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk;
     __DSB();
     __ISB();
-    HalIntRestore(intSave);
+    ArchIntRestore(intSave);
 }
-VOID HalMpuDisable(VOID)
+
+VOID ArchMpuDisable(VOID)
 {
-    UINT32 intSave = HalIntLock();
+    UINT32 intSave = ArchIntLock();
     MPU->CTRL = 0;
     __DSB();
     __ISB();
-    HalIntRestore(intSave);
+    ArchIntRestore(intSave);
 }
 
-STATIC VOID HalMpuRASRAddMemAttr(MPU_CFG_PARA *para, UINT32 *RASR)
+STATIC VOID ArchMpuRASRAddMemAttr(MPU_CFG_PARA *para, UINT32 *RASR)
 {
     BOOL cachable = 0;
     BOOL buffable = 0;
@@ -91,7 +92,7 @@ STATIC VOID HalMpuRASRAddMemAttr(MPU_CFG_PARA *para, UINT32 *RASR)
     (*RASR) |= ((cachable << MPU_RASR_C_Pos) | (buffable << MPU_RASR_B_Pos));
 }
 
-STATIC UINT32 HalMpuEncodeSize(UINT64 size)
+STATIC UINT32 ArchMpuEncodeSize(UINT64 size)
 {
     UINT32 encodeSize = 0;
     if (size > SIZE_4G_BYTE) {
@@ -111,7 +112,7 @@ STATIC UINT32 HalMpuEncodeSize(UINT64 size)
     return encodeSize;
 }
 
-STATIC UINT32 HalMpuEncodeAP(MpuAccessPermission permission)
+STATIC UINT32 ArchMpuEncodeAP(MpuAccessPermission permission)
 {
     UINT32 ap;
     switch (permission) {
@@ -134,20 +135,20 @@ STATIC UINT32 HalMpuEncodeAP(MpuAccessPermission permission)
     return ap;
 }
 
-STATIC UINT32 HalMpuGetRASR(UINT32 encodeSize, MPU_CFG_PARA *para)
+STATIC UINT32 ArchMpuGetRASR(UINT32 encodeSize, MPU_CFG_PARA *para)
 {
     UINT32 RASR;
     UINT32 ap;
-    ap = HalMpuEncodeAP(para->permission);
+    ap = ArchMpuEncodeAP(para->permission);
     RASR = MPU_RASR_ENABLE_Msk;
     RASR |= ((encodeSize << MPU_RASR_SIZE_Pos) & MPU_RASR_SIZE_Msk);
     RASR |= ((ap << MPU_RASR_AP_Pos) & MPU_RASR_AP_Msk) | ((para->executable << MPU_RASR_XN_Pos) & MPU_RASR_XN_Msk) |
         ((para->shareability << MPU_RASR_S_Pos) & MPU_RASR_S_Msk);
-    HalMpuRASRAddMemAttr(para, &RASR);
+    ArchMpuRASRAddMemAttr(para, &RASR);
     return RASR;
 }
 
-UINT32 HalMpuSetRegion(UINT32 regionId, MPU_CFG_PARA *para)
+UINT32 ArchMpuSetRegion(UINT32 regionId, MPU_CFG_PARA *para)
 {
     UINT32 RASR;
     UINT32 RBAR;
@@ -165,7 +166,7 @@ UINT32 HalMpuSetRegion(UINT32 regionId, MPU_CFG_PARA *para)
     }
 
     RNR = regionId;
-    encodeSize = HalMpuEncodeSize(para->size);
+    encodeSize = ArchMpuEncodeSize(para->size);
     if (encodeSize == 0) {
         return LOS_NOK;
     }
@@ -174,10 +175,10 @@ UINT32 HalMpuSetRegion(UINT32 regionId, MPU_CFG_PARA *para)
         return LOS_NOK;
     }
     RBAR = para->baseAddr & MPU_RBAR_ADDR_Msk;
-    RASR = HalMpuGetRASR(encodeSize, para);
-    intSave = HalIntLock();
+    RASR = ArchMpuGetRASR(encodeSize, para);
+    intSave = ArchIntLock();
     if (g_regionNumBeUsed[regionId]) {
-        HalIntRestore(intSave);
+        ArchIntRestore(intSave);
         return LOS_NOK;
     }
     MPU->RNR = RNR;
@@ -186,11 +187,11 @@ UINT32 HalMpuSetRegion(UINT32 regionId, MPU_CFG_PARA *para)
     __DSB();
     __ISB();
     g_regionNumBeUsed[regionId] = 1; /* Set mpu region used flag */
-    HalIntRestore(intSave);
+    ArchIntRestore(intSave);
     return LOS_OK;
 }
 
-UINT32 HalMpuDisableRegion(UINT32 regionId)
+UINT32 ArchMpuDisableRegion(UINT32 regionId)
 {
     volatile UINT32 type;
     UINT32 intSave;
@@ -199,9 +200,9 @@ UINT32 HalMpuDisableRegion(UINT32 regionId)
         return LOS_NOK;
     }
 
-    intSave = HalIntLock();
+    intSave = ArchIntLock();
     if (!g_regionNumBeUsed[regionId]) {
-        HalIntRestore(intSave);
+        ArchIntRestore(intSave);
         return LOS_NOK;
     }
 
@@ -213,20 +214,20 @@ UINT32 HalMpuDisableRegion(UINT32 regionId)
         __ISB();
     }
     g_regionNumBeUsed[regionId] = 0; /* clear mpu region used flag */
-    HalIntRestore(intSave);
+    ArchIntRestore(intSave);
     return LOS_OK;
 }
 
-INT32 HalMpuUnusedRegionGet(VOID)
+INT32 ArchMpuUnusedRegionGet(VOID)
 {
     INT32 id;
-    UINT32 intSave = HalIntLock();
+    UINT32 intSave = ArchIntLock();
     for (id = 0; id < MPU_MAX_REGION_NUM; id++) {
         if (!g_regionNumBeUsed[id]) {
             break;
         }
     }
-    HalIntRestore(intSave);
+    ArchIntRestore(intSave);
 
     if (id == MPU_MAX_REGION_NUM) {
         return -1;

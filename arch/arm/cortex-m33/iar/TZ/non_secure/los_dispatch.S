@@ -31,12 +31,12 @@
 
     PRESERVE8
 
-    EXPORT  HalIntLock
-    EXPORT  HalIntUnLock
-    EXPORT  HalIntRestore
-    EXPORT  HalTaskSchedule
-    EXPORT  HalPendSV
-    EXPORT  HalSVCHandler
+    EXPORT  ArchIntLock
+    EXPORT  ArchIntUnLock
+    EXPORT  ArchIntRestore
+    EXPORT  OsTaskSchedule
+    EXPORT  OsPendSV
+    EXPORT  OsSVCHandler
     EXPORT  HalStartFirstTask
     EXPORT  HalSVCStartSchedule
     EXPORT  HalSVCSecureContextAlloc
@@ -80,32 +80,32 @@ HalStartFirstTask
     LDR     R1, [R1]
     AND     R1, R1, #OS_FPU_CPACR_ENABLE
     CMP     R1, #OS_FPU_CPACR_ENABLE
-    BNE     __DisabledFPU1
+    BNE     DisabledFPU1
     ADD     R12, R12, #64
     VPUSH   S0;
     VPOP    S0;
 
-__DisabledFPU1
+DisabledFPU1
     ADD     R12, R12, #36
     MSR     PSP, R12
     CPSIE   I
     BX      R3
 
-HalIntLock
+ArchIntLock
     MRS     R0, PRIMASK
     CPSID   I
     BX      LR
 
-HalIntUnLock
+ArchIntUnLock
     MRS     R0, PRIMASK
     CPSIE   I
     BX      LR
 
-HalIntRestore
+ArchIntRestore
     MSR     PRIMASK, R0
     BX      LR
 
-HalTaskSchedule
+OsTaskSchedule
     LDR     R0, =OS_NVIC_INT_CTRL
     LDR     R1, =OS_NVIC_PENDSVSET
     STR     R1, [R0]
@@ -113,11 +113,11 @@ HalTaskSchedule
     ISB
     BX      LR
 
-HalPendSV
+OsPendSV
     MRS     R12, PRIMASK
     CPSID   I
 
-HalTaskSwitch
+OsTaskSwitch
     PUSH    {R12, LR}
     BLX     OsSchedTaskSwitch
     POP     {R12, LR}
@@ -133,7 +133,7 @@ TaskContextSwitch
 
     LDR     R2, =g_secureContext
     LDR     R1, [R2]
-    CBZ     R1, __SaveNSContext               /* If the g_secureContext is NULL, so no secure context to save. */
+    CBZ     R1, SaveNSContext               /* If the g_secureContext is NULL, so no secure context to save. */
 
     PUSH    {R0-R1, R12, R14}                 /* Store registers, include LR, PRIMASK. */
     BL      HalSecureContextSave              /* Store the secure context to g_secureContext->curStackPointer. */
@@ -141,16 +141,16 @@ TaskContextSwitch
     MOV     LR, R3
     MOV     R12, R2                           /* R2 = PRIMASK. */
 
-__SaveNSContext
+SaveNSContext
     STMFD   R0!, {R4-R12}
     LDR.W   R3, =OS_FPU_CPACR
     LDR     R3, [R3]
     AND     R3, R3, #OS_FPU_CPACR_ENABLE
     CMP     R3, #OS_FPU_CPACR_ENABLE
-    BNE     __DisabledFPU2
+    BNE     DisabledFPU2
     VSTMDB  R0!, {D8-D15}
 
-__DisabledFPU2
+DisabledFPU2
     LDR     R5, =g_losTask
     LDR     R6, [R5]                          /* Get the stackPointer handler of the current task. */
     SUBS    R0, R0, #12
@@ -168,21 +168,21 @@ __DisabledFPU2
     MOV     LR, R3
     LDR     R2, =g_secureContext
     STR     R0, [R2]                          /* Set the secureContext of the new task to g_secureContext. */
-    CBZ     R0, __RestoreNSContext            /* If there is no secure context for the new task, so restore from the non-secure context. */
+    CBZ     R0, RestoreNSContext            /* If there is no secure context for the new task, so restore from the non-secure context. */
     PUSH    {R1, R3}
     BL      HalSecureContextLoad              /* Restore the secure context. */
     POP     {R1, R3}
     MOV     LR, R3
 
-__RestoreNSContext
+RestoreNSContext
     LDR.W   R3, =OS_FPU_CPACR
     LDR     R3, [R3]
     AND     R3, R3, #OS_FPU_CPACR_ENABLE
     CMP     R3, #OS_FPU_CPACR_ENABLE
-    BNE     __DisabledFPU3
+    BNE     DisabledFPU3
     VLDMIA  R1!, {D8-D15}
 
-__DisabledFPU3
+DisabledFPU3
     LDMFD   R1!, {R4-R12}
     MSR     PSP,  R1
 
@@ -206,7 +206,7 @@ HalSVCSecureContextFree
     SVC     1
     BX      LR
 
-HalSVCHandler
+OsSVCHandler
     TST     LR, #0x04
     ITE     EQ
     MRSEQ   R1, MSP
