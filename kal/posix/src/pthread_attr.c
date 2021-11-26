@@ -44,7 +44,9 @@ int pthread_attr_init(pthread_attr_t *attr)
     attr->schedpolicy                 = SCHED_RR;
     attr->schedparam.sched_priority   = LOSCFG_BASE_CORE_TSK_DEFAULT_PRIO;
     attr->inheritsched                = PTHREAD_INHERIT_SCHED;
-    attr->scope                       = PTHREAD_SCOPE_PROCESS;
+	/* begin jbc 2021-11-25 */
+    attr->scope                       = PTHREAD_SCOPE_SYSTEM;
+	/* end jbc 2021-11-25 */
     attr->stackaddr_set               = 0;
     attr->stackaddr                   = NULL;
     attr->stacksize_set               = 1;
@@ -58,8 +60,9 @@ int pthread_attr_destroy(pthread_attr_t *attr)
     if (attr == NULL) {
         return EINVAL;
     }
-
-    /* Nothing to do here... */
+    /* begin jbc 2021-11-25 */
+    (void)memset_s(attr, sizeof(pthread_attr_t), 0, sizeof(pthread_attr_t));
+    /* end jbc 2021-11-25 */
     return 0;
 }
 
@@ -89,13 +92,15 @@ int pthread_attr_setscope(pthread_attr_t *attr, int scope)
     if (attr == NULL) {
         return EINVAL;
     }
-
-    if (scope == PTHREAD_SCOPE_PROCESS) {
+    /* begin jbc 2021-11-25 */
+    if (scope == PTHREAD_SCOPE_SYSTEM) {
+	/* end jbc 2021-11-25 */
         attr->scope = (unsigned int)scope;
         return 0;
     }
-
-    if (scope == PTHREAD_SCOPE_SYSTEM) {
+    /* begin jbc 2021-11-25 */
+    if (scope == PTHREAD_SCOPE_PROCESS) {
+    /* end jbc 2021-11-25 */
         return ENOTSUP;
     }
 
@@ -219,6 +224,28 @@ int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stackSize)
 
     return 0;
 }
+
+/* begin jbc 2021-11-25 */
+int pthread_attr_setstack(pthread_attr_t *attr, void *stackAddr, size_t stackSize)
+{
+    (void)attr;
+    (void)stackAddr;
+    (void)stackSize;
+    PRINT_ERR("%s: Don't support the pthread stack func currently!\n", __FUNCTION__);
+    errno = ENOSYS;
+    return -1;
+}
+
+int pthread_attr_getstack(const pthread_attr_t *attr, void **stackAddr, size_t *stackSize)
+{
+    (void)attr;
+    (void)stackAddr;
+    (void)stackSize;
+    PRINT_ERR("%s: Don't support the pthread stack func currently!\n", __FUNCTION__);
+    errno = ENOSYS;
+    return -1;
+}
+/* end jbc 2021-11-25 */
 
 int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stackSize)
 {

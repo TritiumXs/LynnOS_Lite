@@ -39,21 +39,22 @@
 #include "los_task.h"
 
 #define PTHREAD_NAMELEN 16
+/* begin jbc 2021-11-25 */
+// typedef struct {
+//     void *(*startRoutine)(void *);
+//     void *param;
+//     char name[PTHREAD_NAMELEN];
+// } PthreadData;
 
-typedef struct {
-    void *(*startRoutine)(void *);
-    void *param;
-    char name[PTHREAD_NAMELEN];
-} PthreadData;
-
-static void *PthreadEntry(UINT32 param)
-{
-    PthreadData *pthreadData = (PthreadData *)(UINTPTR)param;
-    void *(*startRoutine)(void *) = pthreadData->startRoutine;
-    void *ret = startRoutine(pthreadData->param);
-    free(pthreadData);
-    return ret;
-}
+// static void *PthreadEntry(UINT32 param)
+// {
+//     PthreadData *pthreadData = (PthreadData *)(UINTPTR)param;
+//     void *(*startRoutine)(void *) = pthreadData->startRoutine;
+//     void *ret = startRoutine(pthreadData->param);
+//     free(pthreadData);
+//     return ret;
+// }
+/* end jbc 2021-11-25 */
 
 static inline int IsPthread(pthread_t thread)
 {
@@ -65,7 +66,10 @@ static int PthreadCreateAttrInit(const pthread_attr_t *attr, void *(*startRoutin
 {
     const pthread_attr_t *threadAttr = attr;
     struct sched_param schedParam = { 0 };
-    PthreadData *pthreadData = NULL;
+    /* begin jbc 2021-11-25 */
+    // PthreadData *pthreadData = NULL;
+    /* end jbc 2021-11-25 */
+
     INT32 policy = 0;
     pthread_attr_t attrTmp;
     INT32 ret;
@@ -91,17 +95,21 @@ static int PthreadCreateAttrInit(const pthread_attr_t *attr, void *(*startRoutin
         }
         taskInitParam->usTaskPrio = (UINT16)schedParam.sched_priority;
     }
-
-    pthreadData = (PthreadData *)malloc(sizeof(PthreadData));
-    if (pthreadData == NULL) {
-        return ENOMEM;
-    }
-
-    pthreadData->startRoutine   = startRoutine;
-    pthreadData->param          = arg;
-    taskInitParam->pcName       = pthreadData->name;
-    taskInitParam->pfnTaskEntry = PthreadEntry;
-    taskInitParam->uwArg        = (UINT32)(UINTPTR)pthreadData;
+    /* begin jbc 2021-11-25 */
+    // pthreadData = (PthreadData *)malloc(sizeof(PthreadData));
+    // if (pthreadData == NULL) {
+    //     return ENOMEM;
+    // }
+    
+    // pthreadData->startRoutine   = startRoutine;
+    // pthreadData->param          = arg;
+    // taskInitParam->pcName       = pthreadData->name;
+    // taskInitParam->pfnTaskEntry = PthreadEntry;
+    taskInitParam->pcName = (char *)malloc(sizeof(char) * PTHREAD_NAMELEN);
+    taskInitParam->pfnTaskEntry = (TSK_ENTRY_FUNC)startRoutine;
+    taskInitParam->uwArg        = (UINT32)(UINTPTR)arg;
+    // taskInitParam->uwArg        = (UINT32)(UINTPTR)pthreadData;
+    /* end jbc 2021-11-25 */
     if (threadAttr->detachstate != PTHREAD_CREATE_DETACHED) {
         taskInitParam->uwResved = LOS_TASK_ATTR_JOINABLE;
     }
@@ -123,7 +131,6 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     if (ret != 0) {
         return ret;
     }
-
     if (LOS_TaskCreateOnly(&taskID, &taskInitParam) != LOS_OK) {
         free((VOID *)(UINTPTR)taskInitParam.uwArg);
         return EINVAL;
@@ -192,9 +199,20 @@ int pthread_cancel(pthread_t thread)
 int pthread_join(pthread_t thread, void **retval)
 {
     UINTPTR result;
+
+    /* begin jbc 2021-11-25 */
+    if (OsCheckTaskIDValid((UINT32)thread) != LOS_OK){
+        return ESRCH;
+    }
+    /* end jbc 2021-11-25 */
+
     UINT32 ret = LOS_TaskJoin((UINT32)thread, &result);
     if (ret == LOS_ERRNO_TSK_NOT_JOIN_SELF) {
         return EDEADLK;
+    /* begin jbc 2021-11-25 */
+    } else if (ret == LOS_ERRNO_TSK_NOT_CREATED) {
+        return ESRCH;
+    /* end jbc 2021-11-25 */
     } else if (ret != LOS_OK) {
         return EINVAL;
     }
@@ -221,7 +239,10 @@ void pthread_exit(void *retVal)
 {
     LosTaskCB *tcb = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
     tcb->joinRetval = (UINTPTR)retVal;
-    free((PthreadData *)(UINTPTR)tcb->arg);
+    /* begin jbc 2021-11-25 */
+    // free((PthreadData *)(UINTPTR)tcb->arg);
+    free(tcb->taskName);
+    /* end jbc 2021-11-25 */
     (void)LOS_TaskDelete(tcb->taskID);
 }
 
@@ -240,12 +261,14 @@ int pthread_setname_np(pthread_t thread, const char *name)
 
     taskCB = OS_TCB_FROM_TID((UINT32)thread);
     intSave = LOS_IntLock();
-    if (taskCB->taskEntry == PthreadEntry) {
-        (void)strcpy_s(taskName, PTHREAD_NAMELEN, name);
-    } else {
-        LOS_IntRestore(intSave);
-        return EINVAL;
-    }
+    /* begin jbc 2021-11-25 */
+    // if (taskCB->taskEntry == PthreadEntry) {
+    (void)strcpy_s(taskName, PTHREAD_NAMELEN, name);
+    // } else {
+    //     LOS_IntRestore(intSave);
+    //     return EINVAL;
+    // }
+    /* end jbc 2021-11-25 */
     LOS_IntRestore(intSave);
     return 0;
 }

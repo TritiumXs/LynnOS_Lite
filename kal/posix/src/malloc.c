@@ -32,17 +32,18 @@
 #include "securec.h"
 #include "los_config.h"
 #include "los_memory.h"
-
-
+/* begin jbc 2021-11-25 */
+#define UINT32_MAX (0xFFFFFFFFu)
+/* end jbc 2021-11-25 */
 void *calloc(size_t nitems, size_t size)
 {
     size_t real_size;
     void *ptr = NULL;
-
-    if (nitems == 0 || size == 0) {
+    /* begin jbc 2021-11-25 */
+    if (nitems == 0 || size == 0 || nitems > (UINT32_MAX / size)) {
         return NULL;
     }
-
+    /* end jbc 2021-11-25 */
     real_size = (size_t)(nitems * size);
     ptr = LOS_MemAlloc(OS_SYS_MEM_ADDR, real_size);
     if (ptr != NULL) {

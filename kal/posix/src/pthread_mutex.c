@@ -36,7 +36,10 @@
 #include "los_mux.h"
 #include "errno.h"
 
-
+/* begin jbc 2021-11-25 */
+#include "los_mux.h"
+#define MUTEXATTR_TYPE_MASK 0x0fU
+/* end jbc 2021-11-25 */
 #define OS_SYS_NS_PER_MSECOND 1000000
 #define OS_SYS_NS_PER_SECOND  1000000000
 
@@ -67,28 +70,41 @@ int pthread_mutexattr_init(pthread_mutexattr_t *mutexAttr)
     if (mutexAttr == NULL) {
         return EINVAL;
     }
-
-    mutexAttr->type = PTHREAD_MUTEX_RECURSIVE;
+    /* begin jbc 2021-11-25 */
+    mutexAttr->type = PTHREAD_MUTEX_DEFAULT;
+    /* ebd jbc 2021-11-25 */
     return 0;
 }
 
+/* begin jbc 2021-11-25 */
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *outType)
+{
+    INT32 type;
+
+    if ((attr == NULL) || (outType == NULL)) {
+        return EINVAL;
+    }
+
+    type = (INT32)(attr->type & MUTEXATTR_TYPE_MASK);
+    if ((type < PTHREAD_MUTEX_NORMAL) || (type > PTHREAD_MUTEX_ERRORCHECK)) {
+        return EINVAL;
+    }
+
+    *outType = type;
+    return ENOERR;
+}
+/* end jbc 2021-11-25 */
+
 int pthread_mutexattr_settype(pthread_mutexattr_t *mutexAttr, int type)
 {
-    if (mutexAttr == NULL) {
+    /* begin jbc 2021-11-25 */
+    if ((mutexAttr == NULL) ||
+        (type < PTHREAD_MUTEX_NORMAL) ||
+        (type > PTHREAD_MUTEX_ERRORCHECK)) {
         return EINVAL;
     }
-
-    if (((unsigned)type != PTHREAD_MUTEX_NORMAL) &&
-        ((unsigned)type != PTHREAD_MUTEX_RECURSIVE) &&
-        ((unsigned)type != PTHREAD_MUTEX_ERRORCHECK)) {
-        return EINVAL;
-    }
-
-    if ((unsigned)type != PTHREAD_MUTEX_RECURSIVE) {
-        return EOPNOTSUPP;
-    }
-
-    mutexAttr->type = PTHREAD_MUTEX_RECURSIVE;
+    mutexAttr->type = (UINT8)((mutexAttr->type & ~MUTEXATTR_TYPE_MASK) | (UINT32)type);
+	/* end jbc 2021-11-25 */
     return 0;
 }
 
@@ -105,18 +121,31 @@ int pthread_mutexattr_destroy(pthread_mutexattr_t *mutexAttr)
 /* Initialize mutex. If mutexAttr is NULL, use default attributes. */
 int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexAttr)
 {
+    /* begin jbc 2021-11-25 */
+    pthread_mutexattr_t useAttr;
+    /* end jbc 2021-11-25 */
     UINT32 muxHandle;
     UINT32 ret;
 
-    if ((mutexAttr != NULL) && (mutexAttr->type != PTHREAD_MUTEX_RECURSIVE)) {
-        return EOPNOTSUPP;
+    /* begin jbc 2021-11-25 */
+    if (mutex == NULL) {
+        return EINVAL;
     }
+    
+    if (mutexAttr == NULL){
+        (VOID)pthread_mutexattr_init(&useAttr);
+    } else {
+        useAttr = *mutexAttr;
+    }
+    /* end jbc 2021-11-25 */
 
     ret = LOS_MuxCreate(&muxHandle);
     if (ret != LOS_OK) {
         return MapError(ret);
     }
-
+    /* begin jbc 2021-11-25 */
+    mutex->stAttr = useAttr;
+    /* end jbc 2021-11-25 */
     mutex->magic = _MUX_MAGIC;
     mutex->handle = muxHandle;
 
@@ -126,9 +155,11 @@ int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexA
 int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
     UINT32 ret;
-    if (mutex->magic != _MUX_MAGIC) {
+    /* begin jbc 2021-11-25 */
+    if ((mutex == NULL) || (mutex->magic != _MUX_MAGIC)) {
         return EINVAL;
     }
+    /* end jbc 2021-11-25 */
     ret = LOS_MuxDelete(mutex->handle);
     if (ret != LOS_OK) {
         return MapError(ret);
@@ -137,14 +168,36 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex)
     mutex->magic = 0;
     return 0;
 }
+/* begin jbc 2021-11-25 */
+STATIC UINT32 CheckMutexAttr(const pthread_mutexattr_t *attr)
+{
+    if (((INT8)(attr->type) < PTHREAD_MUTEX_NORMAL) ||
+        (attr->type > PTHREAD_MUTEX_ERRORCHECK)) {
+        return LOS_NOK;
+    }
+    return LOS_OK;
+}
 
+UINT32 OsMuxPreCheck(const pthread_mutex_t *mutex, const LosTaskCB *runTask)
+{
+    if (CheckMutexAttr(&mutex->stAttr) != LOS_OK) {
+        return EINVAL;
+    }
+
+    return ENOERR;
+}
+/* end jbc 2021-11-25 */
 int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *absTimeout)
 {
     UINT32 ret;
     UINT32 timeout;
     UINT64 timeoutNs;
     struct timespec curTime = {0};
-    if ((mutex->magic != _MUX_MAGIC) || (absTimeout->tv_nsec < 0) || (absTimeout->tv_nsec >= OS_SYS_NS_PER_SECOND)) {
+    /* begin jbc 2021-11-25 */
+    LosMuxCB *muxPended = NULL;
+    
+    if ((mutex == NULL) || (absTimeout == NULL) || (mutex->magic != _MUX_MAGIC) || (absTimeout->tv_nsec < 0) || (absTimeout->tv_nsec >= OS_SYS_NS_PER_SECOND)) {
+    /* end jbc 2021-11-25 */
         return EINVAL;
     }
     if (mutex->handle == _MUX_INVALID_HANDLE) {
@@ -152,7 +205,26 @@ int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *absTi
         if (ret != LOS_OK) {
             return MapError(ret);
         }
+    /* begin jbc 2021-11-25 */
+    } else {
+        muxPended = GET_MUX(mutex->handle);
+        if (((INT8)(mutex->stAttr.type) < PTHREAD_MUTEX_NORMAL) ||
+            (mutex->stAttr.type > PTHREAD_MUTEX_ERRORCHECK)) {
+            return EINVAL;
+        }
+        //ret = OsMuxPreCheck(mutex, &g_losTask.runTask);
+        // if (ret != ENOERR) {
+        //     return (INT32)ret;
+        // }
+
+        if ((mutex->stAttr.type == PTHREAD_MUTEX_ERRORCHECK) &&
+            (muxPended->muxCount != 0) &&
+            (muxPended->owner == OS_TCB_FROM_TID(LOS_CurTaskIDGet()))) {
+            return EDEADLK;
+        } 
     }
+    /* end jbc 2021-11-25 */
+
     ret = clock_gettime(CLOCK_REALTIME, &curTime);
     if (ret != LOS_OK) {
         return EINVAL;
@@ -170,15 +242,28 @@ int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *absTi
 int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
     UINT32 ret;
-    if (mutex->magic != _MUX_MAGIC) {
+    /* begin jbc 2021-11-25 */
+    LosMuxCB *muxPended = NULL;
+    if ((mutex == NULL ) || (mutex->magic != _MUX_MAGIC) || ((INT8)(mutex->stAttr.type) < PTHREAD_MUTEX_NORMAL) ||
+        (mutex->stAttr.type > PTHREAD_MUTEX_ERRORCHECK)) {
         return EINVAL;
     }
+    /* end jbc 2021-11-25 */
     if (mutex->handle == _MUX_INVALID_HANDLE) {
         ret = LOS_MuxCreate(&mutex->handle);
         if (ret != LOS_OK) {
             return MapError(ret);
         }
+    /* begin jbc 2021-11-25 */
+    } else {
+        muxPended = GET_MUX(mutex->handle);
+        if ((mutex->stAttr.type == PTHREAD_MUTEX_ERRORCHECK) &&
+            (muxPended->muxCount != 0) &&
+            (muxPended->owner == OS_TCB_FROM_TID(LOS_CurTaskIDGet()))) {
+            return EDEADLK;
+        } 
     }
+    /* end jbc 2021-11-25 */
     ret = LOS_MuxPend(mutex->handle, LOS_WAIT_FOREVER);
     return MapError(ret);
 }
@@ -186,15 +271,28 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
 int pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
     UINT32 ret;
-    if (mutex->magic != _MUX_MAGIC) {
+    /* begin jbc 2021-11-25 */
+    LosMuxCB *muxPended = NULL;
+    if ((mutex == NULL) || (mutex->magic != _MUX_MAGIC)) {
         return EINVAL;
     }
+    /* end jbc 2021-11-25 */
     if (mutex->handle == _MUX_INVALID_HANDLE) {
         ret = LOS_MuxCreate(&mutex->handle);
         if (ret != LOS_OK) {
             return MapError(ret);
         }
+    /* begin jbc 2021-11-25 */
+    } else {
+        muxPended = GET_MUX(mutex->handle);
+        if ((muxPended->owner != NULL) && (muxPended->owner != OS_TCB_FROM_TID(LOS_CurTaskIDGet()))) {
+            return EBUSY;
+        }
+        if ((mutex->stAttr.type != PTHREAD_MUTEX_RECURSIVE) && (muxPended->muxCount != 0)) {
+            return EBUSY;
+        }
     }
+    /* end jbc 2021-11-25 */
     ret = LOS_MuxPend(mutex->handle, 0);
     return MapError(ret);
 }
@@ -202,9 +300,12 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
 int pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
     UINT32 ret;
-    if (mutex->magic != _MUX_MAGIC) {
+    /* begin jbc 2021-11-25 */
+    if ((mutex == NULL) || (mutex->magic != _MUX_MAGIC) || ((INT8)(mutex->stAttr.type) < PTHREAD_MUTEX_NORMAL) ||
+        (mutex->stAttr.type > PTHREAD_MUTEX_ERRORCHECK)) {
         return EINVAL;
     }
+    /* begin jbc 2021-11-25 */
     ret = LOS_MuxPost(mutex->handle);
     return MapError(ret);
 }

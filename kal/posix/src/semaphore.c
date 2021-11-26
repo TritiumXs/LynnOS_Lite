@@ -138,7 +138,24 @@ int sem_post(sem_t *sem)
 
     return 0;
 }
+/* begin jbc 2021-11-25 */
+int sem_trywait(sem_t *sem)
+{
+    UINT32 ret;
 
+    if ((sem == NULL) || (sem->s_magic != _SEM_MAGIC)) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ret = LOS_SemPend((UINT32)sem->s_handle, LOS_NO_WAIT);
+    if (ret != LOS_OK) {
+        errno = MapError(ret);
+        return -1;
+    }
+    return 0;
+}
+/* end jbc 2021-11-25 */
 static long long GetTickTimeFromNow(const struct timespec *absTimeSpec)
 {
     struct timespec tsNow = { 0 };
@@ -190,12 +207,12 @@ int sem_timedwait(sem_t *sem, const struct timespec *timeout)
 int sem_getvalue(sem_t *sem, int *currVal)
 {
     UINT32 ret;
-
-    if ((sem == NULL) || (currVal == NULL)) {
+	/* begin jbc 2021-11-25 */
+    if ((sem == NULL) || (sem->s_magic != _SEM_MAGIC)|| (currVal == NULL)) {
         errno = EINVAL;
         return -1;
     }
-
+	/* end jbc 2021-11-25 */
     ret = LOS_SemGetValue(sem->s_handle, currVal);
     if (ret) {
         errno = EINVAL;

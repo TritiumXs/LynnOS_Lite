@@ -40,6 +40,9 @@
 #include <los_swtmr.h>
 #include "los_atomic.h"
 #include "los_event.h"
+/* begin jbc 2021-11-25 */
+#include "los_mux.h"
+/* ebd jbc 2021-11-25 */
 
 typedef struct {
     volatile INT32 *realValue;
@@ -53,6 +56,50 @@ typedef struct {
 #define COND_COUNTER_STEP   0x0004U
 #define COND_FLAGS_MASK     0x0003U
 #define COND_COUNTER_MASK   (~COND_FLAGS_MASK)
+/* begin jbc 2021-11-25 */
+#define INT_MAX  0x7fffffff
+
+/*
+ * Check whether there is a cancel pending and if so, whether
+ * cancellations are enabled. We do it in this order to reduce the
+ * number of tests in the common case - when no cancellations are
+ * pending. We make this inline so it can be called directly below for speed
+ */
+STATIC INT32 CheckForCancel(VOID)
+{
+    // _pthread_data *self = pthread_get_self_data();
+    // if (self->canceled && (self->cancelstate == PTHREAD_CANCEL_ENABLE)) {
+    //     return 1;
+    // }
+    // return 0;
+    return 0;
+}
+
+int pthread_condattr_getpshared(const pthread_condattr_t *attr, int *shared)
+{
+    if ((attr == NULL) || (shared == NULL)) {
+        return EINVAL;
+    }
+
+    *shared = PTHREAD_PROCESS_PRIVATE;
+
+    return 0;
+}
+
+int pthread_condattr_setpshared(pthread_condattr_t *attr, int shared)
+{
+    (VOID)attr;
+    if ((shared != PTHREAD_PROCESS_PRIVATE) && (shared != PTHREAD_PROCESS_SHARED)) {
+        return EINVAL;
+    }
+
+    if (shared != PTHREAD_PROCESS_PRIVATE) {
+        return ENOSYS;
+    }
+
+    return 0;
+}
+/* end jbc 2021-11-25 */
 
 int pthread_condattr_destroy(pthread_condattr_t *attr)
 {
@@ -61,8 +108,22 @@ int pthread_condattr_destroy(pthread_condattr_t *attr)
     }
 
     (VOID)memset_s(attr, sizeof(pthread_condattr_t), 0, sizeof(pthread_condattr_t));
+	/* begin jbc 2021-11-25 */
+    attr->clock = INT_MAX;
+	/* end jbc 2021-11-25 */
     return 0;
 }
+/* begin jbc 2021-11-25 */
+int pthread_condattr_getclock(const pthread_condattr_t *attr, clockid_t *clock)
+{
+    if ((attr == NULL) || (clock == NULL)) {
+        return -1;
+    }
+
+    *clock = attr->clock;
+    return 0;
+}
+/* end jbc 2021-11-25 */
 
 int pthread_condattr_init(pthread_condattr_t *attr)
 {
@@ -225,6 +286,25 @@ STATIC INT32 ProcessReturnVal(pthread_cond_t *cond, INT32 val)
     return ret;
 }
 
+/* begin jbc 2021-11-25 */
+/*
+ * Test for a pending cancellation for the current thread and terminate
+ * the thread if there is one.
+ */
+void pthread_testcancel(void)
+{
+    if (CheckForCancel()) {
+        /*
+         * If we have cancellation enabled, and there is a cancellation
+         * pending, then go ahead and do the deed.
+         * Exit now with special retVal. pthread_exit() calls the
+         * cancellation handlers implicitly.
+         */
+        pthread_exit((void *)PTHREAD_CANCELED);
+    }
+}
+/* end jbc 2021-11-25 */
+
 int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
                            const struct timespec *ts)
 {
@@ -234,11 +314,20 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     struct timespec tp;
     UINT64 nseconds;
     UINT64 currTime;
-
-    if ((cond == NULL) || (mutex == NULL) || (ts == NULL)) {
+    
+    /* begin jbc 2021-11-25 */
+    LosMuxCB *muxPosted = NULL;
+    pthread_testcancel();
+    
+    if ((cond == NULL) || (mutex == NULL) || (ts == NULL) || (mutex->magic != _MUX_MAGIC)) {
         return EINVAL;
     }
 
+    muxPosted = GET_MUX(mutex->handle);
+    if ((mutex->stAttr.type == PTHREAD_MUTEX_ERRORCHECK) && (g_losTask.runTask != muxPosted->owner)) {
+         return EPERM;
+     }
+    /* end jbc 2021-11-25 */
     if (CondInitCheck(cond)) {
         ret = pthread_cond_init(cond, NULL);
         if (ret != ENOERR) {
@@ -276,6 +365,9 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     }
 
     ret = ProcessReturnVal(cond, ret);
+    /* begin jbc 2021-11-25 */
+    pthread_testcancel();
+    /* end jbc 2021-11-25 */
     return ret;
 }
 

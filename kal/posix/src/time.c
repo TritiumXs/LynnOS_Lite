@@ -43,6 +43,9 @@
 #include "los_tick.h"
 #include "los_context.h"
 #include "los_interrupt.h"
+/* begin jbc 2021-11-25 */
+#include "sys/times.h"
+/* end jbc 2021-11-25 */
 
 /* accumulative time delta from discontinuous modify */
 STATIC struct timespec g_accDeltaFromSet;
@@ -97,7 +100,9 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
     }
 
     /* sleep in interrupt context or in task sched lock state */
-    errno = EPERM;
+    /* begin jbc 2021-11-25 */
+    errno = EINTR;
+    /* end jbc 2021-11-25 */
     return -1;
 }
 
@@ -153,7 +158,9 @@ int timer_settime(timer_t timerID, int flags,
 
     if (flags != 0) {
         /* flags not supported currently */
-        errno = ENOSYS;
+        /* begin jbc 2021-11-25 */
+        errno = ENOTSUP;
+        /* end jbc 2021-11-25 */
         return -1;
     }
 
@@ -230,7 +237,11 @@ int timer_gettime(timer_t timerID, struct itimerspec *value)
         errno = EINVAL;
         return -1;
     }
-
+    /* begin jbc 2021-11-25 */
+    if (ret == LOS_ERRNO_SWTMR_NOT_STARTED){
+        tick = 0;
+    }
+    /* end jbc 2021-11-25 */
     OsTick2TimeSpec(&value->it_value, tick);
     OsTick2TimeSpec(&value->it_interval, (swtmr->ucMode == LOS_SWTMR_MODE_ONCE) ? 0 : swtmr->uwInterval);
     return 0;
@@ -662,3 +673,19 @@ unsigned sleep(unsigned seconds)
     specTime.tv_nsec = (long)(nanoseconds % OS_SYS_NS_PER_SECOND);
     return nanosleep(&specTime, NULL);
 }
+
+/* begin jbc 2021-11-25 */
+clock_t times(struct tms *tms)
+{
+	clock_t clockTick;
+    
+    clockTick = (clock_t)LOS_TickCountGet();
+    if (tms != NULL) {
+        tms->tms_cstime = clockTick;
+        tms->tms_cutime = clockTick;
+        tms->tms_stime  = clockTick;
+        tms->tms_utime  = clockTick;
+    }
+    return clockTick;
+}
+/* end jbc 2021-11-25 */

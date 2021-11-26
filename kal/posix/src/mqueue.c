@@ -312,11 +312,17 @@ OUT:
 
 int mq_close(mqd_t personal)
 {
-    INT32 ret = 0;
+    /* begin jbc 2021-11-25 */
+    INT32 ret = -1;
     struct mqarray *mqueueCB = NULL;
     struct mqpersonal *privateMqPersonal = NULL;
     struct mqpersonal *tmp = NULL;
 
+    if ((personal == (mqd_t)NULL) || (personal == (mqd_t)-1)) {
+        errno = EBADF;
+        return -1;
+    }
+    /* end jbc 2021-11-25 */
     (VOID)pthread_mutex_lock(&g_mqueueMutex);
     privateMqPersonal = (struct mqpersonal *)personal;
     if (privateMqPersonal->mq_status != MQ_USE_MAGIC) {
@@ -419,8 +425,8 @@ int OsMqSetAttr(mqd_t personal, const struct mq_attr *mqSetAttr, struct mq_attr 
     (VOID)pthread_mutex_unlock(&g_mqueueMutex);
     return 0;
 }
-
-int mq_getsetattr(mqd_t mqd, const struct mq_attr *new, struct mq_attr *old)
+/* begin jbc 2021-11-25 */
+STATIC int OsMqGetSetAttr(mqd_t mqd, const struct mq_attr *new, struct mq_attr *old)
 {
     if (new == NULL) {
         return OsMqGetAttr(mqd, old);
@@ -430,14 +436,28 @@ int mq_getsetattr(mqd_t mqd, const struct mq_attr *new, struct mq_attr *old)
 
 int mq_getattr(mqd_t mqd, struct mq_attr *attr)
 {
-    return mq_getsetattr(mqd, 0, attr);
+    if ((mqd == (mqd_t)NULL) || (mqd == (mqd_t)-1)) {
+        errno = EBADF;
+        return -1;
+    }
+    return OsMqGetSetAttr(mqd, NULL, attr);
 }
 
 int mq_setattr(mqd_t mqd, const struct mq_attr *new, struct mq_attr *old)
 {
-    return mq_getsetattr(mqd, new, old);
-}
+    if ((mqd == (mqd_t)NULL) || (mqd == (mqd_t)-1)) {
+        errno = EBADF;
+        return -1;
+    }
 
+    if (new == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    return OsMqGetSetAttr(mqd, new, old);
+}
+/* end jbc 2021-11-25 */
 int mq_unlink(const char *mqName)
 {
     INT32 ret = 0;
@@ -455,7 +475,9 @@ int mq_unlink(const char *mqName)
     }
 
     if (mqueueCB->mq_personal != NULL) {
+        errno = EINTR;
         mqueueCB->unlinkflag = TRUE;
+        goto ERROUT_UNLOCK;
     } else {
         ret = DoMqueueDelete(mqueueCB);
     }
@@ -516,7 +538,12 @@ int mq_timedsend(mqd_t personal, const char *msg, size_t msgLen, unsigned int ms
     UINT64 absTicks;
     struct mqarray *mqueueCB = NULL;
     struct mqpersonal *privateMqPersonal = NULL;
-
+	/* begin jbc 2021-11-25 */
+    if (personal == NULL) {
+        errno = EBADF;
+        return -1;
+    }
+	/* end jbc 2021-11-25 */
     OS_MQ_GOTO_ERROUT_IF(!MqParamCheck(personal, msg, msgLen), errno);
 
     OS_MQ_GOTO_ERROUT_IF(msgPrio > (MQ_PRIO_MAX - 1), EINVAL);

@@ -146,11 +146,17 @@ UserException:
 
     rsr     a0, EXCCAUSE
     beqi    a0, 4, InterruptEntry1
+    beqi    a0, 5, AllocHandelEntry
     call0   HandleEntry
 1:
     j 1b
 
 .section    .iram,"ax"
+.type       AllocHandelEntry,@function
+.align      4
+AllocHandelEntry:
+    call0 AllocEntry
+
 .type       InterruptEntry1,@function
 .align      4
 InterruptEntry1:
@@ -254,13 +260,31 @@ OverFlowGroup1:
 .global UnderFlowGroup1
 UnderFlowGroup1:
 
-    addi    a5, a5, -16
-    l32i    a3, a5, 12
-    l32i    a2, a5, 8
-    l32i    a1, a5, 4
-    l32i    a0, a5, 0
-    addi    a5, a5, 16
-    rfwu
+    l32e	a0, a5, -16		/* Restore a0 from call[i+1]'s stack frame */
+	l32e	a1, a5, -12		/* Restore a1 from call[i+1]'s stack frame */
+	l32e	a2, a5,  -8		/* Restore a2 from call[i+1]'s stack frame */
+	l32e	a3, a5,  -4		/* Restore a3 from call[i+1]'s stack frame */
+	rfwu
+
+.align	4
+	.global	AllocEntry
+AllocEntry:
+    rsr		a0, WINDOWBASE	/* Grab WINDOWBASE before rotw changes it */
+	rotw	-1				/* WINDOWBASE goes to a4, new a0-a3 are scratch */
+	rsr		a2, PS
+	extui	a3, a2, 8, 4
+	xor		a3, a3, a4		/* Bits changed from old to current windowbase */
+	rsr		a4, EXCSAVE1	/* Restore original a0 (now in a4) */
+	slli	a3, a3, 8
+	xor		a2, a2, a3		/* Flip changed bits in old window base */
+	wsr		a2, PS			/* Update PS.OWB to new window base */
+	rsync
+
+	_bbci.l	a4, 31, UnderFlowGroup1
+	rotw	-1				/* Original a0 goes to a8 */
+	_bbci.l	a8, 30, UnderFlowGroup2
+	rotw	-1
+	j		UnderFlowGroup3
 
 .org    0x80
 .global OverFlowGroup2
