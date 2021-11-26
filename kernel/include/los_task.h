@@ -1168,7 +1168,7 @@ extern VOID LOS_UDelay(UINT64 microseconds);
  * <ul><li>los_tick.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_Udelay
  */
-extern VOID LOS_Mdelay(UINT32 mSecs);
+extern VOID LOS_MDelay(UINT32 mSecs);
 
 /* *
  * @ingroup  los_task
