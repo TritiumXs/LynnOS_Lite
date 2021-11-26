@@ -112,6 +112,12 @@ extern UINT64 LOS_SysCycleGet(VOID);
 
 #define OS_SYS_NS_PER_SECOND   1000000000
 
+/**
+ * @ingroup los_tick
+ * Number of nanoseconds in one milliseconds.
+ */
+#define OS_SYS_NS_PER_MS       1000000
+
 #define OS_SYS_NS_PER_US       1000
 
 #define OS_CYCLE_PER_TICK      (OS_SYS_CLOCK / LOSCFG_BASE_CORE_TICK_PER_SECOND)
@@ -350,6 +356,12 @@ typedef struct TagCpuTick {
 
 /**
  * @ingroup los_tick
+ * Number of microseconds in one milliseconds.
+ */
+#define OS_SYS_US_PER_MS       1000
+
+/**
+ * @ingroup los_tick
  * The maximum length of name.
  */
 #define OS_SYS_APPVER_NAME_MAX 64
@@ -462,6 +474,24 @@ STATIC_INLINE UINT64 OsCycle2US(UINT64 cycle)
     return (UINT64)(cycle / tmp);
 }
 
+/**
+ * @ingroup  los_tick
+ * @brief Obtain system time in nanoseconds.
+ *
+ * @par Description:
+ * This API is used to obtain system time in nanoseconds.
+ * @attention
+ * <ul>
+ * <li>None.</li>
+ * </ul>
+ * @param  None.
+ *
+ * @retval #UINT64  system time in nanoseconds.
+ * @par Dependency:
+ * <ul><li>los_tick.h: the header file that contains the API declaration.</li></ul>
+ * @see None.
+ */
+extern UINT64 LOS_CurrNanosec(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

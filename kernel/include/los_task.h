@@ -1151,6 +1151,25 @@ extern CHAR* LOS_TaskNameGet(UINT32 taskID);
  */
 extern VOID LOS_UDelay(UINT64 microseconds);
 
+/**
+ * @ingroup  los_tick
+ * @brief: cpu delay.
+ *
+ * @par Description:
+ * This API is used to cpu delay, no task switching.
+ *
+ * @attention:
+ * <ul><li>None.</li></ul>
+ *
+ * @param  UINT32  [IN] delay times, microseconds.
+ *
+ * @retval: None.
+ * @par Dependency:
+ * <ul><li>los_tick.h: the header file that contains the API declaration.</li></ul>
+ * @see LOS_Udelay
+ */
+extern VOID LOS_Mdelay(UINT32 mSecs);
+
 /* *
  * @ingroup  los_task
  * @brief: cpu delay.
@@ -1579,7 +1598,7 @@ extern LOS_DL_LIST          g_losFreeTask;
  * Circular linked list that stores tasks that are deleted automatically.
  *
  */
-extern LOS_DL_LIST          g_taskRecyleList;
+extern LOS_DL_LIST          g_taskRecycleList;
 
 /**
  * @ingroup  los_task

@@ -177,4 +177,10 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsCpuTick2US(CpuTick *cpuTick, UINT32 *usHi, UINT32
     return LOS_OK;
 }
 
+LITE_OS_SEC_TEXT_MINOR UINT64 LOS_CurrNanosec(VOID)
+{
+    UINT64 nanos;
+    nanos = OsGetCurrSysTimeCycle() * (OS_SYS_NS_PER_SECOND / OS_SYS_NS_PER_MS) / (g_sysClock / OS_SYS_NS_PER_MS);
+    return nanos;
+}
 

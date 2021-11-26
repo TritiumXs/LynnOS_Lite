@@ -41,6 +41,13 @@
 #include "los_mux.h"
 #include "los_sem.h"
 #include "los_timer.h"
+
+#ifdef __cplusplus
+#if __cplusplus
+extern "C" {
+#endif
+#endif /* __cplusplus */
+
 #if (LOSCFG_BASE_CORE_CPUP == 1)
 #include "los_cpup.h"
 #endif
@@ -109,7 +116,7 @@ LITE_OS_SEC_BSS  UINT32                              g_taskMaxNum;
 LITE_OS_SEC_BSS  UINT32                              g_idleTaskID;
 LITE_OS_SEC_BSS  UINT32                              g_swtmrTaskID;
 LITE_OS_SEC_DATA_INIT LOS_DL_LIST                    g_losFreeTask;
-LITE_OS_SEC_DATA_INIT LOS_DL_LIST                    g_taskRecyleList;
+LITE_OS_SEC_DATA_INIT LOS_DL_LIST                    g_taskRecycleList;
 LITE_OS_SEC_BSS  BOOL                                g_taskScheduled = FALSE;
 
 STATIC VOID (*PmEnter)(VOID) = NULL;
@@ -154,9 +161,9 @@ STATIC VOID OsRecyleFinishedTask(VOID)
     UINTPTR stackPtr;
 
     intSave = LOS_IntLock();
-    while (!LOS_ListEmpty(&g_taskRecyleList)) {
-        taskCB = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&g_taskRecyleList));
-        LOS_ListDelete(LOS_DL_LIST_FIRST(&g_taskRecyleList));
+    while (!LOS_ListEmpty(&g_taskRecycleList)) {
+        taskCB = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&g_taskRecycleList));
+        LOS_ListDelete(LOS_DL_LIST_FIRST(&g_taskRecycleList));
         stackPtr = 0;
         OsRecycleTaskResources(taskCB, &stackPtr);
         LOS_IntRestore(intSave);
@@ -390,7 +397,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsTaskInit(VOID)
     // Ignore the return code when matching CSEC rule 6.6(1).
     (VOID)memset_s(g_taskCBArray, size, 0, size);
     LOS_ListInit(&g_losFreeTask);
-    LOS_ListInit(&g_taskRecyleList);
+    LOS_ListInit(&g_taskRecycleList);
     for (index = 0; index <= LOSCFG_BASE_CORE_TSK_LIMIT; index++) {
         g_taskCBArray[index].taskStatus = OS_TASK_STATUS_UNUSED;
         g_taskCBArray[index].taskID = index;
@@ -1048,7 +1055,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_TaskDetach(UINT32 taskID)
 
 LITE_OS_SEC_TEXT_INIT STATIC_INLINE VOID OsRunningTaskDelete(UINT32 taskID, LosTaskCB *taskCB)
 {
-    LOS_ListTailInsert(&g_taskRecyleList, &taskCB->pendList);
+    LOS_ListTailInsert(&g_taskRecycleList, &taskCB->pendList);
     g_losTask.runTask = &g_taskCBArray[g_taskMaxNum];
     g_losTask.runTask->taskID = taskID;
     g_losTask.runTask->taskStatus = taskCB->taskStatus | OS_TASK_STATUS_RUNNING;
@@ -1501,3 +1508,45 @@ VOID LOS_UDelay(UINT64 microseconds)
 
     return;
 }
+
+LITE_OS_SEC_TEXT_MINOR VOID LOS_MDelay(UINT32 mSecs)
+{
+    while (mSecs > UINT32_MAX / OS_SYS_US_PER_MS) {
+        LOS_UDelay(mSecs);
+        mSecs -= (UINT32_MAX / OS_SYS_US_PER_MS);
+    }
+    LOS_UDelay(mSecs);
+}
+
+LITE_OS_SEC_TEXT_INIT STATIC VOID OsTaskCBRecycleToFree(VOID)
+{
+    LosTaskCB *taskCB = NULL;
+    VOID *poolTmp = NULL;
+    while (!LOS_ListEmpty(&g_taskRecycleList)) {
+        poolTmp = (VOID *)OS_TASK_STACK_ADDR;
+        taskCB = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&g_taskRecycleList));
+        LOS_ListDelete(LOS_DL_LIST_FIRST(&g_taskRecycleList));
+        LOS_ListAdd(&g_losFreeTask, &taskCB->pendList);
+#ifdef LOSCFG_EXC_INTERACTION
+        if (taskCB->topOfStack < (UINTPTR)m_aucSysMem1) {
+            poolTmp = (VOID *)m_aucSysMem0;
+        }
+#endif
+        (VOID)LOS_MemFree(poolTmp, (VOID *)taskCB->topOfStack);
+        taskCB->topOfStack = 0;
+    }
+}
+
+VOID LOS_TaskResRecycle(VOID)
+{
+    UINT32 intSave;
+    intSave = LOS_IntLock();
+    OsTaskCBRecycleToFree();
+    LOS_IntRestore(intSave);
+}
+
+#ifdef __cplusplus
+#if __cplusplus
+}
+#endif
+#endif /* __cplusplus */
