@@ -129,8 +129,6 @@ STATIC INLINE UINTPTR GetFp(VOID)
     return fpSave;
 }
 
-extern VOID HalStartToRun(VOID);
-
 extern VOID HalTaskContextSwitch(UINT32 intSave);
 
 /**

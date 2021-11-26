@@ -34,9 +34,9 @@
 
 .section .text
 .align  2
-.type HalStartToRun, %function
-.global HalStartToRun
-HalStartToRun:
+.type ArchStartToRun, %function
+.global ArchStartToRun
+ArchStartToRun:
     lrw    r1, g_losTask
     lrw    r2, g_losTask + 4
 

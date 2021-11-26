@@ -47,7 +47,7 @@ static OS_TICK_HANDLER systick_handler = (OS_TICK_HANDLER)NULL;
 
 extern UINT32 g_intCount;
 
-WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
+WEAK UINT32 ArchTickStart(OS_TICK_HANDLER handler)
 {
     SysTick_Config(SYSTICK_TICK_CONST);
     ECLIC_DisableIRQ(SysTimer_IRQn);
@@ -72,18 +72,18 @@ WEAK UINT32 HalTickStart(OS_TICK_HANDLER handler)
 
 void HalTickSysTickHandler( void )
 {
-    /* Do systick handler registered in HalTickStart. */
+    /* Do systick handler registered in ArchTickStart. */
     if ((void *)systick_handler != NULL) {
         systick_handler();
     }
 }
 
-WEAK VOID HalSysTickReload(UINT64 nextResponseTime)
+WEAK VOID ArchSysTickReload(UINT64 nextResponseTime)
 {
     SysTick_Reload(nextResponseTime);
 }
 
-WEAK UINT64 HalGetTickCycle(UINT32 *period)
+WEAK UINT64 ArchGetTickCycle(UINT32 *period)
 {
     UINT64 ticks;
     UINT32 intSave = LOS_IntLock();
@@ -93,17 +93,17 @@ WEAK UINT64 HalGetTickCycle(UINT32 *period)
     return ticks;
 }
 
-WEAK VOID HalTickLock(VOID)
+WEAK VOID ArchTickLock(VOID)
 {
     SysTimer_Stop();
 }
 
-WEAK VOID HalTickUnlock(VOID)
+WEAK VOID ArchTickUnlock(VOID)
 {
     SysTimer_Start();
 }
 
-UINT32 HalEnterSleep(VOID)
+UINT32 ArchEnterSleep(VOID)
 {
     __WFI();
 

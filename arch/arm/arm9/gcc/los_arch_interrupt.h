@@ -171,78 +171,6 @@ extern UINT32 g_intCount;
  */
 #define OS_ERRNO_HWI_FASTMODE_ALREADY_CREATED LOS_ERRNO_OS_ERROR(LOS_MOD_HWI, 0x07)
 
-#if (OS_HWI_WITH_ARG == 1)
-/* *
- * @ingroup los_hwi
- * Set interrupt vector table.
- */
-extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg);
-#else
-/* *
- * @ingroup los_hwi
- * Set interrupt vector table.
- */
-extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector);
-#endif
-
-/* *
- * @ingroup  los_arch_interrupt
- * @brief: Hardware interrupt entry function.
- *
- * @par Description:
- * This API is used as all hardware interrupt handling function entry.
- *
- * @attention:
- * <ul><li>None.</li></ul>
- *
- * @param:None.
- *
- * @retval:None.
- * @par Dependency:
- * <ul><li>los_arch_interrupt.h: the header file that contains the API declaration.</li></ul>
- * @see None.
- */
-extern VOID HalInterrupt(VOID);
-
-/* *
- * @ingroup  los_arch_interrupt
- * @brief: Get an interrupt number.
- *
- * @par Description:
- * This API is used to get the current interrupt number.
- *
- * @attention:
- * <ul><li>None.</li></ul>
- *
- * @param: None.
- *
- * @retval: Interrupt Indexes number.
- * @par Dependency:
- * <ul><li>los_arch_interrupt.h: the header file that contains the API declaration.</li></ul>
- * @see None.
- */
-extern UINT32 HalIntNumGet(VOID);
-
-/* *
- * @ingroup  los_arch_interrupt
- * @brief: Default vector handling function.
- *
- * @par Description:
- * This API is used to configure interrupt for null function.
- *
- * @attention:
- * <ul><li>None.</li></ul>
- *
- * @param:None.
- *
- * @retval:None.
- * @par Dependency:
- * <ul><li>los_arch_interrupt.h: the header file that contains the API declaration.</li
-></ul>
- * @see None.
- */
-extern VOID HalHwiDefaultHandler(VOID);
-
 #define OS_EXC_IN_INIT                      0
 #define OS_EXC_IN_TASK                      1
 #define OS_EXC_IN_HWI                       2
@@ -282,7 +210,6 @@ typedef struct TagExcContext {
 
 typedef VOID (*EXC_PROC_FUNC)(UINT32, EXC_CONTEXT_S *);
 VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, UINT32 pid, EXC_CONTEXT_S *excBufAddr);
-VOID HalHwiInit(VOID);
 
 /**
  * @ingroup los_exc

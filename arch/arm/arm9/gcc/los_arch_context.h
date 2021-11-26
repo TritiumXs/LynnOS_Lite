@@ -76,26 +76,6 @@ typedef struct TagTskContext {
 } TaskContext;
 
 /**
- * @ingroup  los_config
- * @brief: Task start running function.
- *
- * @par Description:
- * This API is used to start a task.
- *
- * @attention:
- * <ul><li>None.</li></ul>
- *
- * @param: None.
- *
- * @retval None.
- *
- * @par Dependency:
- * <ul><li>los_config.h: the header file that contains the API declaration.</li></ul>
- * @see None.
- */
-extern VOID HalStartToRun(VOID);
-
-/**
  * @ingroup los_arch_context
  * @brief Wait for interrupt.
  *
