@@ -42,12 +42,6 @@
 #include "los_sem.h"
 #include "los_timer.h"
 
-#ifdef __cplusplus
-#if __cplusplus
-extern "C" {
-#endif
-#endif /* __cplusplus */
-
 #if (LOSCFG_BASE_CORE_CPUP == 1)
 #include "los_cpup.h"
 #endif
@@ -1544,9 +1538,3 @@ VOID LOS_TaskResRecycle(VOID)
     OsTaskCBRecycleToFree();
     LOS_IntRestore(intSave);
 }
-
-#ifdef __cplusplus
-#if __cplusplus
-}
-#endif
-#endif /* __cplusplus */
