@@ -352,6 +352,14 @@ config PLATFORM_EXC
     depends on KERNEL_EXTKERNEL
     select DEBUG_HOOK
 
+config KERNEL_LMK
+    bool "Enable Low Memory Killer"
+    default n
+    depends on KERNEL_EXTKERNEL
+    help
+      Configuration item for low momery killer tailoring.
+      If you wish to build LiteOS with support for low memory killer.
+
 ######################### config options of trace #########################
 source "components/trace/Kconfig"
 
