@@ -130,8 +130,16 @@ void TestKernel(void)
     ItSuiteLosDynlink();
 #endif
 
+#if (LOS_KERNEL_LMS_TEST == 1)
+    ItSuiteLosLms();
+#endif
+
 #if (LOS_KERNEL_PM_TEST == 1)
     ItSuiteLosPm();
+#endif
+
+#if (LOS_KERNEL_LMK_TEST == 1)
+    ItSuiteLosLmk();
 #endif
 }
 

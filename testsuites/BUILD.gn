@@ -58,6 +58,7 @@ group("testsuites") {
     ":test_init",
     "sample/kernel/event:test_event",
     "sample/kernel/hwi:test_hwi",
+    "sample/kernel/lowmemory:test_lmk",
     "sample/kernel/mem:test_mem",
     "sample/kernel/mux:test_mux",
     "sample/kernel/power:test_pm",
@@ -68,6 +69,9 @@ group("testsuites") {
   ]
   if (defined(LOSCFG_DYNLINK)) {
     deps += [ "sample/kernel/dynlink:test_dynlink" ]
+  }
+  if (defined(LOSCFG_KERNEL_LMS)) {
+    deps += [ "sample/kernel/lms:test_lms" ]
   }
   if (!module_switch) {
     deps = []
