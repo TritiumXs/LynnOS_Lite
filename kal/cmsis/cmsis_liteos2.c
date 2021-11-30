@@ -650,18 +650,19 @@ void osThreadExit(void)
 osStatus_t osDelay(uint32_t ticks)
 {
 
-    UINT32 ret = LOS_OK;
+    UINT32 ret;
     if (OS_INT_ACTIVE) {
         return osErrorISR;
     }
     if (ticks == 0) {
-        return osOK;
+        return osErrorParameter;
     }
     if (osKernelGetState() != osKernelRunning) {
-        LOS_UDelay(ticks * OS_US_PER_TICK);
-    } else {
-        ret = LOS_TaskDelay(ticks);
+        return osError;
     }
+
+    ret = LOS_TaskDelay(ticks);
+
     if (ret == LOS_OK) {
         return osOK;
     } else {
