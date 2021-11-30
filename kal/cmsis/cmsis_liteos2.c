@@ -657,12 +657,8 @@ osStatus_t osDelay(uint32_t ticks)
     if (ticks == 0) {
         return osErrorParameter;
     }
-    if (osKernelGetState() != osKernelRunning) {
-        return osError;
-    }
 
     ret = LOS_TaskDelay(ticks);
-
     if (ret == LOS_OK) {
         return osOK;
     } else {
