@@ -67,11 +67,11 @@ typedef struct {
  */
 STATIC INT32 CheckForCancel(VOID)
 {
-    // _pthread_data *self = pthread_get_self_data();
+    LosTaskCB *tcb = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
     // if (self->canceled && (self->cancelstate == PTHREAD_CANCEL_ENABLE)) {
-    //     return 1;
-    // }
-    // return 0;
+    if (tcb->cancelstate == PTHREAD_CANCEL_ENABLE) {
+        return 1;
+    }
     return 0;
 }
 

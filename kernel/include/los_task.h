@@ -1461,6 +1461,10 @@ typedef struct {
     UINT32                      eventMode;                /**< Event mode */
     VOID                        *msg;                     /**< Memory allocated to queues */
     INT32                       errorNo;
+    /* begin jbc 2021-11-25 */
+    unsigned char               cancelstate;               /* Cancel state of thread */
+    volatile unsigned char      canceltype;                /* Cancel type of thread */
+    /* end jbc 2021-11-25 */
 } LosTaskCB;
 
 typedef struct {

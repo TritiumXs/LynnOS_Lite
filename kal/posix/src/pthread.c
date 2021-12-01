@@ -122,7 +122,9 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     TSK_INIT_PARAM_S taskInitParam = { 0 };
     UINT32 taskID;
     UINT32 ret;
-
+    /* begin jbc 2021-11-25 */
+    LosTaskCB *tcb = NULL;
+    /* end jbc 2021-11-25 */
     if ((thread == NULL) || (startRoutine == NULL)) {
         return EINVAL;
     }
@@ -135,7 +137,11 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
         free((VOID *)(UINTPTR)taskInitParam.uwArg);
         return EINVAL;
     }
-
+    /* begin jbc 2021-11-25 */
+    tcb = OS_TCB_FROM_TID(taskID);
+    tcb->cancelstate  = PTHREAD_CANCEL_ENABLE;
+    tcb->canceltype   = PTHREAD_CANCEL_DEFERRED;
+    /* end jbc 2021-11-25 */
     /* set pthread default name */
     (void)sprintf_s(taskInitParam.pcName, PTHREAD_NAMELEN, "pthread%u", taskID);
 
@@ -207,6 +213,39 @@ int pthread_equal(pthread_t thread1, pthread_t thread2)
     return thread1 == thread2;
 }
 #endif
+
+int pthread_setcancelstate(int state, int *oldState)
+{
+    LosTaskCB *tcb = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
+
+    if ((state != PTHREAD_CANCEL_ENABLE) && (state != PTHREAD_CANCEL_DISABLE)) {
+        return EINVAL;
+    }
+
+    if (oldState != NULL) {
+        *oldState = tcb->cancelstate;
+    }
+
+    tcb->cancelstate = (UINT8)state;
+    return ENOERR;
+}
+
+int pthread_setcanceltype(int type, int *oldType)
+{
+    LosTaskCB *tcb = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
+
+    if ((type != PTHREAD_CANCEL_ASYNCHRONOUS) && (type != PTHREAD_CANCEL_DEFERRED)) {
+        return EINVAL;
+    }
+
+    if (oldType != NULL) {
+        *oldType = tcb->canceltype;
+    }
+
+    tcb->canceltype = (UINT8)type;
+
+    return ENOERR;
+}
 /* end jbc 2021-11-25 */
 
 int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
@@ -232,12 +271,43 @@ pthread_t pthread_self(void)
     return (pthread_t)LOS_CurTaskIDGet();
 }
 
+/* begin jbc 2021-11-25 */
+STATIC UINT32 DoPthreadCancel(LosTaskCB *task)
+{
+    UINT32 ret = LOS_OK;
+    LOS_TaskLock();
+    if ((task->taskStatus == 0) || (LOS_TaskSuspend(task->taskID) != ENOERR)) {
+        ret = LOS_NOK;
+        goto OUT;
+    }
+    free(task->taskName);
+    (void)LOS_TaskDelete(task->taskID);
+OUT:
+    LOS_TaskUnlock();
+    return ret;
+}
+/* end jbc 2021-11-25 */
+
 int pthread_cancel(pthread_t thread)
 {
+    /* begin jbc 2021-11-25 */
+    LosTaskCB *tcb = NULL;
     if (!IsPthread(thread)) {
         return EINVAL;
     }
-
+    tcb = OS_TCB_FROM_TID((UINT32)thread);
+    if ((tcb->cancelstate == PTHREAD_CANCEL_ENABLE) &&
+        (tcb->canceltype == PTHREAD_CANCEL_ASYNCHRONOUS)) {
+        /*
+         * If the thread has cancellation enabled, and it is in
+         * asynchronous mode, suspend it and set corresponding thread's status.
+         * We also release the thread out of any current wait to make it wake up.
+         */
+        if (DoPthreadCancel(tcb) == LOS_NOK) {
+            return ESRCH;
+        }
+    }
+    /* end jbc 2021-11-25 */
     return ENOSYS;
 }
 
@@ -285,6 +355,11 @@ void pthread_exit(void *retVal)
     LosTaskCB *tcb = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
     tcb->joinRetval = (UINTPTR)retVal;
     /* begin jbc 2021-11-25 */
+    int *oldState = NULL;
+
+    if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, oldState) != ENOERR) {
+        PRINT_ERR("%s: %d failed\n", __FUNCTION__, __LINE__);
+    }
     // free((PthreadData *)(UINTPTR)tcb->arg);
     free(tcb->taskName);
     /* end jbc 2021-11-25 */
