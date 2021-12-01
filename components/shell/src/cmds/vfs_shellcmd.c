@@ -278,6 +278,7 @@ INT32 OsShellCmdCat(INT32 argc, const CHAR **argv)
 
     if (fd == -1) {
         ret = -1;
+        free(fullpath);
         return ret;
     }
 
@@ -291,7 +292,7 @@ INT32 OsShellCmdCat(INT32 argc, const CHAR **argv)
         }
         PRINTK("%s", buf);
         (VOID)LOS_TaskDelay(1);
-    } while (size == CAT_BUF_SIZE);
+    } while (size == CAT_BUF_SIZE - 1);
 
     free(fullpath);
     close(fd);
@@ -856,7 +857,7 @@ INT32 OsShellCmdCp(INT32 argc, const CHAR **argv)
             (VOID)OsWildcardExtractDirectory(srcCopy, &count, CP_COUNT);
             free(srcCopy);
             if (count > 1) {
-                PRINTK("cp error : %s is not a directory.\n", drcFullPath);
+                PRINTK("cp error : Can not copy two or more files.\n");
                 goto errout_with_path;
             }
         }

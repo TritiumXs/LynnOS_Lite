@@ -37,6 +37,7 @@ group("components") {
     "dynlink",
     "exchook",
     "fs",
+    "lms",
     "net",
     "power",
     "shell",
@@ -56,5 +57,6 @@ config("public") {
     "power:public",
     "shell:public",
     "trace:public",
+    "lms:public",
   ]
 }

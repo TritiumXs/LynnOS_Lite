@@ -28,13 +28,12 @@
 
 import("//kernel/liteos_m/liteos.gni")
 import("$LITEOSTHIRDPARTY/lwip/lwip.gni")
-import("lwip_porting.gni")
+import("$LITEOSTOPDIR/components/net/lwip-2.1/lwip_porting.gni")
 
 module_switch = defined(LOSCFG_NET_LWIP_SACK)
 module_name = "lwip"
 kernel_module(module_name) {
   sources = LWIP_PORTING_FILES + LWIPNOAPPSFILES - [ "$LWIPDIR/api/sockets.c" ]
-  defines = [ "_BSD_SOURCE=1" ]
   include_dirs = [ "//utils/native/lite/include" ]
 }
 
