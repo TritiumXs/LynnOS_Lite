@@ -201,10 +201,12 @@ int pthread_once(pthread_once_t *onceControl, void (*initRoutine)(void))
     return ENOERR;
 }
 
+#ifndef pthread_equal
 int pthread_equal(pthread_t thread1, pthread_t thread2)
 {
     return thread1 == thread2;
 }
+#endif
 /* end jbc 2021-11-25 */
 
 int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
