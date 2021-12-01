@@ -34,7 +34,9 @@
 #include "los_tick.h"
 #include "los_debug.h"
 #include "los_hook.h"
+#if (LOSCFG_KERNEL_PM == 1)
 #include "los_pm.h"
+#endif
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -220,6 +222,7 @@ STATIC INLINE VOID OsSchedSetNextExpireTime(UINT64 startTime, UINT32 responseID,
 
 VOID OsSchedUpdateExpireTime(UINT64 startTime, BOOL timeUpdate)
 {
+    BOOL isPmMode = FALSE;
     UINT64 endTime;
     LosTaskCB *runTask = g_losTask.runTask;
 
@@ -227,7 +230,9 @@ VOID OsSchedUpdateExpireTime(UINT64 startTime, BOOL timeUpdate)
         return;
     }
 
-    BOOL isPmMode = OsIsPmMode();
+#if (LOSCFG_KERNEL_PM == 1)
+    isPmMode = OsIsPmMode();
+#endif
     if ((runTask->taskID != g_idleTaskID) && !isPmMode) {
         INT32 timeSlice = (runTask->timeSlice <= OS_TIME_SLICE_MIN) ? OS_SCHED_TIME_SLICES : runTask->timeSlice;
         endTime = startTime + timeSlice;
