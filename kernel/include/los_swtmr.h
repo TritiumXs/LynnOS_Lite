@@ -271,6 +271,9 @@ typedef struct tagSwTmrCtrl {
     struct tagSwTmrCtrl *pstNext;       /* Pointer to the next software timer                    */
     UINT8               ucState;        /* Software timer state                                  */
     UINT8               ucMode;         /* Software timer mode                                   */
+/* begin jbc 2021-11-25 */
+    UINT8               ucOverrun;      /* Times that a software timer repeats timing            */
+/* end jbc 2021-11-25 */
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     UINT8               ucRouses;       /* wake up enable                                        */
     UINT8               ucSensitive;    /* align enable                                          */

@@ -45,6 +45,9 @@
 #include "los_interrupt.h"
 /* begin jbc 2021-11-25 */
 #include "sys/times.h"
+
+#define DELAYTIMER_MAX 0x7fffffff
+#define OS_SWTMR_MAX_TIMERID    ((0xFFFFFFFF / LOSCFG_BASE_CORE_SWTMR_LIMIT) * LOSCFG_BASE_CORE_SWTMR_LIMIT)
 /* end jbc 2021-11-25 */
 
 /* accumulative time delta from discontinuous modify */
@@ -110,13 +113,15 @@ int timer_create(clockid_t clockID, struct sigevent *restrict evp, timer_t *rest
 {
     UINT32 ret;
     UINT32 swtmrID;
-
-    if (!timerID || (clockID != CLOCK_REALTIME)) {
+    /* begin jbc 2021-11-25 */
+    if (!timerID || (clockID != CLOCK_REALTIME) || !evp) {
+    /* end jbc 2021-11-25 */
         errno = EINVAL;
         return -1;
     }
-
-    if (!evp || evp->sigev_notify != SIGEV_THREAD || evp->sigev_notify_attributes) {
+	/* begin jbc 2021-11-25 */
+    if (evp->sigev_notify != SIGEV_THREAD || evp->sigev_notify_attributes) {
+	/* end jbc 2021-11-25 */
         errno = ENOTSUP;
         return -1;
     }
@@ -197,7 +202,9 @@ int timer_settime(timer_t timerID, int flags,
     swtmr = OS_SWT_FROM_SID(swtmrID);
     swtmr->ucMode = (interval ? LOS_SWTMR_MODE_PERIOD : LOS_SWTMR_MODE_NO_SELFDELETE);
     swtmr->uwInterval = (interval ? interval : expiry);
-
+    /* begin jbc 2021-11-25 */
+    swtmr->ucOverrun = 0;
+    /* end jbc 2021-11-25 */
     LOS_IntRestore(intSave);
 
     if ((value->it_value.tv_sec == 0) && (value->it_value.tv_nsec == 0)) {
@@ -249,10 +256,20 @@ int timer_gettime(timer_t timerID, struct itimerspec *value)
 
 int timer_getoverrun(timer_t timerID)
 {
-    (void)timerID;
+    /* begin jbc 2021-11-25 */
+    SWTMR_CTRL_S *swtmr = NULL;
+    swtmr = OS_SWT_FROM_SID((UINT32)(UINTPTR)timerID);
 
-    errno = ENOSYS;
-    return -1;
+    if (swtmr->usTimerID >= OS_SWTMR_MAX_TIMERID) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if ((swtmr->ucOverrun) >= (UINT8)DELAYTIMER_MAX) {
+        return (INT32)DELAYTIMER_MAX;
+    }
+    return (int)swtmr->ucOverrun;
+    /* end jbc 2021-11-25 */
 }
 
 STATIC VOID OsGetHwTime(struct timespec *hwTime)

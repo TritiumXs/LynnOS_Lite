@@ -164,6 +164,49 @@ int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param
     return 0;
 }
 
+/* begin jbc 2021-11-25 */
+int pthread_setschedprio(pthread_t thread, int prio)
+{
+   if (LOS_TaskPriSet((UINT32)thread, (UINT16)prio) != LOS_OK) {
+       return EINVAL;
+   }
+   return 0;
+}
+
+int pthread_once(pthread_once_t *onceControl, void (*initRoutine)(void))
+{
+    pthread_once_t old;
+
+    if ((onceControl == NULL) || (initRoutine == NULL)) {
+        return EINVAL;
+    }
+
+    // ret = pthread_mutex_lock(&g_pthreadsDataMutex);
+    // if (ret != ENOERR) {
+    //     return ret;
+    // }
+
+    old = *onceControl;
+    *onceControl = 1;
+
+    // ret = pthread_mutex_unlock(&g_pthreadsDataMutex);
+    // if (ret != ENOERR) {
+    //     return ret;
+    // }
+    /* If the onceControl was zero, call the initRoutine(). */
+    if (!old) {
+        initRoutine();
+    }
+
+    return ENOERR;
+}
+
+int pthread_equal(pthread_t thread1, pthread_t thread2)
+{
+    return thread1 == thread2;
+}
+/* end jbc 2021-11-25 */
+
 int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
 {
     UINT32 prio;

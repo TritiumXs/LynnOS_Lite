@@ -251,7 +251,9 @@ LITE_OS_SEC_TEXT VOID OsSwtmrStop(SWTMR_CTRL_S *swtmr)
 {
     OsDeleteSortLink(&swtmr->stSortList, OS_SORT_LINK_SWTMR);
     swtmr->ucState = OS_SWTMR_STATUS_CREATED;
-
+    /* begin jbc 2021-11-25 */
+    swtmr->ucOverrun = 0;
+    /* end jbc 2021-11-25 */
     OsSchedUpdateExpireTime(OsGetCurrSchedTimeCycle(), TRUE);
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     g_swtmrAlignID[swtmr->usTimerID % LOSCFG_BASE_CORE_SWTMR_LIMIT].isAligned = 0;
@@ -274,6 +276,9 @@ STATIC VOID OsSwtmrTimeoutHandle(UINT64 currTime, SWTMR_CTRL_S *swtmr)
             swtmr->usTimerID %= LOSCFG_BASE_CORE_SWTMR_LIMIT;
         }
     } else if (swtmr->ucMode == LOS_SWTMR_MODE_PERIOD) {
+        /* begin jbc 2021-11-25 */
+        swtmr->ucOverrun++;
+        /* end jbc 2021-11-25 */
         OsSwtmrStart(currTime, swtmr);
     } else if (swtmr->ucMode == LOS_SWTMR_MODE_NO_SELFDELETE) {
         swtmr->ucState = OS_SWTMR_STATUS_CREATED;
@@ -477,6 +482,9 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_SwtmrCreate(UINT32 interval,
     swtmr->ucSensitive   = sensitive;
 #endif
     swtmr->ucState       = OS_SWTMR_STATUS_CREATED;
+    /* begin jbc 2021-11-25 */
+    swtmr->ucOverrun = 0;
+    /* end jbc 2021-11-25 */
     *swtmrId = swtmr->usTimerID;
     SET_SORTLIST_VALUE(&swtmr->stSortList, OS_SORT_LINK_INVALID_TIME);
     OsHookCall(LOS_HOOK_TYPE_SWTMR_CREATE, swtmr);
