@@ -866,6 +866,10 @@ uint32_t osEventFlagsSet(osEventFlagsId_t ef_id, uint32_t flags)
     UINT32 ret;
     uint32_t rflags;
 
+    if (pstEventCB == NULL) {
+        return osFlagsErrorParameter;
+    }
+
     ret = LOS_EventWrite(pstEventCB, (UINT32)flags);
     if (ret == LOS_OK) {
         rflags = pstEventCB->uwEventID;
@@ -1114,7 +1118,7 @@ osSemaphoreId_t osSemaphoreNew(uint32_t max_count, uint32_t initial_count, const
 
     UNUSED(attr);
 
-    if ((initial_count > max_count) || (max_count > LOS_SEM_COUNT_MAX) || OS_INT_ACTIVE) {
+    if ((initial_count > max_count) || (max_count > LOS_SEM_COUNT_MAX) || OS_INT_ACTIVE || max_count == 0) {
         return NULL;
     }
 
