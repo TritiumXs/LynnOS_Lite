@@ -69,7 +69,7 @@ STATIC INT32 CheckForCancel(VOID)
 {
     LosTaskCB *tcb = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
     // if (self->canceled && (self->cancelstate == PTHREAD_CANCEL_ENABLE)) {
-    if (tcb->cancelstate == PTHREAD_CANCEL_ENABLE) {
+    if ((tcb->canceled) && (tcb->cancelstate == PTHREAD_CANCEL_ENABLE)) {
         return 1;
     }
     return 0;

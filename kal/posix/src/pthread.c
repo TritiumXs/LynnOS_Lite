@@ -141,6 +141,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     tcb = OS_TCB_FROM_TID(taskID);
     tcb->cancelstate  = PTHREAD_CANCEL_ENABLE;
     tcb->canceltype   = PTHREAD_CANCEL_DEFERRED;
+    tcb->canceled = 0;
     /* end jbc 2021-11-25 */
     /* set pthread default name */
     (void)sprintf_s(taskInitParam.pcName, PTHREAD_NAMELEN, "pthread%u", taskID);
@@ -276,6 +277,7 @@ STATIC UINT32 DoPthreadCancel(LosTaskCB *task)
 {
     UINT32 ret = LOS_OK;
     LOS_TaskLock();
+    task->canceled = 0;
     if ((task->taskStatus == 0) || (LOS_TaskSuspend(task->taskID) != ENOERR)) {
         ret = LOS_NOK;
         goto OUT;
@@ -296,6 +298,7 @@ int pthread_cancel(pthread_t thread)
         return EINVAL;
     }
     tcb = OS_TCB_FROM_TID((UINT32)thread);
+    tcb->canceled = 1;
     if ((tcb->cancelstate == PTHREAD_CANCEL_ENABLE) &&
         (tcb->canceltype == PTHREAD_CANCEL_ASYNCHRONOUS)) {
         /*
@@ -316,7 +319,8 @@ int pthread_join(pthread_t thread, void **retval)
     UINTPTR result;
 
     /* begin jbc 2021-11-25 */
-    if (OsCheckTaskIDValid((UINT32)thread) != LOS_OK){
+    // if (OsCheckTaskIDValid((UINT32)thread) != LOS_OK){
+    if (((UINT32)thread == g_idleTaskID) || ((UINT32)thread == g_swtmrTaskID) || (OS_TSK_GET_INDEX((UINT32)thread) >= g_taskMaxNum)) {
         return ESRCH;
     }
     /* end jbc 2021-11-25 */
@@ -358,7 +362,7 @@ void pthread_exit(void *retVal)
     int *oldState = NULL;
 
     if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, oldState) != ENOERR) {
-        PRINT_ERR("%s: %d failed\n", __FUNCTION__, __LINE__);
+        printf("%s: %d failed\n", __FUNCTION__, __LINE__);
     }
     // free((PthreadData *)(UINTPTR)tcb->arg);
     free(tcb->taskName);

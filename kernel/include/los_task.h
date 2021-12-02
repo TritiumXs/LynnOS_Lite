@@ -1464,6 +1464,7 @@ typedef struct {
     /* begin jbc 2021-11-25 */
     unsigned char               cancelstate;               /* Cancel state of thread */
     volatile unsigned char      canceltype;                /* Cancel type of thread */
+    volatile unsigned char      canceled;
     /* end jbc 2021-11-25 */
 } LosTaskCB;
 
