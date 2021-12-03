@@ -402,7 +402,7 @@ source "components/fs/fatfs/Kconfig"
 
 config FS_LITTLEFS
     bool "Enable littlefs"
-    default n
+    default y
     depends on FS_VFS
     select SUPPORT_LITTLEFS
     help
