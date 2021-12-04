@@ -263,7 +263,9 @@ LITE_OS_SEC_TEXT_INIT UINT32 HalHwiDelete(HWI_HANDLE_T hwiNum)
 #define BUSFAULT                        (1 << 17)
 #define MEMFAULT                        (1 << 16)
 #define DIV0FAULT                       (1 << 4)
+#ifndef UNALIGNFAULT
 #define UNALIGNFAULT                    (1 << 3)
+#endif
 #define HARDFAULT_IRQN                  (-13)
 
 ExcInfo g_excInfo = {0};
