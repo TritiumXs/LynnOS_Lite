@@ -100,7 +100,7 @@ WEAK UINT64 HalGetTickCycle(UINT32 *period)
 {
     UINT32 hwCycle;
     UINT32 intSave = LOS_IntLock();
-    *period = SysTick->LOAD;
+    *period = SysTick->LOAD + 1;
     hwCycle = *period - SysTick->VAL;
     LOS_IntRestore(intSave);
     return (UINT64)hwCycle;
