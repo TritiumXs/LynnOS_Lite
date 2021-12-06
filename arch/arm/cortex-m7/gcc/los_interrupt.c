@@ -188,21 +188,21 @@ LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
  Description : create hardware interrupt
  Input       : hwiNum   --- hwi num to create
                hwiPrio  --- priority of the hwi
-               mode     --- unused
-               handler --- hwi handler
-               arg      --- param of the hwi handler
+               hwiMode     --- unused
+               hwiHandler --- hwi handler
+               irqParam      --- param of the hwi handler
  Output      : None
  Return      : LOS_OK on success or error code on failure
  **************************************************************************** */
 LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
                                            HWI_PRIOR_T hwiPrio,
-                                           HWI_MODE_T mode,
-                                           HWI_PROC_FUNC handler,
-                                           HWI_ARG_T arg)
+                                           HWI_MODE_T hwiMode,
+                                           HWI_PROC_FUNC hwiHandler,
+                                           HWI_IRQ_PARAM_S *irqParam)
 {
     UINT32 intSave;
 
-    if (handler == NULL) {
+    if (hwiHandler == NULL) {
         return OS_ERRNO_HWI_PROC_FUNC_NULL;
     }
 
@@ -220,7 +220,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
 
     intSave = LOS_IntLock();
 #if (OS_HWI_WITH_ARG == 1)
-    OsSetVector(hwiNum, handler, arg);
+    OsSetVector(hwiNum, handler, irqParam->arg);
 #else
     OsSetVector(hwiNum, handler);
 #endif

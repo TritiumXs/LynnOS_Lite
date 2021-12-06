@@ -238,7 +238,7 @@ UINT32 los_TestInit(VOID)
     return ret;
 }
 
-UINT32 LosAppInit()
+UINT32 LosAppInit(VOID)
 {
     UINT32 ret;
 

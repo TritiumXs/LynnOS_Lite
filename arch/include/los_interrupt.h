@@ -62,6 +62,16 @@ typedef VOID (*HWI_PROC_FUNC)(VOID *parm);
 typedef VOID (*HWI_PROC_FUNC)(void);
 #endif
 
+/**
+ * @ingroup  los_hwi
+ * The hardware interrupt parameter for #LOS_HwiDelete and interrupt handler in #LOS_HwiCreate.
+ */
+typedef struct tagIrqParam {
+    int swIrq;          /**< The interrupt number */
+    VOID *pDevId;       /**< The pointer to the device ID that launches the interrupt */
+    const CHAR *pName;  /**< The interrupt name */
+} HWI_IRQ_PARAM_S;
+
 /* stack protector */
 extern UINT32 __stack_chk_guard;
 

@@ -41,8 +41,7 @@ static VOID SwtmrF01(VOID)
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     ret = LOS_EventRead(&g_pevent, 0xF, LOS_WAITMODE_AND, LOS_WAIT_FOREVER);
-    ICUNIT_ASSERT_EQUAL_VOID(ret, g_pevent.uwEventID, ret);
-    ICUNIT_ASSERT_EQUAL_VOID(ret, 0xF, ret);
+    ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_ERRNO_EVENT_READ_IN_SYSTEM_TASK, ret);
 
     g_testCount++;
 }

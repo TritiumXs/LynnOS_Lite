@@ -64,7 +64,8 @@ static UINT32 TestCase(VOID)
 
     g_testCount = 0;
     g_index = startIndex;
-
+    
+    startIndex = TaskUsedCountGet() + 1;
     LOS_TaskLock();
 
     for (g_index = startIndex; g_index < LOSCFG_BASE_CORE_TSK_LIMIT; pro++, g_testCount++, g_index++) {

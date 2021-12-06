@@ -77,6 +77,9 @@ static UINT32 TestCase(VOID)
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
     ICUNIT_ASSERT_EQUAL(temp, taskID, temp);
 
+    ret = LOS_TaskJoin(taskID, &temp);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+
     return LOS_OK;
 }
 
