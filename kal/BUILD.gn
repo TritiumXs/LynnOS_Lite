@@ -32,11 +32,13 @@ import("//kernel/liteos_m/liteos.gni")
 group("kal") {
   deps = [ "cmsis" ]
   deps += [ "posix" ]
+  deps += [ "libsec" ]
 }
 
 config("public") {
   configs = [
     "cmsis:public",
     "posix:public",
+    "libsec:public",
   ]
 }

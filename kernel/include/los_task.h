@@ -1280,7 +1280,7 @@ extern UINT32 LOS_TaskDetach(UINT32 taskID);
  *
  * The delayed operation of this task is frozen.
  */
-#define OS_TASK_FALG_FREEZE                         0x4000
+#define OS_TASK_FLAG_FREEZE                         0x4000
 
 /**
  * @ingroup los_task
@@ -1461,6 +1461,11 @@ typedef struct {
     UINT32                      eventMode;                /**< Event mode */
     VOID                        *msg;                     /**< Memory allocated to queues */
     INT32                       errorNo;
+    /* begin jbc 2021-11-25 */
+    unsigned char               cancelstate;               /* Cancel state of thread */
+    volatile unsigned char      canceltype;                /* Cancel type of thread */
+    volatile unsigned char      canceled;
+    /* end jbc 2021-11-25 */
 } LosTaskCB;
 
 typedef struct {

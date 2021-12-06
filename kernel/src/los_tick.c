@@ -35,6 +35,7 @@
 #include "los_swtmr.h"
 #include "los_sched.h"
 
+#define UINT32_MAX (0xFFFFFFFFu)
 
 LITE_OS_SEC_BSS UINT32 g_ticksPerSec;
 LITE_OS_SEC_BSS UINT32 g_uwCyclePerSec;

@@ -415,6 +415,66 @@ VOID OsSchedTaskWake(LosTaskCB *resumedTask)
     }
 }
 
+STATIC VOID OsSchedFreezeTask(LosTaskCB *taskCB)
+{
+    UINT64 responseTime = GET_SORTLIST_VALUE(&taskCB->sortList);
+    OsDeleteSortLink(&taskCB->sortList, OS_SORT_LINK_TASK);
+    SET_SORTLIST_VALUE(&taskCB->sortList, responseTime);
+    taskCB->taskStatus |= OS_TASK_FLAG_FREEZE;
+    return;
+}
+
+STATIC VOID OsSchedUnfreezeTask(LosTaskCB *taskCB)
+{
+    UINT64 currTime, responseTime;
+    UINT32 remainTick;
+
+    taskCB->taskStatus &= ~OS_TASK_FLAG_FREEZE;
+    currTime = OsGetCurrSchedTimeCycle();
+    responseTime = GET_SORTLIST_VALUE(&taskCB->sortList);
+    if (responseTime > currTime) {
+        remainTick = ((responseTime - currTime) + OS_CYCLE_PER_TICK - 1) / OS_CYCLE_PER_TICK;
+        OsAdd2SortLink(&taskCB->sortList, currTime, remainTick, OS_SORT_LINK_TASK);
+        return;
+    }
+
+    SET_SORTLIST_VALUE(&taskCB->sortList, OS_SORT_LINK_INVALID_TIME);
+    if (taskCB->taskStatus & OS_TASK_STATUS_PEND) {
+        LOS_ListDelete(&taskCB->pendList);
+    }
+    taskCB->taskStatus &= ~(OS_TASK_STATUS_DELAY | OS_TASK_STATUS_PEND_TIME | OS_TASK_STATUS_PEND);
+    return;
+}
+
+VOID OsSchedSuspend(LosTaskCB *taskCB)
+{
+    if (taskCB->taskStatus & OS_TASK_STATUS_READY) {
+        OsSchedTaskDeQueue(taskCB);
+    }
+
+    if ((taskCB->taskStatus & (OS_TASK_STATUS_PEND_TIME | OS_TASK_STATUS_DELAY)) && OsIsPmMode()) {
+        OsSchedFreezeTask(taskCB);
+    }
+
+    taskCB->taskStatus |= OS_TASK_STATUS_SUSPEND;
+    OsHookCall(LOS_HOOK_TYPE_MOVEDTASKTOSUSPENDEDLIST, taskCB);
+}
+
+BOOL OsSchedResume(LosTaskCB *taskCB)
+{
+    if (taskCB->taskStatus & OS_TASK_FLAG_FREEZE) {
+        OsSchedUnfreezeTask(taskCB);
+    }
+
+    taskCB->taskStatus &= (~OS_TASK_STATUS_SUSPEND);
+    if (!(taskCB->taskStatus & (OS_TASK_STATUS_DELAY | OS_TASK_STATUS_PEND))) {
+        OsSchedTaskEnQueue(taskCB);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 BOOL OsSchedModifyTaskSchedParam(LosTaskCB *taskCB, UINT16 priority)
 {
     if (taskCB->taskStatus & OS_TASK_STATUS_READY) {
