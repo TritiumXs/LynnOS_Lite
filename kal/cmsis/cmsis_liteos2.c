@@ -1226,6 +1226,14 @@ osStatus_t osSemaphoreDelete(osSemaphoreId_t semaphore_id)
 
 //  ==== Message Queue Management Functions ====
 #if (LOSCFG_BASE_IPC_QUEUE == 1)
+
+typedef enum {
+    ATTR_CAPACITY = 0,
+    ATTR_MSGSIZE = 1,
+    ATTR_COUNT = 2,
+    ATTR_SPACE = 3
+} QueueAttribute;
+
 osMessageQueueId_t osMessageQueueNew(uint32_t msg_count, uint32_t msg_size, const osMessageQueueAttr_t *attr)
 {
     UINT32 queueId;
@@ -1290,61 +1298,60 @@ osStatus_t osMessageQueueGet(osMessageQueueId_t mq_id, void *msg_ptr, uint8_t *m
 }
 
 
-uint32_t osMessageQueueGetCapacity(osMessageQueueId_t mq_id)
+STATIC UINT16 osMessageQueueGetAttr(osMessageQueueId_t mq_id, QueueAttribute attr)
 {
-    uint32_t capacity;
-    LosQueueCB *pstQueue = (LosQueueCB *)mq_id;
+    LosQueueCB *queueCB = (LosQueueCB *)mq_id;
+    UINT32 intSave;
+    UINT16 attrVal = 0;
 
-    if (pstQueue == NULL) {
-        capacity = 0U;
-    } else {
-        capacity = pstQueue->queueLen;
+    if (queueCB == NULL) {
+        return 0;
     }
 
-    return (capacity);
+    if (queueCB->queueState == OS_QUEUE_UNUSED) {
+        return 0;
+    }
+
+    switch (attr) {
+        case ATTR_CAPACITY:
+            attrVal = queueCB->queueLen;
+            break;
+        case ATTR_MSGSIZE:
+            attrVal = queueCB->queueSize - sizeof(UINT32);
+            break;
+        case ATTR_COUNT:
+            attrVal = queueCB->readWriteableCnt[OS_QUEUE_READ];
+            break;
+        case ATTR_SPACE:
+            attrVal = queueCB->readWriteableCnt[OS_QUEUE_WRITE];
+            break;
+        default:
+            break;
+    }
+
+    return attrVal;
+}
+
+uint32_t osMessageQueueGetCapacity(osMessageQueueId_t mq_id)
+{
+    return (uint32_t)osMessageQueueGetAttr(mq_id, ATTR_CAPACITY);
 }
 
 uint32_t osMessageQueueGetMsgSize(osMessageQueueId_t mq_id)
 {
-    uint32_t size;
-    LosQueueCB *pstQueue = (LosQueueCB *)mq_id;
-
-    if (pstQueue == NULL) {
-        size = 0U;
-    } else {
-        size = pstQueue->queueSize - sizeof(UINT32);
-    }
-
-    return (size);
+    return (uint32_t)osMessageQueueGetAttr(mq_id, ATTR_MSGSIZE);
 }
-
 
 uint32_t osMessageQueueGetCount(osMessageQueueId_t mq_id)
 {
-    uint32_t count;
-    LosQueueCB *pstQueue = (LosQueueCB *)mq_id;
-
-    if (pstQueue == NULL) {
-        count = 0U;
-    } else {
-        count = (uint32_t)(pstQueue->readWriteableCnt[OS_QUEUE_READ]);
-    }
-    return count;
+    return (uint32_t)osMessageQueueGetAttr(mq_id, ATTR_COUNT);
 }
-
 
 uint32_t osMessageQueueGetSpace(osMessageQueueId_t mq_id)
 {
-    uint32_t space;
-    LosQueueCB *pstQueue = (LosQueueCB *)mq_id;
-
-    if (pstQueue == NULL) {
-        space = 0U;
-    } else {
-        space = (uint32_t)pstQueue->readWriteableCnt[OS_QUEUE_WRITE];
-    }
-    return space;
+    return (uint32_t)osMessageQueueGetAttr(mq_id, ATTR_SPACE);
 }
+
 
 osStatus_t osMessageQueueDelete(osMessageQueueId_t mq_id)
 {
