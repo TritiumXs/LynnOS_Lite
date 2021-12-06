@@ -278,7 +278,6 @@ static_library("libkernel") {
     ":public",
     ":los_config",
   ]
-  complete_static_lib = true
   visibility += []
 }
 
