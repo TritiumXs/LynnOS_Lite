@@ -67,9 +67,7 @@ typedef VOID (*HWI_PROC_FUNC)(void);
  * The hardware interrupt parameter for #LOS_HwiDelete and interrupt handler in #LOS_HwiCreate.
  */
 typedef struct tagIrqParam {
-    int swIrq;          /**< The interrupt number */
-    VOID *pDevId;       /**< The pointer to the device ID that launches the interrupt */
-    const CHAR *pName;  /**< The interrupt name */
+    HWI_ARG_T arg;
 } HWI_IRQ_PARAM_S;
 
 /* stack protector */
@@ -134,9 +132,9 @@ extern UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum);
  *
  * @param  hwiNum   [IN] Type#HWI_HANDLE_T: hardware interrupt number. The value range applicable for a Cortex-A7 platform is [32,95].
  * @param  hwiPrio  [IN] Type#HWI_PRIOR_T: hardware interrupt priority. Ignore this parameter temporarily.
- * @param  mode     [IN] Type#HWI_MODE_T: hardware interrupt mode. Ignore this parameter temporarily.
- * @param  handler  [IN] Type#HWI_PROC_FUNC: interrupt handler used when a hardware interrupt is triggered.
- * @param  arg      [IN] Type#HWI_ARG_T: input parameter of the interrupt handler used when a hardware interrupt is triggered.
+ * @param  hwMode     [IN] Type#HWI_MODE_T: hardware interrupt mode. Ignore this parameter temporarily.
+ * @param  hwHandler  [IN] Type#HWI_PROC_FUNC: interrupt handler used when a hardware interrupt is triggered.
+ * @param  irqParam      [IN] Type#HWI_ARG_T: input parameter of the interrupt handler used when a hardware interrupt is triggered.
  *
  * @retval #OS_ERRNO_HWI_PROC_FUNC_NULL               0x02000901: Null hardware interrupt handling function.
  * @retval #OS_ERRNO_HWI_NUM_INVALID                  0x02000900: Invalid interrupt number.
@@ -149,9 +147,9 @@ extern UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum);
  */
 extern UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
                             HWI_PRIOR_T hwiPrio,
-                            HWI_MODE_T mode,
-                            HWI_PROC_FUNC handler,
-                            HWI_ARG_T arg);
+                            HWI_MODE_T hwMode,
+                            HWI_PROC_FUNC hwHandler,
+                            HWI_IRQ_PARAM_S *irqParam);
 
 #ifdef __cplusplus
 #if __cplusplus

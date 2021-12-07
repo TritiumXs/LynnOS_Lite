@@ -292,7 +292,7 @@ UINT64 LosCpuCycleGet(VOID)
 #define HWI_BIT 2
 VOID TestHwiTrigger(UINT32 hwiNum)
 {
-    *(volatile UINT32 *)(OS_NVIC_SETPEND + ((hwiNum >> HWI_SHIFT_NUM) << HWI_BIT)) = 1 << (hwiNum & 0x1F);
+    ArchIrqPending(hwiNum);
 }
 
 VOID TestHwiUnTrigger(UINT32 hwiNum)
