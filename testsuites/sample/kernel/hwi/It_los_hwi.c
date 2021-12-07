@@ -68,4 +68,5 @@ VOID ItSuiteLosHwi()
     ItLosHwi032();
     ItLosHwi033();
     ItLosHwi034();
+    ItLosHwi036();
 }

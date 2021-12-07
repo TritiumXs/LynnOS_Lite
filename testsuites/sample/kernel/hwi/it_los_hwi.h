@@ -84,6 +84,7 @@ extern VOID ItLosHwi032(VOID);
 extern VOID ItLosHwi033(VOID);
 extern VOID ItLosHwi034(VOID);
 extern VOID LltLosHwi035(VOID);
+extern VOID ItLosHwi036(VOID);
 
 
 #ifdef __cplusplus
