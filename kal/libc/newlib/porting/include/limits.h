@@ -32,6 +32,7 @@
 #define _ADAPT_LIMITS_H
 
 #include_next <limits.h>
+#include <sys/syslimits.h>
 
 #define SSIZE_MAX   LONG_MAX
 

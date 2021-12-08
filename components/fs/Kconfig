@@ -37,6 +37,6 @@ config SUPPORT_FATFS
     depends on FS_FAT
 
 config SUPPORT_LITTLEFS
-    bool
+    bool "Enable SUPPORT_LITTLEFS"
     default n
     depends on FS_LITTLEFS
