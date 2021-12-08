@@ -57,20 +57,22 @@ static UINT32 Testcase(VOID)
     UINT32 loop;
     HWI_PRIOR_T hwiPrio = 7;
     HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
+    HWI_IRQ_PARAM_S irqParam;
+    (void)memset_s(&irqParam, sizeof(HWI_IRQ_PARAM_S), 0, sizeof(HWI_IRQ_PARAM_S));
+irqParam.arg = 0;
     UINT32 intSave1;
     UINT32 intSave2;
     UINT32 intSave3;
 
     for (loop = 0; loop < HWI_LOOP_NUM; loop++) {
         g_testCount = 0;
-        ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+        ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, &irqParam);
         ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-        ret = LOS_HwiCreate(HWI_NUM_TEST3, hwiPrio, mode, (HWI_PROC_FUNC)HwiF02, arg);
+        ret = LOS_HwiCreate(HWI_NUM_TEST3, hwiPrio, mode, (HWI_PROC_FUNC)HwiF02, &irqParam);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-        ret = LOS_HwiCreate(HWI_NUM_TEST1, hwiPrio, mode, (HWI_PROC_FUNC)HwiF03, arg);
+        ret = LOS_HwiCreate(HWI_NUM_TEST1, hwiPrio, mode, (HWI_PROC_FUNC)HwiF03, &irqParam);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
         intSave1 = LOS_IntLock();

@@ -82,7 +82,9 @@ static UINT32 Testcase(VOID)
     UINT32 semCount = 1;
     HWI_PRIOR_T hwiPrio = 7;
     HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
+    HWI_IRQ_PARAM_S irqParam;
+    (void)memset_s(&irqParam, sizeof(HWI_IRQ_PARAM_S), 0, sizeof(HWI_IRQ_PARAM_S));
+irqParam.arg = 0;
     TSK_INIT_PARAM_S task;
 
     task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
@@ -99,7 +101,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_SemPend(g_usSemID, LOS_NO_WAIT);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, &irqParam);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
     ret = LOS_TaskCreate(&g_testTaskID01, &task);

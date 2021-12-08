@@ -61,7 +61,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_TaskCreate(&g_testTaskIdHwi, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_HwiCreate(HWI_NUM_INT0, hwiPrio, mode, (HWI_PROC_FUNC)ItHwiM3B001F001, arg);
+    ret = LOS_HwiCreate(HWI_NUM_INT0, hwiPrio, mode, (HWI_PROC_FUNC)ItHwiM3B001F001, &irqParam);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);    
 
     return LOS_OK;

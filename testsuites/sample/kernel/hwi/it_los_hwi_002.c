@@ -38,9 +38,11 @@ static UINT32 Testcase(VOID)
     UINT32 ret;
     HWI_PRIOR_T hwiPrio = 3;
     HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
+    HWI_IRQ_PARAM_S irqParam;
+    (void)memset_s(&irqParam, sizeof(HWI_IRQ_PARAM_S), 0, sizeof(HWI_IRQ_PARAM_S));
+    irqParam.arg = 0;
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, NULL, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, NULL, &irqParam);
     ICUNIT_ASSERT_EQUAL(ret, OS_ERRNO_HWI_PROC_FUNC_NULL, ret);
 
     return LOS_OK;
