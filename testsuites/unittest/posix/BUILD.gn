@@ -64,6 +64,7 @@ hctest_suite("PosixTest") {
   include_dirs = [
     "//test/xts/tools/hctest/include",
     "//third_party/unity/src",
+    "//kernel/liteos_m/kal/cmsis",
     "src",
   ]
   cflags = [ "-Wno-error" ]

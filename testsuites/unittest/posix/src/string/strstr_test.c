@@ -36,6 +36,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "log.h"
+
 /* *
  * @tc.desc      : register a test suite, this suite is used to test basic flow and interface dependency
  * @param        : subsystem name is utils

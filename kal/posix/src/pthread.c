@@ -310,8 +310,8 @@ int pthread_cancel(pthread_t thread)
             return ESRCH;
         }
     }
+    return ENOERR;
     /* end jbc 2021-11-25 */
-    return ENOSYS;
 }
 
 int pthread_join(pthread_t thread, void **retval)

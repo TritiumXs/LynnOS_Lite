@@ -130,11 +130,11 @@ extern UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum);
  * <li>Before executing an interrupt on a platform, refer to the chip manual of the platform.</li>
  * </ul>
  *
- * @param  hwiNum   [IN] Type#HWI_HANDLE_T: hardware interrupt number. The value range applicable for a Cortex-A7 platform is [32,95].
- * @param  hwiPrio  [IN] Type#HWI_PRIOR_T: hardware interrupt priority. Ignore this parameter temporarily.
- * @param  hwMode     [IN] Type#HWI_MODE_T: hardware interrupt mode. Ignore this parameter temporarily.
- * @param  hwHandler  [IN] Type#HWI_PROC_FUNC: interrupt handler used when a hardware interrupt is triggered.
- * @param  irqParam      [IN] Type#HWI_ARG_T: input parameter of the interrupt handler used when a hardware interrupt is triggered.
+ * @param  hwiNum    [IN] Type#HWI_HANDLE_T: hardware interrupt number. The value range applicable for a Cortex-A7 platform is [32,95].
+ * @param  hwiPrio   [IN] Type#HWI_PRIOR_T: hardware interrupt priority. Ignore this parameter temporarily.
+ * @param  hwMode    [IN] Type#HWI_MODE_T: hardware interrupt mode. Ignore this parameter temporarily.
+ * @param  hwHandler [IN] Type#HWI_PROC_FUNC: interrupt handler used when a hardware interrupt is triggered.
+ * @param  irqParam  [IN] Type#HWI_ARG_T: input parameter of the interrupt handler used when a hardware interrupt is triggered.
  *
  * @retval #OS_ERRNO_HWI_PROC_FUNC_NULL               0x02000901: Null hardware interrupt handling function.
  * @retval #OS_ERRNO_HWI_NUM_INVALID                  0x02000900: Invalid interrupt number.

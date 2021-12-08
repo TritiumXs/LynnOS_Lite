@@ -203,11 +203,11 @@ LITE_OS_SEC_TEXT VOID ArchInterrupt(VOID)
 /* ****************************************************************************
  Function    : ArchHwiCreate
  Description : create hardware interrupt
- Input       : hwiNum   --- hwi num to create
-               hwiPrio  --- priority of the hwi
-               hwiMode     --- unused
+ Input       : hwiNum     --- hwi num to create
+               hwiPrio    --- priority of the hwi
+               hwiMode    --- unused
                hwiHandler --- hwi handler
-               irqParam      --- param of the hwi handler
+               irqParam   --- param of the hwi handler
  Output      : None
  Return      : LOS_OK on success or error code on failure
  **************************************************************************** */

@@ -153,13 +153,13 @@ LITE_TEST_CASE(PosixStdlibStrtoullTest, testStdlibStrtoull005, Function | Medium
     char nPtr[] = " 1.6";
     char *endPtr = NULL;
     unsigned long long ret = strtoull(nPtr, &endPtr, 65);
-    if (ret == 1ULL) {
+    if (ret == 0ULL) {
         LOG("[DEMO] posix stdlib test case 5:strtoull(base=65) ret:%llu,%s, endPtr:%s ok.\n", ret, nPtr, endPtr);
     } else {
         LOG("[DEMO] posix stdlib test case 5:strtoull(base=65) ret:%llu,%s fail.\n", ret, nPtr);
     }
-    TEST_ASSERT_TRUE(ret == 1ULL);
-    TEST_ASSERT_EQUAL_STRING(endPtr, ".6");
+    TEST_ASSERT_TRUE(ret == 0ULL);
+    TEST_ASSERT_EQUAL_STRING(endPtr, " 1.6");
 }
 
 /* *
@@ -210,7 +210,7 @@ LITE_TEST_CASE(PosixStdlibStrtoullTest, testStdlibStrtoull008, Function | Medium
     char nPtr[] = " 18446744073709551616";
     char *endPtr = NULL;
     unsigned long long ret = strtoull(nPtr, &endPtr, 10);
-    if (ret == 0ULL) {
+    if (ret == 18446744073709551615ULL) {
         LOG("[DEMO] posix stdlib test case 8:strtoull(base=10) ret:%llu,%s, endPtr:%s ok.\n", ret, nPtr, endPtr);
     } else {
         LOG("[DEMO] posix stdlib test case 8:strtoull(base=10) ret:%llu,%s fail.\n", ret, nPtr);

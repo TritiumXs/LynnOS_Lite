@@ -214,6 +214,29 @@ LITE_TEST_CASE(PosixSemaphoreFuncTestSuite, testIpcSem_Timedwait003, Function | 
     TEST_ASSERT_EQUAL_INT(errno, EINVAL);
 }
 
+LITE_TEST_CASE(PosixSemaphoreFuncTestSuite, testIpcSem_Trywait004, Function | MediumTest | Level3)
+{
+    sem_t mysemp;
+    int val;
+    int ret;
+
+    ret = sem_init(&mysemp, 0, 1);
+    TEST_ASSERT_EQUAL_INT(0, ret);
+
+    ret = sem_trywait(&mysemp);
+    TEST_ASSERT_EQUAL_INT(0, ret);
+
+    ret = sem_getvalue(&mysemp, &val);
+    TEST_ASSERT_EQUAL_INT(0, ret);
+
+    if (val <= 0) {
+        sem_destroy(&mysemp);
+        return LOS_OK;
+    } else {
+        TEST_ASSERT_EQUAL_INT(0, ret);
+    }
+}
+
 
 RUN_TEST_SUITE(PosixSemaphoreFuncTestSuite);
 
@@ -223,6 +246,7 @@ void PosixSemaphoreFuncTest()
     RUN_ONE_TESTCASE(testIpcSem_Timedwait001);
     RUN_ONE_TESTCASE(testIpcSem_Timedwait002);
     RUN_ONE_TESTCASE(testIpcSem_Timedwait003);
+    RUN_ONE_TESTCASE(testIpcSem_Trywait004);
 
     return;
 }
