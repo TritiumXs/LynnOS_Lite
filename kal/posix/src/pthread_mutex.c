@@ -34,6 +34,8 @@
 #include <securec.h>
 #include "los_compiler.h"
 #include "los_mux.h"
+#include "los_task.h"
+#include "los_sched.h"
 #include "errno.h"
 
 
@@ -62,33 +64,43 @@ static inline int MapError(UINT32 err)
     }
 }
 
+int pthread_mutexattr_check(pthread_mutexattr_t *mutexAttr)
+{
+    if (mutexAttr == NULL) {
+        return EINVAL;
+    }
+
+    if (mutexAttr->type != PTHREAD_MUTEX_NORMAL &&
+        mutexAttr->type != PTHREAD_MUTEX_RECURSIVE &&
+        mutexAttr->type != PTHREAD_MUTEX_ERRORCHECK) {
+            return EINVAL;
+    }
+    return 0;
+}
+
 int pthread_mutexattr_init(pthread_mutexattr_t *mutexAttr)
 {
     if (mutexAttr == NULL) {
         return EINVAL;
     }
 
-    mutexAttr->type = PTHREAD_MUTEX_RECURSIVE;
+    mutexAttr->type = PTHREAD_MUTEX_NORMAL;
     return 0;
 }
 
 int pthread_mutexattr_settype(pthread_mutexattr_t *mutexAttr, int type)
 {
-    if (mutexAttr == NULL) {
+    if (pthread_mutexattr_check(mutexAttr)) {
         return EINVAL;
     }
 
-    if (((unsigned)type != PTHREAD_MUTEX_NORMAL) &&
-        ((unsigned)type != PTHREAD_MUTEX_RECURSIVE) &&
-        ((unsigned)type != PTHREAD_MUTEX_ERRORCHECK)) {
-        return EINVAL;
+    if (type != PTHREAD_MUTEX_NORMAL &&
+        type != PTHREAD_MUTEX_RECURSIVE &&
+        type != PTHREAD_MUTEX_ERRORCHECK) {
+            return EINVAL;
     }
 
-    if ((unsigned)type != PTHREAD_MUTEX_RECURSIVE) {
-        return EOPNOTSUPP;
-    }
-
-    mutexAttr->type = PTHREAD_MUTEX_RECURSIVE;
+    mutexAttr->type = (unsigned)type;
     return 0;
 }
 
@@ -105,107 +117,235 @@ int pthread_mutexattr_destroy(pthread_mutexattr_t *mutexAttr)
 /* Initialize mutex. If mutexAttr is NULL, use default attributes. */
 int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexAttr)
 {
-    UINT32 muxHandle;
-    UINT32 ret;
+    UINT32 intSave;
 
-    if ((mutexAttr != NULL) && (mutexAttr->type != PTHREAD_MUTEX_RECURSIVE)) {
-        return EOPNOTSUPP;
+    if (mutex == NULL) {
+        return EINVAL;
+    }
+ 
+    if (mutexAttr == NULL) {
+        if (pthread_mutexattr_init(&mutex->attr) != 0) {
+            return EINVAL;
+        }
+    } else {
+        (VOID)memcpy_s(&mutex->attr, sizeof(pthread_mutexattr_t), mutexAttr, sizeof(pthread_mutexattr_t));
     }
 
-    ret = LOS_MuxCreate(&muxHandle);
-    if (ret != LOS_OK) {
-        return MapError(ret);
+    if (pthread_mutexattr_check(&mutex->attr) != 0) {
+        return EINVAL;
     }
 
+    intSave = LOS_IntLock();
+    mutex->muxCount = 0;
+    mutex->owner = NULL;
     mutex->magic = _MUX_MAGIC;
-    mutex->handle = muxHandle;
+    LOS_ListInit(&mutex->muxList);
+    LOS_IntRestore(intSave);
+    return 0;
+}
 
+static int pthread_mutex_pend(pthread_mutex_t *mutex, UINT32 timeout)
+{
+    UINT32 intSave;
+
+    LosTaskCB *runningTask = g_losTask.runTask;
+
+    if (pthread_mutexattr_check(&mutex->attr) != 0) {
+        return EINVAL;
+    }
+    if ((mutex->muxList.pstNext == NULL) || (mutex->muxList.pstPrev == NULL)) {
+        LOS_ListInit(&mutex->muxList);
+    }
+
+    if ((mutex->attr.type == PTHREAD_MUTEX_ERRORCHECK) && (mutex->owner == (VOID *)runningTask)) {
+        return EDEADLK;
+    }
+
+    if (runningTask->taskStatus & OS_TASK_FLAG_SYSTEM_TASK) {
+        return LOS_ERRNO_MUX_PEND_IN_SYSTEM_TASK;
+    }
+
+    intSave = LOS_IntLock();
+    if (mutex->muxCount == 0) {
+        mutex->muxCount++;
+        mutex->owner = (VOID *)runningTask;
+        mutex->priority = runningTask->priority;
+        LOS_IntRestore(intSave);
+        return 0;
+    }
+
+    if ((mutex->attr.type == PTHREAD_MUTEX_RECURSIVE) && (mutex->owner == (VOID *)runningTask)) {
+        mutex->muxCount++;
+        LOS_IntRestore(intSave);
+        return 0;
+    }
+
+    if (!timeout) {
+        LOS_IntRestore(intSave);
+        return EINVAL;
+    }
+
+    if (g_losTaskLock != 0) {
+        LOS_IntRestore(intSave);
+        return EDEADLK;
+    }
+    LOS_IntRestore(intSave);
+
+    /* temporary adjust priority for mutex owner */
+    if (((LosTaskCB *)(mutex->owner))->priority > runningTask->priority) {
+        if (LOS_TaskPriSet(((LosTaskCB *)(mutex->owner))->taskID, runningTask->priority) != 0) {
+            return EINVAL;
+        }
+    }
+
+    intSave = LOS_IntLock();
+    OsSchedTaskWait(&mutex->muxList, timeout);
+    LOS_IntRestore(intSave);
+
+    LOS_Schedule();
+
+    intSave = LOS_IntLock();
+    if (runningTask->taskStatus & OS_TASK_STATUS_TIMEOUT) {
+        runningTask->taskStatus &= (~OS_TASK_STATUS_TIMEOUT);
+        return ETIMEDOUT;
+    }
+    LOS_IntRestore(intSave);
     return 0;
 }
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
-    UINT32 ret;
+    UINT32 intSave;
+
+    if (mutex == NULL) {
+        return EINVAL;
+    }
     if (mutex->magic != _MUX_MAGIC) {
         return EINVAL;
     }
-    ret = LOS_MuxDelete(mutex->handle);
-    if (ret != LOS_OK) {
-        return MapError(ret);
+    if (mutex->muxCount != 0) {
+        return EBUSY;
     }
-    mutex->handle = _MUX_INVALID_HANDLE;
-    mutex->magic = 0;
+
+    intSave = LOS_IntLock();
+    (VOID)memset_s(mutex, sizeof(pthread_mutex_t), 0, sizeof(pthread_mutex_t));
+    LOS_IntRestore(intSave);
     return 0;
 }
 
 int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *absTimeout)
 {
-    UINT32 ret;
+    INT32 ret;
     UINT32 timeout;
     UINT64 timeoutNs;
     struct timespec curTime = {0};
+
+    if (mutex == NULL) {
+        return EINVAL;
+    }
     if ((mutex->magic != _MUX_MAGIC) || (absTimeout->tv_nsec < 0) || (absTimeout->tv_nsec >= OS_SYS_NS_PER_SECOND)) {
         return EINVAL;
     }
-    if (mutex->handle == _MUX_INVALID_HANDLE) {
-        ret = LOS_MuxCreate(&mutex->handle);
-        if (ret != LOS_OK) {
-            return MapError(ret);
-        }
-    }
-    ret = clock_gettime(CLOCK_REALTIME, &curTime);
-    if (ret != LOS_OK) {
+
+    if (clock_gettime(CLOCK_REALTIME, &curTime) != 0) {
         return EINVAL;
     }
     timeoutNs = (absTimeout->tv_sec - curTime.tv_sec) * OS_SYS_NS_PER_SECOND + (absTimeout->tv_nsec - curTime.tv_nsec);
     if (timeoutNs <= 0) {
         return ETIMEDOUT;
     }
-    timeout = (timeoutNs + (OS_SYS_NS_PER_MSECOND - 1)) / OS_SYS_NS_PER_MSECOND;
-    ret = LOS_MuxPend(mutex->handle, timeout);
-    return MapError(ret);
+    timeout = (timeoutNs + OS_SYS_NS_PER_MSECOND - 1) / OS_SYS_NS_PER_MSECOND;
+
+    ret = pthread_mutex_pend(mutex, timeout);
+    return ret;
 }
 
 /* Lock mutex, waiting for it if necessary. */
 int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-    UINT32 ret;
-    if (mutex->magic != _MUX_MAGIC) {
+    INT32 ret;
+
+    if (mutex == NULL) {
         return EINVAL;
     }
-    if (mutex->handle == _MUX_INVALID_HANDLE) {
-        ret = LOS_MuxCreate(&mutex->handle);
-        if (ret != LOS_OK) {
-            return MapError(ret);
-        }
+    if (mutex->magic != _MUX_MAGIC) {
+        return EBADF;
     }
-    ret = LOS_MuxPend(mutex->handle, LOS_WAIT_FOREVER);
-    return MapError(ret);
+
+    ret = pthread_mutex_pend(mutex, LOS_WAIT_FOREVER);
+    return ret;
 }
 
 int pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-    UINT32 ret;
+    INT32 ret;
+
+    if (mutex == NULL) {
+        return EINVAL;
+    }
     if (mutex->magic != _MUX_MAGIC) {
         return EINVAL;
     }
-    if (mutex->handle == _MUX_INVALID_HANDLE) {
-        ret = LOS_MuxCreate(&mutex->handle);
-        if (ret != LOS_OK) {
-            return MapError(ret);
-        }
+    if (mutex->owner != NULL && (LosTaskCB *)mutex->owner != g_losTask.runTask) {
+        return EBUSY;
+    } else if (mutex->muxCount != 0 && mutex->attr.type != PTHREAD_MUTEX_RECURSIVE) {
+        return EBUSY;
     }
-    ret = LOS_MuxPend(mutex->handle, 0);
-    return MapError(ret);
+
+    ret = pthread_mutex_pend(mutex, 0);
+    return ret;
 }
 
 int pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
-    UINT32 ret;
-    if (mutex->magic != _MUX_MAGIC) {
+    UINT32 intSave;
+    LosTaskCB *resumedTask = NULL;
+
+    if (mutex == NULL) {
         return EINVAL;
     }
-    ret = LOS_MuxPost(mutex->handle);
-    return MapError(ret);
-}
+    if (mutex->magic != _MUX_MAGIC) {
+        return EBADF;
+    }
+    if (pthread_mutexattr_check(&mutex->attr) != 0) {
+        return EINVAL;
+    }
+    if ((LosTaskCB *)mutex->owner != g_losTask.runTask) {
+        return EPERM;
+    }
+    if (mutex->muxCount == 0) {
+        return EPERM;
+    }
 
+    intSave = LOS_IntLock();
+    if ((mutex->muxList.pstNext == NULL) || (mutex->muxList.pstPrev == NULL)) {
+        LOS_ListInit(&mutex->muxList);
+    }
+    LOS_IntRestore(intSave);
+
+    /* restore mutex priority */
+    if (((LosTaskCB *)mutex->owner)->priority != mutex->priority) {
+        if (LOS_CurTaskPriSet(mutex->priority) != 0) {
+            return EPERM;
+        }
+    }
+    if ((--mutex->muxCount != 0) && (mutex->attr.type == PTHREAD_MUTEX_RECURSIVE)) {
+        return 0;
+    }
+
+    intSave = LOS_IntLock();
+    if (!LOS_ListEmpty(&mutex->muxList)) {
+        resumedTask = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&(mutex->muxList)));
+        mutex->muxCount = 1;
+        mutex->owner = resumedTask;
+        mutex->priority = resumedTask->priority;
+        OsSchedTaskWake(resumedTask);
+        LOS_IntRestore(intSave);
+
+        LOS_Schedule();
+    } else {
+        mutex->owner = NULL;
+        LOS_IntRestore(intSave);
+    }
+    return 0;
+}
