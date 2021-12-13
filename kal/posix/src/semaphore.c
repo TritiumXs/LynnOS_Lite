@@ -35,7 +35,7 @@
 #include "los_sem.h"
 #include "time_internal.h"
 
-#define _SEM_MAGIC 0xEBCFDEA1
+#define _SEM_MAGIC (int)0xEBCFDEA1
 
 #define s_magic __val[0]
 #define s_handle __val[1]
