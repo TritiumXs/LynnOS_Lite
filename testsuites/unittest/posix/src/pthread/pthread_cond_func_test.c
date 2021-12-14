@@ -36,6 +36,24 @@
 #include "cmsis_os2.h"
 #include "common_test.h"
 
+#include "pthread.h"
+#include "log.h"
+
+#define ICUNIT_ASSERT_EQUAL(param, value, retcode)                   \
+    do {                                                             \
+        if ((param) != (value)) {                                    \
+            printf("\n\nerr:%d %x\n\n",__LINE__, (iiUINT32)retcode); \
+            while(1);                                                \
+        }                                                            \
+    } while (0)
+
+#define TASK_PRIO_TEST           4
+#define OS_TSK_TEST_STACK_SIZE   0x2000
+#define PTHREAD_MUTEX_ERRORCHECK 2
+
+typedef unsigned long iiUINT32;
+
+static INT32 g_pthreadSem = 0;
 static UINT32 g_testCount;
 
 /**

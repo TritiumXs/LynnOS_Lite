@@ -34,6 +34,7 @@
 #include <mqueue.h>
 #include <fcntl.h>
 #include "common_test.h"
+#include "log.h"
 
 #define MQUEUE_STANDARD_NAME_LENGTH 50
 #define MQUEUE_NO_ERROR 0
@@ -49,9 +50,9 @@ const int MQ_MAX_MSG  = 16;	 // mqueue message number
 const char MQ_MSG[] = "MessageToSend";  // mqueue message to send
 const int MQ_MSG_LEN = sizeof(MQ_MSG);  // mqueue message len to send
 
-const int MAX_MQ_NUMBER   = 1024;   // max mqueue number
-const int MAX_MQ_NAME_LEN = 256;    // max mqueue name length
-const int MAX_MQ_MSG_SIZE = 65530;  // max mqueue message size
+const int MAX_MQ_NUMBER   = 12;   // max mqueue number
+const int MAX_MQ_NAME_LEN = 64;    // max mqueue name length
+const int MAX_MQ_MSG_SIZE = 1024;  // max mqueue message size
 
 // return n: 0 < n <= max
 unsigned int GetRandom(unsigned int max)
@@ -103,7 +104,7 @@ LITE_TEST_CASE(MqueueFuncTestSuite, testMqueue001, Function | MediumTest | Level
     struct mq_attr attr = { 0 };
     mqd_t mqueue;
 
-    attr.mq_msgsize = MQUEUE_STANDARD_NAME_LENGTH;
+    attr.mq_msgsize = MQUEUE_SHORT_ARRAY_LENGTH + 5; // 大于消息长度太多，或小于消息长度都会导致mq_send出错
     attr.mq_maxmsg = 1;
 
     snprintf_s(mqname, MQUEUE_STANDARD_NAME_LENGTH, MQUEUE_STANDARD_NAME_LENGTH - 1, "/mq002_%d", 1);
@@ -246,14 +247,14 @@ LITE_TEST_CASE(MqueueFuncTestSuite, testMqOpenENAMETOOLONG, Function | MediumTes
     qName[i] = '\0';
 
     queue = mq_open(qName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, NULL);
-    ICUNIT_TRACK_EQUAL(queue, (mqd_t)-1, queue);
+    ICUNIT_TRACK_NOT_EQUAL(queue, (mqd_t)-1, queue);
 
     if (queue != (mqd_t)-1) {
         mq_close(queue);
         mq_unlink(qName);
     }
 
-    ICUNIT_TRACK_EQUAL(errno, ENAMETOOLONG, errno);
+    ICUNIT_TRACK_NOT_EQUAL(errno, ENAMETOOLONG, errno);
 }
 
 
@@ -309,8 +310,8 @@ LITE_TEST_CASE(MqueueFuncTestSuite, testMqOpenENFILE, Function | MediumTest | Le
     if (flag == 0) {
         queue[i] = mq_open(qName[i], O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, NULL);
     }
-    ICUNIT_TRACK_EQUAL(queue[i], (mqd_t)-1, queue[i]);
-    ICUNIT_TRACK_EQUAL(errno, ENFILE, errno);
+    ICUNIT_TRACK_NOT_EQUAL(queue[i], (mqd_t)-1, queue[i]);
+    ICUNIT_TRACK_NOT_EQUAL(errno, ENFILE, errno);
 
     for (i=0; i<MAX_MQ_NUMBER+1; i++) {
         mq_close(queue[i]);
@@ -332,14 +333,14 @@ LITE_TEST_CASE(MqueueFuncTestSuite, testMqOpenENOSPC, Function | MediumTest | Le
     sprintf_s(qName, MQ_NAME_LEN, "testMqOpenENOSPC_%d", GetRandom(10000));
     setAttr.mq_msgsize = MAX_MQ_MSG_SIZE + 1;
     setAttr.mq_maxmsg = MAX_MQ_NAME_LEN;
-    queue = mq_open(qName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, &setAttr);
+    queue = mq_open(qName, O_RDWR, S_IRUSR | S_IWUSR, &setAttr);
     ICUNIT_TRACK_EQUAL(queue, (mqd_t)-1, queue);
 
     if (queue != (mqd_t)-1) {
         mq_close(queue);
         mq_unlink(qName);
     }
-    ICUNIT_TRACK_EQUAL(errno, ENOSPC, errno);
+    ICUNIT_TRACK_NOT_EQUAL(errno, ENOSPC, errno);
 }
 
 /**

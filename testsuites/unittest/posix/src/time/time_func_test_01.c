@@ -547,7 +547,7 @@ RUN_TEST_SUITE(PosixTimeFuncTestSuite);
 
 void PosixTimeFuncTest()
 {
-    LOG("begin PosixTimeFuncTest....");
+    LOG("begin PosixTimeFuncTest....\n");
 
     RUN_ONE_TESTCASE(testTimeUSleep001);
     RUN_ONE_TESTCASE(testTimeUSleep002);
