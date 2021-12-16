@@ -35,6 +35,7 @@
 #include "los_config.h"
 #include "cmsis_os2.h"
 #include "common_test.h"
+#include "kernel_test.h"
 
 #include "pthread.h"
 #include "log.h"
@@ -48,7 +49,7 @@
     } while (0)
 
 #define TASK_PRIO_TEST           4
-#define OS_TSK_TEST_STACK_SIZE   0x2000
+#define OS_TSK_TEST_STACK_SIZE   0x600
 #define PTHREAD_MUTEX_ERRORCHECK 2
 
 typedef unsigned long iiUINT32;
@@ -846,3 +847,23 @@ LITE_TEST_CASE(PthreadFuncTestSuite, testPthread015, Function | MediumTest | Lev
     return LOS_OK;
 }
 RUN_TEST_SUITE(PthreadFuncTestSuite);
+
+void PthreadFuncTest(void)
+{
+    LOG("begin PthreadFuncTestSuite....\n");
+    RUN_ONE_TESTCASE(testPthread001);
+    RUN_ONE_TESTCASE(testPthread002);
+    RUN_ONE_TESTCASE(testPthread003);
+    RUN_ONE_TESTCASE(testPthread004);
+    RUN_ONE_TESTCASE(testPthread005);
+    RUN_ONE_TESTCASE(testPthread006);
+    RUN_ONE_TESTCASE(testPthread007);
+    RUN_ONE_TESTCASE(testPthread008);
+    RUN_ONE_TESTCASE(testPthread009);
+    RUN_ONE_TESTCASE(testPthread010);
+    RUN_ONE_TESTCASE(testPthread011);
+    RUN_ONE_TESTCASE(testPthread012);
+    RUN_ONE_TESTCASE(testPthread013);
+    RUN_ONE_TESTCASE(testPthread014);
+    RUN_ONE_TESTCASE(testPthread015);
+}
