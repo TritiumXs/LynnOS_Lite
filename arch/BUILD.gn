@@ -41,6 +41,8 @@ module_group("arch") {
     modules += [ "arm" ]
   } else if ("$board_cpu" == "ck802" || "$board_cpu" == "e802") {
     modules += [ "csky" ]
+  } else if ("$board_cpu" == "lx6") {
+     modules += [ "xtensa" ]
   } else if ("$board_cpu" == "") {
     if ("$board_arch" == "rv32imac" || "$board_arch" == "rv32imafdc") {
       modules += [ "risc-v" ]
