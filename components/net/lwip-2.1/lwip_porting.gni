@@ -38,6 +38,7 @@ LWIP_PORTING_FILES = [
   "$LWIP_PORTING_DIR/porting/src/sockets_porting.c",
   "$LWIP_PORTING_DIR/porting/src/sys_arch.c",
   "$LWIP_PORTING_DIR/enhancement/src/fixme.c",
+  "$LWIP_PORTING_DIR/enhancement/src/dhcps.c",
   "$LWIP_PORTING_DIR/enhancement/src/lwip_ifaddrs.c",
 ]
 

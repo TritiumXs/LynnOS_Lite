@@ -35,6 +35,11 @@ module_name = "lwip"
 kernel_module(module_name) {
   sources = LWIP_PORTING_FILES + LWIPNOAPPSFILES - [ "$LWIPDIR/api/sockets.c" ]
   include_dirs = [ "//utils/native/lite/include" ]
+  
+  include_dirs += [ "$LWIP_PORTING_DIR/enhancement/include" ]
+  sources -= [
+    "$LWIPDIR/core/ipv4/dhcp.c",
+  ]
 }
 
 config("public") {

@@ -29,22 +29,19 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LWIP_API_SHELL_H
-#define LWIP_API_SHELL_H
+#ifndef _LWIP_PORTING_API_MSG_H_
+#define _LWIP_PORTING_API_MSG_H_
 
-#include "arch/cc.h"
-#include "lwip/opt.h"
-
-#if defined (__cplusplus) && __cplusplus
-extern "C" {
+#if LWIP_DHCPS
+#define common  common; \
+                struct { \
+                    char *start_ip; \
+                    u16_t ip_num; \
+                } dhcp_start_params
+#else
+#define common  common
 #endif
+#include_next <lwip/priv/api_msg.h>
+#undef common
 
-u32_t lwip_ifconfig(int argc, const char **argv);
-u32_t OsShellPing(int argc, const char **argv);
-#define LWIP_STATIC static
-LWIP_STATIC int OsPingFunc(u32_t *parg);
-
-#if defined (__cplusplus) && __cplusplus
-}
-#endif
-#endif /* LWIP_HDR_API_SHELL_H */
+#endif /* _LWIP_PORTING_API_MSG_H_ */
