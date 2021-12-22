@@ -18,7 +18,6 @@
 
 #include "los_arch_context.h"
 #include "los_arch_interrupt.h"
-#include "los_arch_timer.h"
 #include "los_task.h"
 #include "los_memory.h"
 #include "los_timer.h"
@@ -27,31 +26,31 @@
 #include "los_debug.h"
 #include "nuclei_sdk_soc.h"
 
-extern VOID HalHwiInit(VOID);
+extern VOID ArchHwiInit(VOID);
 
 #define INITIAL_MSTATUS                 ( MSTATUS_MPP | MSTATUS_MPIE | MSTATUS_FS_INITIAL)
 #define ALIGN_DOWN(size, align)         ((size) & ~((align) - 1))
 
-LITE_OS_SEC_TEXT_INIT VOID HalArchInit(VOID)
+LITE_OS_SEC_TEXT_INIT VOID ArchInit(VOID)
 {
     UINT32 ret;
-    HalHwiInit();
+    ArchHwiInit();
 
-    ret = HalTickStart(OsTickHandler);
+    ret = ArchTickStart(OsTickHandler);
     if (ret != LOS_OK) {
         PRINT_ERR("Tick start failed!\n");
         return;
     }
 }
 
-LITE_OS_SEC_TEXT_MINOR VOID HalSysExit(VOID)
+LITE_OS_SEC_TEXT_MINOR VOID ArchSysExit(VOID)
 {
-    HalIntLock();
+    ArchIntLock();
     while (1) {
     }
 }
 
-LITE_OS_SEC_TEXT_INIT VOID *HalTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack)
+LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack)
 {
     UINT32 index;
     UINT8 *stk = 0;
@@ -67,7 +66,7 @@ LITE_OS_SEC_TEXT_INIT VOID *HalTskStackInit(UINT32 taskID, UINT32 stackSize, VOI
     for (index = 1; index < sizeof(TaskContext)/ sizeof(STACK_TYPE); index ++) {
         ((STACK_TYPE *)context)[index] = OS_TASK_STACK_INIT;
     }
-    context->ra      = (STACK_TYPE)HalSysExit;
+    context->ra      = (STACK_TYPE)ArchSysExit;
     context->a0      = (STACK_TYPE)taskID;
     context->epc     = (STACK_TYPE)OsTaskEntry;
 
@@ -78,15 +77,15 @@ LITE_OS_SEC_TEXT_INIT VOID *HalTskStackInit(UINT32 taskID, UINT32 stackSize, VOI
 }
 
 extern LosTask g_losTask;
-LITE_OS_SEC_TEXT_INIT UINT32 HalStartSchedule(VOID)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 {
     (VOID)LOS_IntLock();
     OsSchedStart();
-    HalStartToRun();
+    ArchStartToRun();
     return LOS_OK; /* never return */
 }
 
-VOID HalTaskSchedule(VOID)
+VOID ArchTaskSchedule(VOID)
 {
     SysTimer_SetSWIRQ();
 }

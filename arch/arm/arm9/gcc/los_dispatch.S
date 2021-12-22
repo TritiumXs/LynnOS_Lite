@@ -42,7 +42,7 @@
     .equ    OS_PSR_MODE_UND,    0x1B
     .equ    OS_PSR_MODE_SYS,    0x1F
 
-    .global HalStartToRun
+    .global ArchStartToRun
     .global OsTaskEntryArm
     .global OsTaskEntryThumb
     .global HalExceptSwiHdl
@@ -129,7 +129,7 @@
 4:
 .endm
 
-HalStartToRun:
+ArchStartToRun:
     LDR     R1, =g_losTask
     LDR     R0, [R1, #4]
     LDR     LR, [R0]

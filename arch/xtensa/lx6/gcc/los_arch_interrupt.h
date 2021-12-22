@@ -199,25 +199,7 @@ extern UINT32 g_intCount;
  */
 #define OS_ERRNO_HWI_FASTMODE_ALREADY_CREATED LOS_ERRNO_OS_ERROR(LOS_MOD_HWI, 0x07)
 
-#if (OS_HWI_WITH_ARG == 1)
-/* *
- * @ingroup los_arch_interrupt
- * Set interrupt vector table.
- */
-extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg);
-#else
-/* *
- * @ingroup los_arch_interrupt
- * Set interrupt vector table.
- */
-extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector);
-#endif
-
-VOID HalInterrupt(VOID);
-UINT32 HalIntNumGet(VOID);
-VOID HalHwiDefaultHandler(VOID);
 VOID HalExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type);
-VOID HalHwiInit(VOID);
 
 /**
  * @ingroup los_exc

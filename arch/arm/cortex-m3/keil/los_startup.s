@@ -41,7 +41,7 @@
     THUMB
 
     IMPORT  ||Image$$ARM_LIB_STACKHEAP$$ZI$$Limit||
-    IMPORT  HalHwiDefaultHandler
+    IMPORT  ArchHwiDefaultHandler
 
     EXPORT  _BootVectors
     EXPORT  Reset_Handler
@@ -49,8 +49,8 @@
 _BootVectors
     DCD     ||Image$$ARM_LIB_STACKHEAP$$ZI$$Limit||
     DCD     Reset_Handler
-    DCD     HalHwiDefaultHandler
-    DCD     HalHwiDefaultHandler
+    DCD     ArchHwiDefaultHandler
+    DCD     ArchHwiDefaultHandler
 
 
 Reset_Handler
