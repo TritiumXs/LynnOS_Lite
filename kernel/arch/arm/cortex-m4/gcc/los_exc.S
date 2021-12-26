@@ -267,7 +267,7 @@ _hwiActiveCheck:
     RBIT  R2, R3
     CLZ   R2, R2
     AND   R12, R12, #1
-    ADD   R2, R2, R12, LSL #5               // calculate R2 (hwi number) as pid
+    ADD   R2, R2, R12, LSL #5               // calculate R2 (hwi number) as uwPid
     .fnend
 
     .type _ExcInMSP, %function
@@ -275,7 +275,7 @@ _hwiActiveCheck:
 _ExcInMSP:
     .fnstart
     .cantunwind
-    CMP   LR, #0xFFFFFFE9
+    CMP   LR, #0XFFFFFFED
     BNE   _NoFloatInMsp
     ADD   R3, R13, #104
     PUSH  {R3}

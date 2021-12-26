@@ -240,7 +240,7 @@ STATIC UINT32 OsCreateTraceAgentTask(VOID)
 }
 #endif
 
-UINT32 OsTraceInit(VOID)
+UINT32 LOS_TraceInit(VOID *buf, UINT32 size)
 {
     UINT32 intSave;
     UINT32 ret;
@@ -267,15 +267,10 @@ UINT32 OsTraceInit(VOID)
     }
 #endif
 
-#if (LOSCFG_RECORDER_MODE_OFFLINE == 1)
-    ret = OsTraceBufInit(LOSCFG_TRACE_BUFFER_SIZE);
+    ret = OsTraceBufInit(buf, size);
     if (ret != LOS_OK) {
-#if (LOSCFG_TRACE_CONTROL_AGENT == 1)
-        (VOID)LOS_TaskDelete(g_traceTaskId);
-#endif
-        goto LOS_ERREND;
+        goto LOS_RELEASE;
     }
-#endif
 
     OsTraceHookInstall();
     OsTraceCnvInit();
@@ -291,6 +286,10 @@ UINT32 OsTraceInit(VOID)
 #endif
     TRACE_UNLOCK(intSave);
     return LOS_OK;
+LOS_RELEASE:
+#if (LOSCFG_TRACE_CONTROL_AGENT == 1)
+    LOS_TaskDelete(g_traceTaskId);
+#endif
 LOS_ERREND:
     TRACE_UNLOCK(intSave);
     return ret;

@@ -184,7 +184,6 @@ extern VOID ItLosTask119(VOID);
 extern VOID ItLosTask120(VOID);
 extern VOID ItLosTask121(VOID);
 extern VOID ItLosTask122(VOID);
-extern VOID ItLosTask123(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus
