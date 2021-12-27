@@ -68,7 +68,7 @@ static UINT32 Testcase(VOID)
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     id2 = swtmrId1;
-    ICUNIT_GOTO_EQUAL(id1, id2, id2, EXIT);
+    ICUNIT_GOTO_NOT_EQUAL(id1, id2, id2, EXIT);
 
     ret = LOS_SwtmrDelete(id2);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
@@ -84,3 +84,4 @@ VOID ItLosSwtmrDelay004() // IT_Layer_ModuleORFeature_No
 {
     TEST_ADD_CASE("ItLosSwtmrDelay004", Testcase, TEST_LOS, TEST_SWTMR, TEST_LEVEL1, TEST_FUNCTION);
 }
+

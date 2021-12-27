@@ -284,6 +284,8 @@ extern UINT32 TaskUsedCountGet(VOID);
 #define HWI_NUM_TEST1 34
 #define HWI_NUM_TEST2 35
 #define HWI_NUM_TEST3 36
+#elif __CSKY_V2__
+#define HWI_NUM_TEST HWI_NUM_INT31
 #else
 #define HWI_NUM_TEST0 HWI_NUM_INT1
 #define HWI_NUM_TEST HWI_NUM_INT7
