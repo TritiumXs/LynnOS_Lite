@@ -54,8 +54,8 @@ static UINT32 TestCase(VOID)
     task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
     task1.uwStackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE + 0x100;
 
-    if (LOSCFG_BASE_CORE_SWTMR == 1) {
-        startIndex = 3; // 3, init the index  according to LOSCFG_BASE_CORE_SWTMR.
+    startIndex = TaskUsedCountGet() + 1;
+    if (startIndex >= 3) { // 3, // init the index  according to LOSCFG_BASE_CORE_SWTMR.
         pro = 1;
     } else {
         startIndex = 0;
@@ -63,7 +63,6 @@ static UINT32 TestCase(VOID)
     }
 
     g_testCount = 0;
-    g_index = startIndex;
 
     LOS_TaskLock();
 
