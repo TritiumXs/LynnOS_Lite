@@ -60,9 +60,6 @@ static UINT32 TestCase(VOID)
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
     ICUNIT_ASSERT_EQUAL(uwtemp, 9, uwtemp); /* 8: pthread exit code */
 
-    ret = LOS_TaskDelete(taskID);
-    ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_NOT_CREATED, ret);
-
     return LOS_OK;
 }
 

@@ -41,6 +41,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include_next <lwip/sockets.h>
+#include <fatfs.h>
 
 #ifdef __cplusplus
 extern "C" {
