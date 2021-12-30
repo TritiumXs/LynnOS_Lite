@@ -277,7 +277,10 @@ static_library("libkernel") {
 }
 
 group("kernel") {
-  deps = [ ":libkernel" ]
+  deps = [
+    ":build_kernel_image",
+    ":libkernel",
+  ]
 }
 
 group("liteos_m") {
@@ -299,8 +302,6 @@ executable("liteos") {
 
   if (liteos_kernel_only) {
     deps = [ ":kernel" ]
-  } else {
-    deps = [ "//build/lite:ohos" ]
   }
 }
 
