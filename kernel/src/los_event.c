@@ -31,16 +31,7 @@
 
 #include "los_event.h"
 #include "los_hook.h"
-#include "los_interrupt.h"
-#include "los_task.h"
-#include "los_sched.h"
-
-
-LITE_OS_SEC_TEXT_INIT UINT32 LOS_EventInit(PEVENT_CB_S eventCB)
-{
-    if (eventCB == NULL) {
-        return LOS_ERRNO_EVENT_PTR_NULL;
-    }
+#i
     eventCB->uwEventID = 0;
     LOS_ListInit(&eventCB->stEventList);
     OsHookCall(LOS_HOOK_TYPE_EVENT_INIT, eventCB);
