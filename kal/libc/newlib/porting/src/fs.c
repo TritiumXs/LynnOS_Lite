@@ -140,7 +140,10 @@ int ftruncate(int fd, off_t length)
 {
     return LOS_Ftruncate(fd, length);
 }
-
+long __wrap_ftell(int fd)
+{
+    return LfsTell(fd);
+}
 #else /* #ifdef LOSCFG_FS_VFS */
 
 int _open(const char *path, int oflag, ...)

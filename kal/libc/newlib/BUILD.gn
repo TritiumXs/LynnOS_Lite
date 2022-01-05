@@ -47,4 +47,5 @@ kernel_module(module_name) {
 
 config("public") {
   include_dirs = [ "porting/include" ]
+  ldflags = [ "-Wl,--wrap=ftell" ]
 }
