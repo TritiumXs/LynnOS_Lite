@@ -104,6 +104,7 @@ int LfsOpen(const char *pathName, int openFlag, int mode);
 int LfsRead(int fd, void *buf, unsigned int len);
 int LfsWrite(int fd, const void *buf, unsigned int len);
 off_t LfsSeek(int fd, off_t offset, int whence);
+off_t LfsTell(int fd);
 int LfsClose(int fd);
 int LfsRename(const char *oldName, const char *newName);
 int LfsStat(const char *path, struct stat *buf);

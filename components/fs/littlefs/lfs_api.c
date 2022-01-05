@@ -678,6 +678,24 @@ off_t LfsSeek(int fd, off_t offset, int whence)
     return ret;
 }
 
+off_t LfsTell(int fd)
+{
+    off_t ret;
+
+    if (LfsFdIsValid(fd) == FALSE) {
+        errno = EBADF;
+        return VFS_ERROR;
+    }
+
+    lfs_file_t *file = &(g_handle[fd].file);
+
+    if (NULL != file) {
+        return file->pos;
+    }
+
+    return VFS_ERROR;
+}
+
 int LfsClose(int fd)
 {
     int ret;
