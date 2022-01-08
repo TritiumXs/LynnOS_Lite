@@ -46,12 +46,15 @@ extern "C" {
 
 #define OS_PRIORITY_QUEUE_NUM      32
 #define PRIQUEUE_PRIOR0_BIT        0x80000000U
-#define OS_SCHED_TIME_SLICES       ((LOSCFG_BASE_CORE_TIMESLICE_TIMEOUT * OS_SYS_NS_PER_US) / OS_NS_PER_CYCLE)
-#define OS_TIME_SLICE_MIN          (INT32)((50 * OS_SYS_NS_PER_US) / OS_NS_PER_CYCLE) /* 50us */
 #define OS_TICK_RESPONSE_TIME_MAX  LOSCFG_BASE_CORE_TICK_RESPONSE_MAX
 #if (LOSCFG_BASE_CORE_TICK_RESPONSE_MAX == 0)
 #error "Must specify the maximum value that tick timer counter supports!"
 #endif
+
+STATIC INT32 g_schedTimeSlice;
+STATIC INT32 g_schedTimeSliceMin;
+STATIC UINT32 g_schedTickMinPeriod;
+STATIC UINT32 g_tickResponsePrecision;
 
 #define OS_TASK_BLOCKED_STATUS (OS_TASK_STATUS_PEND | OS_TASK_STATUS_SUSPEND | \
                                 OS_TASK_STATUS_EXIT | OS_TASK_STATUS_UNUSED)
@@ -114,10 +117,10 @@ STATIC INLINE VOID OsSchedTickReload(UINT64 nextResponseTime, UINT32 responseID,
         usedTime = 0;
     }
 
-    if ((nextResponseTime > usedTime) && ((nextResponseTime - usedTime) > OS_TICK_RESPONSE_PRECISION)) {
+    if ((nextResponseTime > usedTime) && ((nextResponseTime - usedTime) > g_tickResponsePrecision)) {
         nextResponseTime -= usedTime;
     } else {
-        nextResponseTime = OS_TICK_RESPONSE_PRECISION;
+        nextResponseTime = g_tickResponsePrecision;
     }
 
     nextExpireTime = currTime + nextResponseTime;
@@ -141,15 +144,15 @@ STATIC INLINE VOID OsSchedSetNextExpireTime(UINT64 startTime, UINT32 responseID,
     UINT64 nextResponseTime = 0;
     BOOL isTimeSlice = FALSE;
 
-    nextExpireTime = OsGetNextExpireTime(startTime);
+    nextExpireTime = OsGetNextExpireTime(startTime, g_tickResponsePrecision);
     /* The response time of the task time slice is aligned to the next response time in the delay queue */
-    if ((nextExpireTime > taskEndTime) && ((nextExpireTime - taskEndTime) > OS_SCHED_MINI_PERIOD)) {
+    if ((nextExpireTime > taskEndTime) && ((nextExpireTime - taskEndTime) > g_schedTickMinPeriod)) {
         nextExpireTime = taskEndTime;
         isTimeSlice = TRUE;
     }
 
     if ((g_schedResponseTime > nextExpireTime) &&
-        ((g_schedResponseTime - nextExpireTime) >= OS_TICK_RESPONSE_PRECISION)) {
+        ((g_schedResponseTime - nextExpireTime) >= g_tickResponsePrecision)) {
         nextResponseTime = nextExpireTime - startTime;
         if (nextResponseTime > OS_TICK_RESPONSE_TIME_MAX) {
             if (SchedRealSleepTimeSet != NULL) {
@@ -184,10 +187,10 @@ VOID OsSchedUpdateExpireTime(UINT64 startTime)
     isPmMode = OsIsPmMode();
 #endif
     if ((runTask->taskID != g_idleTaskID) && !isPmMode) {
-        INT32 timeSlice = (runTask->timeSlice <= OS_TIME_SLICE_MIN) ? OS_SCHED_TIME_SLICES : runTask->timeSlice;
+        INT32 timeSlice = (runTask->timeSlice <= g_schedTimeSliceMin) ? g_schedTimeSlice : runTask->timeSlice;
         endTime = startTime + timeSlice;
     } else {
-        endTime = OS_SCHED_MAX_RESPONSE_TIME - OS_TICK_RESPONSE_PRECISION;
+        endTime = OS_SCHED_MAX_RESPONSE_TIME - g_tickResponsePrecision;
     }
     OsSchedSetNextExpireTime(startTime, runTask->taskID, endTime);
 }
@@ -280,10 +283,10 @@ VOID OsSchedTaskEnQueue(LosTaskCB *taskCB)
     LOS_ASSERT(!(taskCB->taskStatus & OS_TASK_STATUS_READY));
 
     if (taskCB->taskID != g_idleTaskID) {
-        if (taskCB->timeSlice > OS_TIME_SLICE_MIN) {
+        if (taskCB->timeSlice > g_schedTimeSliceMin) {
             OsSchedPriQueueEnHead(&taskCB->pendList, taskCB->priority);
         } else {
-            taskCB->timeSlice = OS_SCHED_TIME_SLICES;
+            taskCB->timeSlice = g_schedTimeSlice;
             OsSchedPriQueueEnTail(&taskCB->pendList, taskCB->priority);
         }
         OsHookCall(LOS_HOOK_TYPE_MOVEDTASKTOREADYSTATE, taskCB);
@@ -468,6 +471,44 @@ UINT32 OsTaskNextSwitchTimeGet(VOID)
     return ticks;
 }
 
+STATIC VOID TaskSchedTimeConvertFreq(UINT32 oldFreq)
+{
+    for (UINT32 loopNum = 0; loopNum < g_taskMaxNum; loopNum++) {
+        LosTaskCB *taskCB = (((LosTaskCB *)g_taskCBArray) + loopNum);
+        if (taskCB->taskStatus & OS_TASK_STATUS_UNUSED) {
+            continue;
+        }
+        if (taskCB->timeSlice > 0) {
+            taskCB->timeSlice = (INT32)OS_SYS_TIME_CONVERT_FREQ((UINT64)taskCB->timeSlice, oldFreq, g_sysClock);
+        } else {
+            taskCB->timeSlice = 0;
+        }
+
+        if (taskCB->taskStatus & OS_TASK_STATUS_RUNNING) {
+            taskCB->startTime = OS_SYS_TIME_CONVERT_FREQ(taskCB->startTime, oldFreq, g_sysClock);
+        }
+    }
+}
+
+STATIC VOID SchedTimerBaseDataInit(VOID)
+{
+    g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
+
+    g_schedTickMinPeriod = g_sysClock / LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI;
+    g_tickResponsePrecision =  (g_schedTickMinPeriod * 75) / 100;
+    g_schedTimeSlice = (INT32)(((UINT64)g_sysClock * LOSCFG_BASE_CORE_TIMESLICE_TIMEOUT) / OS_SYS_US_PER_SECOND);
+    g_schedTimeSliceMin = (INT32)(((UINT64)g_sysClock * 50) / OS_SYS_US_PER_SECOND); /* Minimum time slice 50 us*/
+}
+
+VOID OsSchedTickTimerDataConvertFreq(UINT32 oldFreq)
+{
+    SchedTimerBaseDataInit();
+    TaskSchedTimeConvertFreq(oldFreq);
+    g_sysSchedStartTime = OS_SYS_TIME_CONVERT_FREQ(g_sysSchedStartTime, oldFreq, g_sysClock);
+    OsSortLinkExpireTimeConvertFreq(oldFreq);
+    OsSchedUpdateExpireTime(OsGetCurrSchedTimeCycle());
+}
+
 UINT32 OsSchedInit(VOID)
 {
     UINT16 pri;
@@ -482,8 +523,8 @@ UINT32 OsSchedInit(VOID)
     }
 
     OsSortLinkInit(g_taskSortLinkList);
-    g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
 
+    SchedTimerBaseDataInit();
     return LOS_OK;
 }
 
@@ -557,7 +598,7 @@ BOOL OsSchedTaskSwitch(VOID)
     if (newTask->taskID != g_idleTaskID) {
         endTime = newTask->startTime + newTask->timeSlice;
     } else {
-        endTime = OS_SCHED_MAX_RESPONSE_TIME - OS_TICK_RESPONSE_PRECISION;
+        endTime = OS_SCHED_MAX_RESPONSE_TIME - g_tickResponsePrecision;
     }
 
     if (g_schedResponseID == runTask->taskID) {
@@ -585,7 +626,7 @@ UINT64 LOS_SchedTickTimeoutNsGet(VOID)
         responseTime = 0; /* Tick interrupt already timeout */
     }
 
-    return OS_SYS_CYCLE_TO_NS(responseTime, OS_SYS_CLOCK);
+    return OS_SYS_CYCLE_TO_NS(responseTime, g_sysClock);
 }
 
 VOID LOS_SchedTickHandler(VOID)

@@ -42,10 +42,11 @@ LITE_OS_SEC_BSS UINT32 g_ticksPerSec;
 LITE_OS_SEC_BSS UINT32 g_uwCyclePerSec;
 LITE_OS_SEC_BSS UINT32 g_cyclesPerTick;
 LITE_OS_SEC_BSS UINT32 g_sysClock;
-LITE_OS_SEC_BSS BOOL g_sysTimerIsInit = FALSE;
+LITE_OS_SEC_BSS STATIC BOOL g_sysTimerIsInit = FALSE;
 
 #if (LOSCFG_BASE_CORE_TICK_WTIMER == 0)
 STATIC UINT64 g_tickTimerBase;
+STATIC UINT64 g_oldTickTimerBase;
 
 LITE_OS_SEC_TEXT STATIC VOID OsUpdateSysTimeBase(VOID)
 {
@@ -85,20 +86,19 @@ LITE_OS_SEC_TEXT UINT64 LOS_SysCycleGet(VOID)
 #if (LOSCFG_BASE_CORE_TICK_WTIMER == 1)
     return g_sysTickTimer->getCycle(NULL);
 #else
-    STATIC UINT64 oldSchedTime = 0;
     UINT32 period = 0;
     UINT32 intSave = LOS_IntLock();
     UINT64 time = g_sysTickTimer->getCycle(&period);
     UINT64 schedTime = g_tickTimerBase + time;
-    if (schedTime < oldSchedTime) {
+    if (schedTime < g_oldTickTimerBase) {
         /* Turn the timer count */
         g_tickTimerBase += period;
         schedTime = g_tickTimerBase + time;
     }
 
-    LOS_ASSERT(schedTime >= oldSchedTime);
+    LOS_ASSERT(schedTime >= g_oldTickTimerBase);
 
-    oldSchedTime = schedTime;
+    g_oldTickTimerBase = schedTime;
     LOS_IntRestore(intSave);
     return schedTime;
 #endif
@@ -223,6 +223,45 @@ LITE_OS_SEC_TEXT UINT32 LOS_TickTimerRegister(const ArchTickTimer *timer, const 
     return LOS_OK;
 }
 
+UINT32 LOS_SysTickClockFreqAdjust(const SYS_TICK_FREQ_ADJUST_FUNC handler, UINTPTR param)
+{
+    UINT32 intSave;
+    UINT32 freq;
+    UINT32 oldFreq = g_sysClock;
+    UINT64 currTimeCycle;
+
+    if (handler == NULL) {
+        return LOS_ERRNO_SYS_HOOK_IS_NULL;
+    }
+
+    intSave = LOS_IntLock();
+    g_sysTickTimer->lock();
+    currTimeCycle = LOS_SysCycleGet();
+
+    freq = handler(param);
+    if ((freq == 0) || (freq == g_sysClock)) {
+        g_sysTickTimer->unlock();
+        LOS_IntRestore(intSave);
+        return LOS_ERRNO_SYS_CLOCK_INVALID;
+    }
+
+    g_sysTickTimer->reload(LOSCFG_BASE_CORE_TICK_RESPONSE_MAX);
+    g_sysTickTimer->unlock();
+
+#if (LOSCFG_BASE_CORE_TICK_WTIMER == 0)
+    g_tickTimerBase = OS_SYS_TIME_CONVERT_FREQ(currTimeCycle, oldFreq, freq);
+    g_oldTickTimerBase = OS_SYS_TIME_CONVERT_FREQ(g_oldTickTimerBase, oldFreq, freq);
+#endif
+
+    g_sysTickTimer->freq = freq;
+    g_sysClock = g_sysTickTimer->freq;
+    g_cyclesPerTick = g_sysTickTimer->freq / LOSCFG_BASE_CORE_TICK_PER_SECOND;
+    OsSchedTickTimerDataConvertFreq(oldFreq);
+    LOS_IntRestore(intSave);
+
+    return LOS_OK;
+}
+
 /*****************************************************************************
 Function    : LOS_TickCountGet
 Description : get current tick
@@ -232,7 +271,7 @@ Return      : current tick
 *****************************************************************************/
 LITE_OS_SEC_TEXT_MINOR UINT64 LOS_TickCountGet(VOID)
 {
-    return LOS_SysCycleGet() / OS_CYCLE_PER_TICK;
+    return LOS_SysCycleGet() / g_cyclesPerTick;
 }
 
 /*****************************************************************************

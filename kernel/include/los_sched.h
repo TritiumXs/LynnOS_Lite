@@ -42,8 +42,6 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-#define OS_SCHED_MINI_PERIOD       (OS_SYS_CLOCK / LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI)
-#define OS_TICK_RESPONSE_PRECISION (UINT32)((OS_SCHED_MINI_PERIOD * 75) / 100)
 #define OS_SCHED_MAX_RESPONSE_TIME (UINT64)(((UINT64)-1) - 1U)
 
 extern UINT32 g_taskScheduled;
@@ -86,6 +84,8 @@ UINT32 OsSchedInit(VOID);
 VOID OsSchedStart(VOID);
 
 BOOL OsSchedTaskSwitch(VOID);
+
+VOID OsSchedTickTimerDataConvertFreq(UINT32 oldFreq);
 
 LosTaskCB *OsGetTopTask(VOID);
 

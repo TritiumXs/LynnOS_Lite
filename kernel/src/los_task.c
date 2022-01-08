@@ -1476,8 +1476,8 @@ VOID LOS_UDelay(UINT64 microseconds)
         return;
     }
 
-    endTime = (microseconds / OS_SYS_US_PER_SECOND) * OS_SYS_CLOCK +
-            (microseconds % OS_SYS_US_PER_SECOND) * OS_SYS_CLOCK / OS_SYS_US_PER_SECOND;
+    endTime = (microseconds / OS_SYS_US_PER_SECOND) * g_sysClock +
+            (microseconds % OS_SYS_US_PER_SECOND) * g_sysClock / OS_SYS_US_PER_SECOND;
     endTime = LOS_SysCycleGet() + endTime;
     while (LOS_SysCycleGet() < endTime) {
     }
