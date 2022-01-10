@@ -42,8 +42,6 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     UINT32 swtmrId1;
-    UINT32 id1;
-    UINT32 id2;
 
     // 2, Timeout interval of a periodic software timer.
     ret = LOS_SwtmrCreate(2, LOS_SWTMR_MODE_NO_SELFDELETE, (SWTMR_PROC_FUNC)Case1, &swtmrId1, 0xffff
@@ -53,7 +51,6 @@ static UINT32 Testcase(VOID)
 #endif
     );
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
-    id1 = swtmrId1;
 
     ret = LOS_SwtmrDelete(id1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
@@ -68,7 +65,7 @@ static UINT32 Testcase(VOID)
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     id2 = swtmrId1;
-    ICUNIT_GOTO_EQUAL(id1, id2, id2, EXIT);
+    ICUNIT_GOTO_NOT_EQUAL(id1, id2, id2, EXIT);
 
     ret = LOS_SwtmrDelete(id2);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
@@ -84,3 +81,4 @@ VOID ItLosSwtmrDelay004() // IT_Layer_ModuleORFeature_No
 {
     TEST_ADD_CASE("ItLosSwtmrDelay004", Testcase, TEST_LOS, TEST_SWTMR, TEST_LEVEL1, TEST_FUNCTION);
 }
+
