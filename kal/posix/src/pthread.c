@@ -150,8 +150,10 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
         return ret;
     }
 
-    if (LOS_TaskCreateOnly(&taskID, &taskInitParam) != LOS_OK) {
+    ret = LOS_TaskCreateOnly(&taskID, &taskInitParam);
+    if (ret != LOS_OK) {
         free((VOID *)(UINTPTR)taskInitParam.uwArg);
+        PRINT_ERR("%s: failed, error num: 0x%x\n", __FUNCTION__, ret);
         return EINVAL;
     }
 
