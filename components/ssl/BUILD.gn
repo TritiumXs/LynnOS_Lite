@@ -29,21 +29,14 @@
 
 import("//kernel/liteos_m/liteos.gni")
 
-module_name = get_path_info(rebase_path("."), "name")
-module_group(module_name) {
-  modules = [
-    "backtrace",
-    "cppsupport",
-    "cpup",
-    "dynlink",
-    "exchook",
-    "fs",
-    "lmk",
-    "lms",
-    "net",
-    "power",
-    "shell",
-    "ssl",
-    "trace",
-  ]
+declare_args() {
+  ohos_kernel_liteos_m_mbedtls_path = "mbedtls"
+}
+
+config("public") {
+  configs = []
+}
+
+group("ssl") {
+  deps = [ "$ohos_kernel_liteos_m_mbedtls_path" ]
 }
