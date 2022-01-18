@@ -138,3 +138,28 @@ int hal_trace_printf(int attr, const char *fmt, ...) {
     return 0;
 }
 
+int vsnprintf_s(char *strDest, size_t destMax, size_t count, const char *format, va_list argList)
+{
+    int retVal;
+
+    if (destMax > count) {
+        retVal = SecVsnprintfImpl(strDest, count + 1, format, argList);
+    } else {
+        retVal = SecVsnprintfImpl(strDest, destMax, format, argList);
+    }
+
+    return retVal;
+}
+
+int snprintf_s(char *strDest, size_t destMax, size_t count, const char *format, ...)
+{
+    int ret;                    /* If initialization causes  e838 */
+    va_list argList;
+
+    va_start(argList, format);
+    ret = vsnprintf_s(strDest, destMax, count, format, argList);
+    va_end(argList);
+    (void)argList;              /* To clear e438 last value assigned not used , the compiler will optimize this code */
+
+    return ret;
+}

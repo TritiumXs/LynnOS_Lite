@@ -109,7 +109,7 @@ extern "C" {
 /*=============================================================================
                                         TestSuite configuration
 =============================================================================*/
-#define LOSCFG_TEST                                         1
+#define LOSCFG_TEST                                         0
 #define LOSCFG_KERNEL_PRINTF                                0
 
 // #define LOSCFG_BACKTRACE_TYPE                               4
