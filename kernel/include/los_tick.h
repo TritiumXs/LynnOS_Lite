@@ -101,6 +101,30 @@ extern UINT64 LOS_SysCycleGet(VOID);
 
 /**
  * @ingroup los_tick
+ * Ticks per second
+ */
+extern UINT32    g_ticksPerSec;
+
+/**
+ * @ingroup los_tick
+ * Cycles per Second
+ */
+extern UINT32    g_uwCyclePerSec;
+
+/**
+ * @ingroup los_tick
+ * Cycles per Tick
+ */
+extern UINT32    g_cyclesPerTick;
+
+/**
+ * @ingroup los_tick
+ * System Clock
+ */
+extern UINT32    g_sysClock;
+
+/**
+ * @ingroup los_tick
  * Number of milliseconds in one second.
  */
 #define OS_SYS_MS_PER_SECOND   1000
@@ -115,9 +139,7 @@ extern UINT64 LOS_SysCycleGet(VOID);
 
 #define OS_SYS_NS_PER_US       1000
 
-#define OS_CYCLE_PER_TICK      (OS_SYS_CLOCK / LOSCFG_BASE_CORE_TICK_PER_SECOND)
-
-#define OS_NS_PER_CYCLE        (OS_SYS_NS_PER_SECOND / OS_SYS_CLOCK)
+#define OS_CYCLE_PER_TICK      g_cyclesPerTick
 
 #define OS_MS_PER_TICK         (OS_SYS_MS_PER_SECOND / LOSCFG_BASE_CORE_TICK_PER_SECOND)
 
@@ -125,11 +147,13 @@ extern UINT64 LOS_SysCycleGet(VOID);
 
 #define OS_NS_PER_TICK         (OS_SYS_NS_PER_SECOND / LOSCFG_BASE_CORE_TICK_PER_SECOND)
 
-#define OS_SYS_CYCLE_TO_NS(cycle, freq)  (((cycle) / (freq)) * OS_SYS_NS_PER_SECOND + \
-    ((cycle) % OS_SYS_CLOCK) * OS_SYS_NS_PER_SECOND / (freq))
+#define OS_SYS_CYCLE_TO_NS(cycle, freq) (((cycle) / (freq)) * OS_SYS_NS_PER_SECOND + \
+    ((cycle) % (freq)) * OS_SYS_NS_PER_SECOND / (freq))
 
-#define OS_SYS_NS_TO_CYCLE(time, freq) (((time) / OS_SYS_NS_PER_SECOND) * (freq) +     \
+#define OS_SYS_NS_TO_CYCLE(time, freq) (((time) / OS_SYS_NS_PER_SECOND) * (freq) +   \
     ((time) % OS_SYS_NS_PER_SECOND) * (freq) / OS_SYS_NS_PER_SECOND)
+
+#define OS_SYS_TIME_CONVERT_FREQ(time, olfFreq, newFreq) (UINT64)(((UINT64)(time) * (newFreq)) / (olfFreq))
 
 /**
  * @ingroup los_tick
@@ -335,27 +359,43 @@ extern UINT32 LOS_TickTimerRegister(const ArchTickTimer *timer, const HWI_PROC_F
 
 /**
  * @ingroup los_tick
- * Ticks per second
+ * @brief Adjust the system tick timer clock frequency function hooks.
+ *
+ * @par Description:
+ * This API is used to adjust the system tick timer clock frequency.
+ * @attention
+ *
+ * @param param  [IN] Function parameters.
+ *
+ * @retval              0: Adjust the system tick timer clock frequency failed.
+ * @retval more than zero: Adjust after the system tick timer clock frequency.
+ * @par Dependency:
+ * <ul><li>los_tick.h: the header file that contains the API declaration.</li></ul>
+ * @see
  */
-extern UINT32    g_ticksPerSec;
+typedef UINT32 (*SYS_TICK_FREQ_ADJUST_FUNC)(UINTPTR param);
 
 /**
  * @ingroup los_tick
- * Cycles per Second
+ * @brief Adjust the system tick timer clock frequency.
+ *
+ * @par Description:
+ * This API is used to adjust the system tick timer clock frequency.
+ * @attention
+ * <ul>
+ * <li> This function needs to be invoked only when the clock frequency of the system tick timer adjust as a result of
+ * changing the CPU frequency.</li>
+ * </ul>
+ *
+ * @param handler [IN] Adjust the system tick timer clock frequency function hooks.
+ * @param param   [IN] Function parameters.
+ *
+ * @retval LOS_OK or Error code.
+ * @par Dependency:
+ * <ul><li>los_tick.h: the header file that contains the API declaration.</li></ul>
+ * @see
  */
-extern UINT32    g_uwCyclePerSec;
-
-/**
- * @ingroup los_tick
- * Cycles per Tick
- */
-extern UINT32    g_cyclesPerTick;
-
-/**
- * @ingroup los_tick
- * System Clock
- */
-extern UINT32    g_sysClock;
+extern UINT32 LOS_SysTickClockFreqAdjust(const SYS_TICK_FREQ_ADJUST_FUNC handler, UINTPTR param);
 
 /**
  * @ingroup  los_tick

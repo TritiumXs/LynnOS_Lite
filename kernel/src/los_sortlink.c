@@ -78,24 +78,40 @@ STATIC INLINE VOID OsAddNode2SortLink(SortLinkAttribute *sortLinkHeader, SortLin
     } while (1);
 }
 
+STATIC INLINE VOID SortLinkNodeTimeConvertFreq(SortLinkAttribute *sortLinkHeader, UINT32 oldFreq)
+{
+    LOS_DL_LIST *head = (LOS_DL_LIST *)&sortLinkHeader->sortLink;
+
+    if (LOS_ListEmpty(head)) {
+        return;
+    }
+
+    LOS_DL_LIST *nextNode = head->pstNext;
+    do {
+        SortLinkList *listSorted = LOS_DL_LIST_ENTRY(nextNode, SortLinkList, sortLinkNode);
+        listSorted->responseTime = OS_SYS_TIME_CONVERT_FREQ(listSorted->responseTime, oldFreq, g_sysClock);
+        nextNode = nextNode->pstNext;
+    } while (nextNode != head);
+}
+
 VOID OsDeleteNodeSortLink(SortLinkList *sortList)
 {
     LOS_ListDelete(&sortList->sortLinkNode);
     SET_SORTLIST_VALUE(sortList, OS_SORT_LINK_INVALID_TIME);
 }
 
-STATIC INLINE UINT64 OsGetSortLinkNextExpireTime(SortLinkAttribute *sortHeader, UINT64 startTime)
+STATIC INLINE UINT64 OsGetSortLinkNextExpireTime(SortLinkAttribute *sortHeader, UINT64 startTime, UINT32 tickPrecision)
 {
     LOS_DL_LIST *head = &sortHeader->sortLink;
     LOS_DL_LIST *list = head->pstNext;
 
     if (LOS_ListEmpty(head)) {
-        return OS_SCHED_MAX_RESPONSE_TIME - OS_TICK_RESPONSE_PRECISION;
+        return OS_SCHED_MAX_RESPONSE_TIME - tickPrecision;
     }
 
     SortLinkList *listSorted = LOS_DL_LIST_ENTRY(list, SortLinkList, sortLinkNode);
-    if (listSorted->responseTime <= (startTime + OS_TICK_RESPONSE_PRECISION)) {
-        return startTime + OS_TICK_RESPONSE_PRECISION;
+    if (listSorted->responseTime <= (startTime + tickPrecision)) {
+        return startTime + tickPrecision;
     }
 
     return listSorted->responseTime;
@@ -144,18 +160,27 @@ SortLinkAttribute *OsGetSortLinkAttribute(SortLinkType type)
     return NULL;
 }
 
-UINT64 OsGetNextExpireTime(UINT64 startTime)
+UINT64 OsGetNextExpireTime(UINT64 startTime, UINT32 tickPrecision)
 {
     UINT32 intSave;
     SortLinkAttribute *taskHeader = &g_taskSortLink;
     SortLinkAttribute *swtmrHeader = &g_swtmrSortLink;
 
     intSave = LOS_IntLock();
-    UINT64 taskExpirTime = OsGetSortLinkNextExpireTime(taskHeader, startTime);
-    UINT64 swtmrExpirTime = OsGetSortLinkNextExpireTime(swtmrHeader, startTime);
+    UINT64 taskExpireTime = OsGetSortLinkNextExpireTime(taskHeader, startTime, tickPrecision);
+    UINT64 swtmrExpireTime = OsGetSortLinkNextExpireTime(swtmrHeader, startTime, tickPrecision);
     LOS_IntRestore(intSave);
 
-    return (taskExpirTime < swtmrExpirTime) ? taskExpirTime : swtmrExpirTime;
+    return (taskExpireTime < swtmrExpireTime) ? taskExpireTime : swtmrExpireTime;
+}
+
+VOID OsSortLinkExpireTimeConvertFreq(UINT32 oldFreq)
+{
+    SortLinkAttribute *taskHeader = &g_taskSortLink;
+    SortLinkAttribute *swtmrHeader = &g_swtmrSortLink;
+
+    SortLinkNodeTimeConvertFreq(taskHeader, oldFreq);
+    SortLinkNodeTimeConvertFreq(swtmrHeader, oldFreq);
 }
 
 UINT32 OsSortLinkGetTargetExpireTime(UINT64 currTime, const SortLinkList *targetSortList)
@@ -164,7 +189,7 @@ UINT32 OsSortLinkGetTargetExpireTime(UINT64 currTime, const SortLinkList *target
         return 0;
     }
 
-    return (UINT32)(((targetSortList->responseTime - currTime) * LOSCFG_BASE_CORE_TICK_PER_SECOND) / OS_SYS_CLOCK);
+    return (UINT32)(((targetSortList->responseTime - currTime) * LOSCFG_BASE_CORE_TICK_PER_SECOND) / g_sysClock);
 }
 
 UINT32 OsSortLinkGetNextExpireTime(const SortLinkAttribute *sortLinkHeader)
