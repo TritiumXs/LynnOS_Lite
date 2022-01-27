@@ -1113,6 +1113,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_TaskDelete(UINT32 taskID)
             taskCB->taskStatus = OS_TASK_STATUS_UNUSED;
             OsRunningTaskDelete(taskID, taskCB);
         }
+        g_losTask.runTask->stackPointer = NULL;
         LOS_IntRestore(intSave);
         LOS_Schedule();
         return LOS_OK;
