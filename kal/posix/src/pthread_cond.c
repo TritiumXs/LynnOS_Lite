@@ -274,10 +274,6 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 {
     INT32 ret;
     UINT64 absTicks;
-    const UINT32 nsPerTick = OS_SYS_NS_PER_SECOND / LOSCFG_BASE_CORE_TICK_PER_SECOND;
-    struct timespec tp;
-    UINT64 nseconds;
-    UINT64 currTime;
     LosMuxCB *muxPosted = NULL;
     pthread_testcancel();
     if ((cond == NULL) || (mutex == NULL) || (ts == NULL) || (mutex->magic != _MUX_MAGIC)) {
@@ -300,17 +296,11 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     cond->count++;
     (VOID)pthread_mutex_unlock(cond->mutex);
 
-    if (!ValidTimeSpec(ts)) {
-        return EINVAL;
+    ret = OsGetTickTimeFromNow(ts, cond->clock, &absTicks);
+    if (ret != 0) {
+        return ret;
     }
 
-    clock_gettime(cond->clock, &tp);
-    currTime = (UINT64)tp.tv_sec * OS_SYS_NS_PER_SECOND + tp.tv_nsec;
-    nseconds = (UINT64)ts->tv_sec * OS_SYS_NS_PER_SECOND + ts->tv_nsec;
-    if (currTime >= nseconds) {
-        return ETIMEDOUT;
-    }
-    absTicks = ((nseconds - currTime) + nsPerTick - 1) / nsPerTick + 1;
     if (absTicks >= UINT32_MAX) {
         return EINVAL;
     }
