@@ -160,39 +160,19 @@ int sem_trywait(sem_t *sem)
     return 0;
 }
 
-static long long GetTickTimeFromNow(const struct timespec *absTimeSpec)
-{
-    struct timespec tsNow = { 0 };
-    long long ns;
-    long long tick;
-
-    clock_gettime(CLOCK_REALTIME, &tsNow);
-    ns = (absTimeSpec->tv_sec - tsNow.tv_sec) * OS_SYS_NS_PER_SECOND + (absTimeSpec->tv_nsec - tsNow.tv_nsec);
-
-    /* Round up for ticks */
-    tick = (ns * LOSCFG_BASE_CORE_TICK_PER_SECOND + (OS_SYS_NS_PER_SECOND - 1)) / OS_SYS_NS_PER_SECOND;
-
-    return tick;
-}
-
 int sem_timedwait(sem_t *sem, const struct timespec *timeout)
 {
     UINT32 ret;
-    long long tickCnt;
+    UINT64 tickCnt;
 
     if ((sem == NULL) || (sem->s_magic != (int)_SEM_MAGIC)) {
         errno = EINVAL;
         return -1;
     }
 
-    if (!ValidTimeSpec(timeout)) {
-        errno = EINVAL;
-        return -1;
-    }
-
-    tickCnt = GetTickTimeFromNow(timeout);
-    if (tickCnt < 0) {
-        errno = ETIMEDOUT;
+    ret = OsGetTickTimeFromNow(timeout, CLOCK_REALTIME, &tickCnt);
+    if (ret != 0) {
+        errno = (INT32)ret;
         return -1;
     }
 
