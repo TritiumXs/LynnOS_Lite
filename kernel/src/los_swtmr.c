@@ -238,7 +238,7 @@ LITE_OS_SEC_TEXT VOID OsSwtmrStart(UINT64 currTime, SWTMR_CTRL_S *swtmr)
     }
 #endif
     OsAdd2SortLink(&swtmr->stSortList, swtmr->startTime, swtmr->uwInterval, OS_SORT_LINK_SWTMR);
-    OsSchedUpdateExpireTime(currTime);
+    OsSchedUpdateExpireTime();
 }
 
 /*****************************************************************************
@@ -273,7 +273,7 @@ LITE_OS_SEC_TEXT VOID OsSwtmrStop(SWTMR_CTRL_S *swtmr)
     OsDeleteSortLink(&swtmr->stSortList);
     swtmr->ucState = OS_SWTMR_STATUS_CREATED;
 
-    OsSchedUpdateExpireTime(OsGetCurrSchedTimeCycle());
+    OsSchedUpdateExpireTime();
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     g_swtmrAlignID[swtmr->usTimerID % LOSCFG_BASE_CORE_SWTMR_LIMIT].isAligned = 0;
 #endif
@@ -323,6 +323,24 @@ STATIC BOOL OsSwtmrScan(VOID)
     }
 
     return needSchedule;
+}
+
+LITE_OS_SEC_TEXT VOID OsSwtmrResponseTimeReset(UINT64 startTime)
+{
+    LOS_DL_LIST *listHead = &g_swtmrSortLinkList->sortLink;
+    LOS_DL_LIST *listNext = listHead->pstNext;
+
+    while (listNext != listHead) {
+        SortLinkList *sortList = LOS_DL_LIST_ENTRY(listNext, SortLinkList, sortLinkNode);
+        SWTMR_CTRL_S *swtmr = LOS_DL_LIST_ENTRY(sortList, SWTMR_CTRL_S, stSortList);
+        OsDeleteNodeSortLink(sortList);
+#if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
+        g_swtmrAlignID[swtmr->usTimerID % LOSCFG_BASE_CORE_SWTMR_LIMIT].isAligned = 0;
+#endif
+        swtmr->startTime = startTime;
+        OsSwtmrStart(startTime, swtmr);
+        listNext = listNext->pstNext;
+    }
 }
 
 /*****************************************************************************
