@@ -81,7 +81,8 @@ STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
     ArchTickTimer *tick = &g_archTickTimer;
 
     tick->freq = OS_SYS_CLOCK;
-
+    
+    printf("test\n");
     SysTick->LOAD = (OS_CYCLE_PER_TICK - 1);
     SysTick->VAL = 0;
     SysTick->CTRL |= (CORETIM_SOURCE | CORETIM_ENABLE | CORETIM_INTMASK);
