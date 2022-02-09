@@ -61,7 +61,7 @@ static UINT32 Testcase(VOID)
     g_testCount = 0;
     g_swtmrId1 = 0;
 
-    ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION1, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &g_swtmrId1,
+    ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION1, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &g_swtmrId1,
         TIMER_LOS_HANDLER_PARAMETER
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE

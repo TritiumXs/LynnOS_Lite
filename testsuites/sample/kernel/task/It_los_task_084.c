@@ -43,8 +43,8 @@ static VOID TaskF03(VOID)
 {
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 6, g_testCount); // 6, Here, assert that g_testCount is equal to 6.
 
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_TaskDelete(g_testTaskId02);
 }
 
 static VOID TaskF02(VOID)
@@ -56,7 +56,7 @@ static VOID TaskF02(VOID)
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 2, g_testCount); // 2, Here, assert that g_testCount is equal to 2.
     g_testCount++;
 
-    LOS_TaskDelete(g_testTaskID03);
+    LOS_TaskDelete(g_testTaskId03);
 }
 
 static VOID HwiF03(VOID)
@@ -86,29 +86,29 @@ static VOID HwiF02(VOID)
 static VOID HwiF01(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.usTaskPrio = TASK_PRIO_TEST - 1;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.taskPrio = TASK_PRIO_TEST - 1;
     task1.pcName = "Tsk084A";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
 
     TestHwiClear(HWI_NUM_TEST);
 
     g_testCount++;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF02;
     task1.pcName = "Tsk084B";
-    ret = LOS_TaskCreate(&g_testTaskID02, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task1);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    task1.usTaskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority base on testsuite task`s priority.
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF03;
+    task1.taskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority base on testsuite task`s priority.
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF03;
     task1.pcName = "Tsk084C";
-    ret = LOS_TaskCreate(&g_testTaskID03, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId03, &task1);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     TestHwiDelete(HWI_NUM_TEST);

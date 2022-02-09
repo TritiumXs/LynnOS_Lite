@@ -41,13 +41,13 @@ static VOID TaskF01(VOID)
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE - LOSCFG_STACK_POINT_ALIGN_SIZE;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE - LOSCFG_STACK_POINT_ALIGN_SIZE;
     task1.pcName = "Tsk004A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_STKSZ_TOO_SMALL, ret);
 
     return LOS_OK;

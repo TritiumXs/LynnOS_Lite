@@ -36,17 +36,17 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     UINT32 index;
-    UINT32 queueID[LOSCFG_BASE_IPC_QUEUE_LIMIT + 1];
+    UINT32 queueId[LOSCFG_BASE_IPC_QUEUE_LIMIT + 1];
     CHAR buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
     CHAR buff2[QUEUE_SHORT_BUFFER_LENGTH] = "";
 
     UINT32 limit = LOSCFG_BASE_IPC_QUEUE_LIMIT - QUEUE_EXISTED_NUM;
     for (index = 0; index < limit; index++) {
-        ret = LOS_QueueCreate(NULL, QUEUE_BASE_NUM, &queueID[index], 0, QUEUE_BASE_MSGSIZE);
+        ret = LOS_QueueCreate(NULL, QUEUE_BASE_NUM, &queueId[index], 0, QUEUE_BASE_MSGSIZE);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     }
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &queueID[LOSCFG_BASE_IPC_QUEUE_LIMIT], 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &queueId[LOSCFG_BASE_IPC_QUEUE_LIMIT], 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_CB_UNAVAILABLE, ret, EXIT);
 
     ret = LOS_QueueWrite(LOSCFG_BASE_IPC_QUEUE_LIMIT + 1, &buff1, QUEUE_BASE_MSGSIZE, 0);
@@ -57,7 +57,7 @@ static UINT32 Testcase(VOID)
 
 EXIT:
     for (index = 0; index < limit; index++) {
-        ret = LOS_QueueDelete(queueID[index]);
+        ret = LOS_QueueDelete(queueId[index]);
         ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     }
 

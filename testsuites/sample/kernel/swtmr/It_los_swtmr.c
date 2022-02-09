@@ -32,10 +32,10 @@
 #include "It_los_swtmr.h"
 
 
-EVENT_CB_S g_eventCB0;
-EVENT_CB_S g_eventCB1;
-EVENT_CB_S g_eventCB2;
-EVENT_CB_S g_eventCB3;
+LosEventCB g_eventCB0;
+LosEventCB g_eventCB1;
+LosEventCB g_eventCB2;
+LosEventCB g_eventCB3;
 
 VOID ItSuiteLosSwtmr(void)
 {

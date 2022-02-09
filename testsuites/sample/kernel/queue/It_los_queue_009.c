@@ -39,24 +39,24 @@ static UINT32 Testcase(VOID)
     CHAR buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
     CHAR buff2[QUEUE_SHORT_BUFFER_LENGTH] = "";
 
-    g_testQueueID01 = 1025;  // 1025, to set a invalid values
+    g_testQueueId01 = 1025;  // 1025, to set a invalid values
 
-    ret = LOS_QueueCreate("Q1", 0xFFFE, &g_testQueueID01, 0, 0xFFF0);
+    ret = LOS_QueueCreate("Q1", 0xFFFE, &g_testQueueId01, 0, 0xFFF0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_CREATE_NO_MEMORY, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_INVALID, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_INVALID, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_NOT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 }

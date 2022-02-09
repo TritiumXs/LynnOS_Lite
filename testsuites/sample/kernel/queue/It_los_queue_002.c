@@ -38,21 +38,21 @@ static UINT32 Testcase(VOID)
     CHAR buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
     CHAR buff2[QUEUE_SHORT_BUFFER_LENGTH] = "";
 
-    g_testQueueID01 = 1025; // 1025, is a invalid value
+    g_testQueueId01 = 1025; // 1025, is a invalid value
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueID01, 0, 0);
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueId01, 0, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_PARA_ISZERO, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_INVALID, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_INVALID, ret, EXIT);
 
     return LOS_OK;
 
 EXIT:
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 }
 

@@ -40,52 +40,52 @@ static VOID TaskF02(VOID)
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 1, g_testCount);
     g_testCount++;
 
-    ret = LOS_TaskResume(g_testTaskID01);
+    ret = LOS_TaskResume(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 3, g_testCount); // 3, Here, assert that g_testCount is equal to 3.
     g_testCount++;
 
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 }
 
 static VOID TaskF01(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task2 = { 0 };
-    task2.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
-    task2.usTaskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority base on testsuite task`s priority.
+    TskInitParam task2 = { 0 };
+    task2.pfnTaskEntry = (TskEntryFunc)TaskF02;
+    task2.taskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority base on testsuite task`s priority.
     task2.pcName = "Tsk085B";
-    task2.uwStackSize = TASK_STACK_SIZE_TEST + 0x200;
+    task2.stackSize = TASK_STACK_SIZE_TEST + 0x200;
     g_testCount++;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task2);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task2);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ret = LOS_TaskSuspend(g_testTaskID01);
+    ret = LOS_TaskSuspend(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 2, g_testCount); // 2, Here, assert that g_testCount is equal to 2.
     g_testCount++;
 
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
     UINT32 loop;
-    TSK_INIT_PARAM_S task1 = { 0 };
+    TskInitParam task1 = { 0 };
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.usTaskPrio = TASK_PRIO_TEST - 5; // 5, set new task priority base on testsuite task`s priority.
-    task1.uwStackSize = TASK_STACK_SIZE_TEST + 0x200;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.taskPrio = TASK_PRIO_TEST - 5; // 5, set new task priority base on testsuite task`s priority.
+    task1.stackSize = TASK_STACK_SIZE_TEST + 0x200;
     task1.pcName = "Tsk085A";
 
     for (loop = 0; loop < IT_TASK_LOOP; loop++) {
         g_testCount = 0;
 
-        ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+        ret = LOS_TaskCreate(&g_testTaskId01, &task1);
         ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
         ICUNIT_ASSERT_EQUAL(g_testCount, 4, g_testCount); // 4, Here, assert that g_testCount is equal to 4.

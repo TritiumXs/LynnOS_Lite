@@ -40,28 +40,28 @@ static UINT32 Testcase(VOID)
     CHAR buff2[QUEUE_SHORT_BUFFER_LENGTH];
     char bufname[102] = {0}; // 102, max len.
 
-    g_testQueueID01 = 0;
+    g_testQueueId01 = 0;
 
     while (i < 100) { // 100, max len - 2 ( 'a' '\0')
         (void)strcat_s(bufname, sizeof(bufname), "a");
         i++;
     }
-    ret = LOS_QueueCreate(bufname, QUEUE_BASE_NUM, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate(bufname, QUEUE_BASE_NUM, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     return LOS_OK;
 
 EXIT:
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 }
 

@@ -40,34 +40,34 @@ static UINT32 Testcase(VOID)
                         "456789abcedfghij9876550210abcdeabcde0123456789abcedfghij9876550210abcdeabcde0123456789abcedfgh"
                         "ij9876550210abcdeabcde0123456789abcedfghij9876550210lalalalalalalala";
     CHAR readbuf[260] = ""; // 260, set max readbuf size > maxMsgSize (count)
-    QUEUE_INFO_S queueInfo;
+    QueueInfo queueInfo;
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueID01, 0, count);
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueId01, 0, count);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     for (i = 0; i < 100; i++) { // 100, test write read times
-        ret = LOS_QueueWrite(g_testQueueID01, filebuf, count, 0);
+        ret = LOS_QueueWrite(g_testQueueId01, filebuf, count, 0);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
         (void)memset_s(readbuf, sizeof(readbuf), 0, 260); // 260, readbuf size
-        ret = LOS_QueueRead(g_testQueueID01, readbuf, count, 0);
+        ret = LOS_QueueRead(g_testQueueId01, readbuf, count, 0);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-        ret = LOS_QueueInfoGet(g_testQueueID01, &queueInfo);
+        ret = LOS_QueueInfoGet(g_testQueueId01, &queueInfo);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
         ICUNIT_GOTO_EQUAL(queueInfo.queueLen, 3, queueInfo.queueLen, EXIT); // Compare wiht the expected value 3.
-        ICUNIT_GOTO_EQUAL(queueInfo.queueID, g_testQueueID01, queueInfo.queueID, EXIT);
+        ICUNIT_GOTO_EQUAL(queueInfo.queueId, g_testQueueId01, queueInfo.queueId, EXIT);
     }
-    ret = LOS_QueueRead(g_testQueueID01, readbuf, count, 0);
+    ret = LOS_QueueRead(g_testQueueId01, readbuf, count, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_ISEMPTY, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT:
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 }
 

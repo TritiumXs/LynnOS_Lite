@@ -52,7 +52,7 @@ static UINT32 Testcase(VOID)
     g_testCount = 0;
 
     for (i = 0; i <= TIMER_LOS_HANDLER_PARAMETER; i++) {
-        ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION3, LOS_SWTMR_MODE_ONCE, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID[i],
+        ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION3, LOS_SWTMR_MODE_ONCE, (SwtmrProcFunc)SwtmrF01, &swTmrID[i],
             TIMER_LOS_HANDLER_PARAMETER
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
             ,
@@ -77,7 +77,7 @@ static UINT32 Testcase(VOID)
     timerCount = 0;
 
     for (i = 0; i <= TIMER_LOS_HANDLER_PARAMETER; i++) {
-        ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION3, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID[i],
+        ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION3, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID[i],
             TIMER_LOS_HANDLER_PARAMETER
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
             ,

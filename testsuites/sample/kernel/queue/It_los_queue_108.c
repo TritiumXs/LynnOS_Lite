@@ -36,16 +36,16 @@
 static VOID HwiF01(VOID)
 {
     UINT32 ret;
-    QUEUE_INFO_S queueInfo;
+    QueueInfo queueInfo;
 
     TestHwiClear(HWI_NUM_TEST);
 
     g_testCount++;
 
-    ret = LOS_QueueInfoGet(g_testQueueID01, &queueInfo);
+    ret = LOS_QueueInfoGet(g_testQueueId01, &queueInfo);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     ICUNIT_GOTO_EQUAL(queueInfo.queueLen, 3, queueInfo.queueLen, EXIT); // Compare wiht the expected value 3.
-    ICUNIT_GOTO_EQUAL(queueInfo.queueID, g_testQueueID01, queueInfo.queueID, EXIT);
+    ICUNIT_GOTO_EQUAL(queueInfo.queueId, g_testQueueId01, queueInfo.queueId, EXIT);
 
     g_testCount++;
 
@@ -58,14 +58,14 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     CHAR buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
-    QUEUE_INFO_S queueInfo;
+    QueueInfo queueInfo;
 
     g_testCount = 0;
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueID01, 0, QUEUE_SHORT_BUFFER_LENGTH);
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueId01, 0, QUEUE_SHORT_BUFFER_LENGTH);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_SHORT_BUFFER_LENGTH, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_SHORT_BUFFER_LENGTH, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ret = LOS_HwiCreate(HWI_NUM_TEST, 1, 0, HwiF01, 0);
@@ -77,12 +77,12 @@ static UINT32 Testcase(VOID)
 
     g_testCount++;
 
-    ret = LOS_QueueInfoGet(g_testQueueID01, &queueInfo);
+    ret = LOS_QueueInfoGet(g_testQueueId01, &queueInfo);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     ICUNIT_GOTO_EQUAL(queueInfo.queueLen, 3, queueInfo.queueLen, EXIT); // Compare wiht the expected value 3.
-    ICUNIT_GOTO_EQUAL(queueInfo.queueID, g_testQueueID01, queueInfo.queueID, EXIT);
+    ICUNIT_GOTO_EQUAL(queueInfo.queueId, g_testQueueId01, queueInfo.queueId, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 3, g_testCount, EXIT); // Compare wiht the expected value 3.
@@ -93,7 +93,7 @@ static UINT32 Testcase(VOID)
 
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 }
 

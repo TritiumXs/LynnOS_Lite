@@ -71,7 +71,7 @@ static VOID Case2()
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    HWI_HANDLE_T hwiNum = HWI_NUM_INT14;
+    HwiHandle hwiNum = HWI_NUM_INT14;
     g_testCount = 0;
 
     ret = LOS_HwiCreate(hwiNum, 1, 0, Case2, 0);

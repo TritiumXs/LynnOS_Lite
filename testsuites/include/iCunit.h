@@ -358,10 +358,10 @@ extern iUINT32 iCunitPrintReport(void);
 
 #define TEST_ADD_CASE(name, casefunc, testcase_layer, testcase_module, testcase_level, testcase_type)         \
     do {                                                                                                      \
-        iUINT32 uwRet = 1;                                                                                    \
-        uwRet = ICunitAddCase(name, (CASE_FUNCTION)casefunc, testcase_layer, testcase_module, testcase_level, \
+        iUINT32 ret = 1;                                                                                    \
+        ret = ICunitAddCase(name, (CASE_FUNCTION)casefunc, testcase_layer, testcase_module, testcase_level, \
             testcase_type);                                                                                   \
-        ICUNIT_ASSERT_EQUAL_VOID(uwRet, ICUNIT_SUCCESS, uwRet);                                               \
+        ICUNIT_ASSERT_EQUAL_VOID(ret, ICUNIT_SUCCESS, ret);                                               \
     } while (0)
 
 #define TEST_RUN_SUITE()                                                   \

@@ -41,7 +41,7 @@ LITE_OS_SEC_TEXT_MINOR VOID ArchSysExit(VOID)
     }
 }
 
-LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack)
+LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskId, UINT32 stackSize, VOID *topStack)
 {
     UINT32 index;
     UINT8 *stk = 0;
@@ -55,7 +55,7 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
         ((STACK_TYPE *)context)[index] = OS_TASK_STACK_INIT;
     }
     context->ra      = (STACK_TYPE)ArchSysExit;
-    context->a0      = (STACK_TYPE)taskID;
+    context->a0      = (STACK_TYPE)taskId;
     context->epc     = (STACK_TYPE)OsTaskEntry;
 
     context->mstatus = INITIAL_MSTATUS;

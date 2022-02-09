@@ -66,7 +66,7 @@
 #define PIPE_RW_WAIT(sem)    do {                                           \
     LosSemCB *__sem = GET_SEM(sem);                                         \
     while (__sem->semCount != 0) {                                          \
-        UINT32 __ret = LOS_SemPend(__sem->semID, LOS_WAIT_FOREVER);         \
+        UINT32 __ret = LOS_SemPend(__sem->semId, LOS_WAIT_FOREVER);         \
         if (__ret != LOS_OK) {                                              \
             PRINT_ERR("pipe device R/W sem wait error, ret = %x\n", __ret); \
         }                                                                   \
@@ -76,7 +76,7 @@
 #define PIPE_RW_POST(sem)    do {                                           \
     LosSemCB *__sem = GET_SEM(sem);                                         \
     while (__sem->semCount == 0) {                                          \
-        UINT32 __ret = LOS_SemPost(__sem->semID);                           \
+        UINT32 __ret = LOS_SemPost(__sem->semId);                           \
         if (__ret != LOS_OK) {                                              \
             PRINT_ERR("pipe device R/W sem post error, ret = %x\n", __ret); \
         }                                                                   \
@@ -483,7 +483,7 @@ STATIC INLINE BOOL PipeWriterIsWaiting(UINT32 sem)
     UINT32 num = 0;
 
     while (semCB->semCount == 0) {
-        UINT32 ret = LOS_SemPost(semCB->semID);
+        UINT32 ret = LOS_SemPost(semCB->semId);
         if (ret != LOS_OK) {
             PRINT_ERR("pipe device write sem post error, ret = %x\n", ret);
         }

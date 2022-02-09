@@ -39,16 +39,16 @@ static UINT32 Testcase(VOID)
     CHAR buff1[] = "UniDSPOS";
     INT32 buff2;
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, 7, 0); // 7, for boundary value test
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, 7, 0); // 7, for boundary value test
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_READ_SIZE_TOO_SMALL, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     // 6, to verify the correct value
     ICUNIT_GOTO_EQUAL(*((char *)(intptr_t)buff2 + 6), buff1[6], *((char *)(intptr_t)buff2 + 6), EXIT);
@@ -56,7 +56,7 @@ static UINT32 Testcase(VOID)
     ICUNIT_GOTO_EQUAL(*((char *)(intptr_t)buff2 + 7), 'S', *((char *)(intptr_t)buff2 + 7), EXIT);
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

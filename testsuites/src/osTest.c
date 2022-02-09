@@ -38,30 +38,30 @@
 
 UINT32 volatile g_testCount;
 UINT32 g_testTskHandle;
-UINT32 g_testTaskID01;
-UINT32 g_testTaskID02;
-UINT32 g_testTaskID03;
-UINT32 g_testTaskID04;
+UINT32 g_testTaskId01;
+UINT32 g_testTaskId02;
+UINT32 g_testTaskId03;
+UINT32 g_testTaskId04;
 
-EVENT_CB_S g_eventCB01;
-EVENT_CB_S g_eventCB02;
-EVENT_CB_S g_eventCB03;
+LosEventCB g_eventCB01;
+LosEventCB g_eventCB02;
+LosEventCB g_eventCB03;
 UINT32 g_mutexTest;
-EVENT_CB_S g_exampleEvent;
+LosEventCB g_exampleEvent;
 
 UINT32 g_hwiNum1;
 UINT32 g_hwiNum2;
-UINT32 g_usSemID;
-UINT32 g_usSemID2;
+UINT32 g_testSemId;
+UINT32 g_testSemId2;
 UINT32 g_cpupTestCount;
 UINT32 g_cmsisRobinCount1;
 UINT32 g_cmsisCount;
 
-UINT16 g_usSwTmrID;
+UINT16 g_testSwtmrId;
 
-UINT32 g_testQueueID01;
-UINT32 g_testQueueID02;
-UINT32 g_testQueueID03;
+UINT32 g_testQueueId01;
+UINT32 g_testQueueId02;
+UINT32 g_testQueueId03;
 
 UINT16 g_index;
 UINT32 g_loopCycle = 0xFFFFF;
@@ -74,23 +74,23 @@ UINT32 g_leavingTaskNum;
 UINT32 g_testTaskIdArray[LOSCFG_BASE_CORE_TSK_LIMIT] = {0};
 UINT32 g_uwGetTickConsume = 0;
 
-UINT32 g_usSemID3[LOSCFG_BASE_IPC_SEM_CONFIG + 1];
+UINT32 g_testSemId3[LOSCFG_BASE_IPC_SEM_CONFIG + 1];
 
 #define TST_RAMADDRSTART 0x20000000
 #define TST_RAMADDREND 0x20010000
 
-extern SWTMR_CTRL_S *g_swtmrCBArray;
+extern LosSwtmrCB *g_swtmrCBArray;
 UINT32 SwtmrCountGetTest(VOID)
 {
     UINT32 loop;
     UINT32 swTmrCnt = 0;
     UINT32 intSave;
-    SWTMR_CTRL_S *swTmrCB = (SWTMR_CTRL_S *)NULL;
+    LosSwtmrCB *swTmrCB = (LosSwtmrCB *)NULL;
 
     intSave = LOS_IntLock();
     swTmrCB = g_swtmrCBArray;
     for (loop = 0; loop < LOSCFG_BASE_CORE_SWTMR_LIMIT; loop++, swTmrCB++) {
-        if (swTmrCB->ucState != OS_SWTMR_STATUS_UNUSED) {
+        if (swTmrCB->state != OS_SWTMR_STATUS_UNUSED) {
             swTmrCnt++;
         }
     }
@@ -233,13 +233,13 @@ VOID TestTaskEntry()
 UINT32 los_TestInit(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S osTaskInitParam = { 0 };
+    TskInitParam osTaskInitParam = { 0 };
 
-    osTaskInitParam.pfnTaskEntry = (TSK_ENTRY_FUNC)TestTaskEntry;
-    osTaskInitParam.uwStackSize = OS_TSK_TEST_STACK_SIZE;
+    osTaskInitParam.pfnTaskEntry = (TskEntryFunc)TestTaskEntry;
+    osTaskInitParam.stackSize = OS_TSK_TEST_STACK_SIZE;
     osTaskInitParam.pcName = "IT_TST_INI";
-    osTaskInitParam.usTaskPrio = TASK_PRIO_TEST;
-    osTaskInitParam.uwResved = LOS_TASK_ATTR_JOINABLE;
+    osTaskInitParam.taskPrio = TASK_PRIO_TEST;
+    osTaskInitParam.resved = LOS_TASK_ATTR_JOINABLE;
 
     ret = LOS_TaskCreate(&g_testTskHandle, &osTaskInitParam);
     if (LOS_OK != ret) {
@@ -296,10 +296,6 @@ UINT64 LosCpuCycleGet(VOID)
 }
 #else
 
-#define OS_NVIC_SETPEND 0xE000E200
-#define OS_NVIC_CLRPEND 0xE000E280
-#define HWI_SHIFT_NUM 5
-#define HWI_BIT 2
 VOID TestHwiTrigger(UINT32 hwiNum)
 {
     LOS_HwiTrigger(hwiNum);
@@ -331,8 +327,8 @@ UINT32 TestSemDelete(UINT32 semHandle)
 {
     return LOS_SemDelete(semHandle);
 }
-UINT32 g_usSemID;
-UINT32 g_usSemID2;
-UINT32 g_usSemID3[LOSCFG_BASE_IPC_SEM_LIMIT + 1];
+UINT32 g_testSemId;
+UINT32 g_testSemId2;
+UINT32 g_testSemId3[LOSCFG_BASE_IPC_SEM_LIMIT + 1];
 #endif
 

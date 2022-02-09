@@ -37,7 +37,7 @@ static VOID SwtmrF01(VOID)
     UINT32 ret;
     CHAR buffer1[] = "MiniOS";
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buffer1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buffer1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     g_testCount++;
@@ -50,7 +50,7 @@ static VOID SwtmrF02(VOID)
 
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 1, g_testCount);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buffer2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buffer2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     g_testCount++;
@@ -65,7 +65,7 @@ static UINT32 Testcase(VOID)
     g_testCount = 0;
 
     // 4, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(4, LOS_SWTMR_MODE_ONCE, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID1, 0xffff
+    ret = LOS_SwtmrCreate(4, LOS_SWTMR_MODE_ONCE, (SwtmrProcFunc)SwtmrF01, &swTmrID1, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
@@ -73,14 +73,14 @@ static UINT32 Testcase(VOID)
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
     // 8, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(8, LOS_SWTMR_MODE_ONCE, (SWTMR_PROC_FUNC)SwtmrF02, &swTmrID2, 0xffff
+    ret = LOS_SwtmrCreate(8, LOS_SWTMR_MODE_ONCE, (SwtmrProcFunc)SwtmrF02, &swTmrID2, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
     );
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT3);
 
-    ret = LOS_QueueCreate("Q1", 1, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", 1, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
     LOS_SwtmrStart(swTmrID1);
@@ -92,20 +92,20 @@ static UINT32 Testcase(VOID)
     ret = LOS_TaskDelay(5); // 5, set delay time
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buffer2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buffer2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_ISEMPTY, ret, EXIT1);
 
     LOS_SwtmrDelete(swTmrID1);
     LOS_SwtmrDelete(swTmrID2);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 
 EXIT1:
     LOS_SwtmrDelete(swTmrID1);
     LOS_SwtmrDelete(swTmrID2);
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 EXIT2:
     LOS_SwtmrDelete(swTmrID1);

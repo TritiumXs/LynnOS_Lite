@@ -40,17 +40,17 @@ static VOID TaskF03(void)
     UINT32 ret;
     UINT32 i;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     for (i = 0; i < IT_SEMLOOP; i++) {
-        ret = LOS_SemPost(g_usSemID);
+        ret = LOS_SemPost(g_testSemId);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-        ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+        ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     }
-    LOS_TaskDelete(g_testTaskID03);
+    LOS_TaskDelete(g_testTaskId03);
 }
 
 static VOID TaskF02(void)
@@ -58,17 +58,17 @@ static VOID TaskF02(void)
     UINT32 ret;
     UINT32 i;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     for (i = 0; i < IT_SEMLOOP; i++) {
-        ret = LOS_SemPost(g_usSemID);
+        ret = LOS_SemPost(g_testSemId);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-        ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+        ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     }
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 }
 
 static VOID TaskF01(void)
@@ -76,69 +76,69 @@ static VOID TaskF01(void)
     UINT32 ret;
     UINT32 i;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     for (i = 0; i < IT_SEMLOOP; i++) {
-        ret = LOS_SemPost(g_usSemID);
+        ret = LOS_SemPost(g_testSemId);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-        ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+        ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     }
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task = { 0 };
+    TskInitParam task = { 0 };
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "SemTsk2";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
 
-    ret = LOS_SemCreate(0, &g_usSemID);
+    ret = LOS_SemCreate(0, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF02;
     task.pcName = "SemTsk2_1";
-    task.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
-    ret = LOS_TaskCreate(&g_testTaskID02, &task);
+    task.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    ret = LOS_TaskCreate(&g_testTaskId02, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF03;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF03;
     task.pcName = "SemTsk2_2";
-    task.usTaskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority, it is higher than the current task.
-    ret = LOS_TaskCreate(&g_testTaskID03, &task);
+    task.taskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority, it is higher than the current task.
+    ret = LOS_TaskCreate(&g_testTaskId03, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT3);
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT4);
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT4);
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT4);
 
 EXIT:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 EXIT4:
-    LOS_TaskDelete(g_testTaskID03);
+    LOS_TaskDelete(g_testTaskId03);
 EXIT3:
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 EXIT2:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

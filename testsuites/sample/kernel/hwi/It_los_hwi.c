@@ -57,6 +57,7 @@ VOID ItSuiteLosHwi()
     ItLosHwi030();
     ItLosHwi031();
     ItLosHwi034();
+    ItLosHwi036();
 #if (LOS_KERNEL_MULTI_HWI_TEST == 1)
     ItLosHwi003();
     ItLosHwi005();

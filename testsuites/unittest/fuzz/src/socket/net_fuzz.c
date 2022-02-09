@@ -55,7 +55,7 @@
 extern S_ElementInit g_element[ELEMENT_LEN];
 extern int g_iteration;
 
-static UINT32 g_testTaskID01;
+static UINT32 g_testTaskId01;
 
 #define BUF_SIZE 40
 static char g_udpIp[16];
@@ -166,23 +166,23 @@ static UINT32 UdpFun(VOID)
         g_udpPort = *(UINT16 *)DT_SetGetU16(&g_element[NUM_5_INDEX], 0);
 
         {
-            TSK_INIT_PARAM_S stTask1 = { 0 };
-            stTask1.pfnTaskEntry = (TSK_ENTRY_FUNC)SampleUdpServer;
-            stTask1.uwStackSize = TASK_STACK_SIZE_TEST;
+            TskInitParam stTask1 = { 0 };
+            stTask1.pfnTaskEntry = (TskEntryFunc)SampleUdpServer;
+            stTask1.stackSize = TASK_STACK_SIZE_TEST;
             stTask1.pcName = "Tsk001A";
-            stTask1.usTaskPrio = TASK_PRIO_TEST;
-            stTask1.uwResved = LOS_TASK_STATUS_DETACHED;
-            (void)LOS_TaskCreate(&g_testTaskID01, &stTask1);
+            stTask1.taskPrio = TASK_PRIO_TEST;
+            stTask1.resved = LOS_TASK_STATUS_DETACHED;
+            (void)LOS_TaskCreate(&g_testTaskId01, &stTask1);
         }
 
         {
-            TSK_INIT_PARAM_S stTask1 = { 0 };
-            stTask1.pfnTaskEntry = (TSK_ENTRY_FUNC)SampleUdpClient;
-            stTask1.uwStackSize = TASK_STACK_SIZE_TEST;
+            TskInitParam stTask1 = { 0 };
+            stTask1.pfnTaskEntry = (TskEntryFunc)SampleUdpClient;
+            stTask1.stackSize = TASK_STACK_SIZE_TEST;
             stTask1.pcName = "Tsk001A";
-            stTask1.usTaskPrio = TASK_PRIO_TEST;
-            stTask1.uwResved = LOS_TASK_STATUS_DETACHED;
-            (void)LOS_TaskCreate(&g_testTaskID01, &stTask1);
+            stTask1.taskPrio = TASK_PRIO_TEST;
+            stTask1.resved = LOS_TASK_STATUS_DETACHED;
+            (void)LOS_TaskCreate(&g_testTaskId01, &stTask1);
         }
     }
 
@@ -286,23 +286,23 @@ static UINT32 TcpFun(VOID)
 
     for (i = 0; i < g_iteration; i++) {
         {
-            TSK_INIT_PARAM_S stTask1 = { 0 };
-            stTask1.pfnTaskEntry = (TSK_ENTRY_FUNC)SampleTcpServer;
-            stTask1.uwStackSize = TASK_STACK_SIZE_TEST;
+            TskInitParam stTask1 = { 0 };
+            stTask1.pfnTaskEntry = (TskEntryFunc)SampleTcpServer;
+            stTask1.stackSize = TASK_STACK_SIZE_TEST;
             stTask1.pcName = "Tsk001A";
-            stTask1.usTaskPrio = TASK_PRIO_TEST;
-            stTask1.uwResved = LOS_TASK_STATUS_DETACHED;
-            (void)LOS_TaskCreate(&g_testTaskID01, &stTask1);
+            stTask1.taskPrio = TASK_PRIO_TEST;
+            stTask1.resved = LOS_TASK_STATUS_DETACHED;
+            (void)LOS_TaskCreate(&g_testTaskId01, &stTask1);
         }
 
         {
-            TSK_INIT_PARAM_S stTask1 = { 0 };
-            stTask1.pfnTaskEntry = (TSK_ENTRY_FUNC)SampleTcpClient;
-            stTask1.uwStackSize = TASK_STACK_SIZE_TEST;
+            TskInitParam stTask1 = { 0 };
+            stTask1.pfnTaskEntry = (TskEntryFunc)SampleTcpClient;
+            stTask1.stackSize = TASK_STACK_SIZE_TEST;
             stTask1.pcName = "Tsk001A";
-            stTask1.usTaskPrio = TASK_PRIO_TEST;
-            stTask1.uwResved = LOS_TASK_STATUS_DETACHED;
-            (void)LOS_TaskCreate(&g_testTaskID01, &stTask1);
+            stTask1.taskPrio = TASK_PRIO_TEST;
+            stTask1.resved = LOS_TASK_STATUS_DETACHED;
+            (void)LOS_TaskCreate(&g_testTaskId01, &stTask1);
         }
     };
 

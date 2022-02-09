@@ -38,8 +38,8 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-Atomic g_testAtomicID03 = 0;
-Atomic64 g_testAtomicID05 = 0;
+Atomic g_testAtomicId03 = 0;
+Atomic64 g_testAtomicId05 = 0;
 
 VOID ItSuiteLosAtomic(VOID)
 {

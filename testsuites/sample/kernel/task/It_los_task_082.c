@@ -34,7 +34,7 @@
 
 
 
-extern EVENT_CB_S g_eventCB01;
+extern LosEventCB g_eventCB01;
 
 static VOID TaskF01(VOID)
 {
@@ -47,7 +47,7 @@ static VOID TaskF01(VOID)
     g_testCount++;
 
 EXIT:
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     return;
 }
@@ -55,17 +55,17 @@ EXIT:
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1;
+    TskInitParam task1;
     LOS_EventInit(&g_eventCB01);
-    (void)memset_s(&task1, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    (void)memset_s(&task1, sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "Tsk082A";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
-    task1.usTaskPrio = TASK_PRIO_TEST - 1;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
+    task1.taskPrio = TASK_PRIO_TEST - 1;
 
     g_testCount = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     LOS_EventWrite(&g_eventCB01, 0x80000000);
@@ -78,7 +78,7 @@ static UINT32 TestCase(VOID)
 
     return LOS_OK;
 EXIT:
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 }

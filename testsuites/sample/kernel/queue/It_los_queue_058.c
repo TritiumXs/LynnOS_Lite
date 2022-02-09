@@ -39,25 +39,25 @@ static UINT32 Testcase(VOID)
     CHAR buff2[QUEUE_SHORT_BUFFER_LENGTH];
     UINT32 maxMsgSize;
 
-    g_testQueueID01 = LOSCFG_BASE_IPC_QUEUE_LIMIT - 1;
+    g_testQueueId01 = LOSCFG_BASE_IPC_QUEUE_LIMIT - 1;
 
     maxMsgSize = 0xFFFF + 1;
 
-    ret = LOS_QueueCreate("Q1", 30, &g_testQueueID01, 0, maxMsgSize); // 30, Create a queue with 3 nodes for test
+    ret = LOS_QueueCreate("Q1", 30, &g_testQueueId01, 0, maxMsgSize); // 30, Create a queue with 3 nodes for test
     ICUNIT_GOTO_NOT_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_NOT_CREATE, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_NOT_CREATE, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_NOT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 
 EXIT:
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 }
 

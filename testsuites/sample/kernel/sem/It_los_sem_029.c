@@ -42,20 +42,20 @@ static UINT32 Testcase(VOID)
 
     g_testCount = 0;
 
-    ret = LOS_SemCreate(IT_SEM_COUNT_MAX - IT_SEMLOOP, &g_usSemID);
+    ret = LOS_SemCreate(IT_SEM_COUNT_MAX - IT_SEMLOOP, &g_testSemId);
 
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     for (i = 0; i < IT_SEMLOOP; i++) {
-        ret = LOS_SemPost(g_usSemID);
+        ret = LOS_SemPost(g_testSemId);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     }
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_TRACK_EQUAL(ret, LOS_ERRNO_SEM_OVERFLOW, ret);
 
 EXIT:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

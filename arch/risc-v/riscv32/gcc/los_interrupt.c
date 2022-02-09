@@ -66,33 +66,33 @@ const CHAR g_excInformation[RISCV_EXC_TYPE_NUM][50] = {
 
 LITE_OS_SEC_BSS UINT32  g_intCount = 0;
 LITE_OS_SEC_BSS UINT32 g_hwiFormCnt[OS_HWI_MAX_NUM];
-LITE_OS_SEC_DATA_INIT HWI_HANDLE_FORM_S g_hwiForm[OS_HWI_MAX_NUM] = {
-    { .pfnHook = NULL, .uwParam = 0 }, // 0 User software interrupt handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 1 Supervisor software interrupt handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 2 Reserved
-    { .pfnHook = HalHwiDefaultHandler, .uwParam = 0 }, // 3 Machine software interrupt handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 4 User timer interrupt handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 5 Supervisor timer interrupt handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 6  Reserved
-    { .pfnHook = HalHwiDefaultHandler, .uwParam = 0 }, // 7 Machine timer interrupt handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 8  User external interrupt handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 9 Supervisor external interrupt handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 10 Reserved
-    { .pfnHook = HalHwiDefaultHandler, .uwParam = 0 }, // 11 Machine external interrupt handler
-    { .pfnHook = HalHwiDefaultHandler, .uwParam = 0 }, // 12 NMI handler
-    { .pfnHook = NULL, .uwParam = 0 }, // 13 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 14 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 15 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 16 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 17 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 18 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 19 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 20 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 21 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 22 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 23 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 24 Reserved
-    { .pfnHook = NULL, .uwParam = 0 }, // 25 Reserved
+LITE_OS_SEC_DATA_INIT HwiHandleForm g_hwiForm[OS_HWI_MAX_NUM] = {
+    { .pfnHook = NULL, .param = 0 }, // 0 User software interrupt handler
+    { .pfnHook = NULL, .param = 0 }, // 1 Supervisor software interrupt handler
+    { .pfnHook = NULL, .param = 0 }, // 2 Reserved
+    { .pfnHook = HalHwiDefaultHandler, .param = 0 }, // 3 Machine software interrupt handler
+    { .pfnHook = NULL, .param = 0 }, // 4 User timer interrupt handler
+    { .pfnHook = NULL, .param = 0 }, // 5 Supervisor timer interrupt handler
+    { .pfnHook = NULL, .param = 0 }, // 6  Reserved
+    { .pfnHook = HalHwiDefaultHandler, .param = 0 }, // 7 Machine timer interrupt handler
+    { .pfnHook = NULL, .param = 0 }, // 8  User external interrupt handler
+    { .pfnHook = NULL, .param = 0 }, // 9 Supervisor external interrupt handler
+    { .pfnHook = NULL, .param = 0 }, // 10 Reserved
+    { .pfnHook = HalHwiDefaultHandler, .param = 0 }, // 11 Machine external interrupt handler
+    { .pfnHook = HalHwiDefaultHandler, .param = 0 }, // 12 NMI handler
+    { .pfnHook = NULL, .param = 0 }, // 13 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 14 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 15 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 16 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 17 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 18 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 19 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 20 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 21 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 22 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 23 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 24 Reserved
+    { .pfnHook = NULL, .param = 0 }, // 25 Reserved
 };
 
 LITE_OS_SEC_TEXT_INIT VOID HalHwiDefaultHandler(VOID *arg)
@@ -108,20 +108,20 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
     UINT32 index;
     for (index = OS_RISCV_SYS_VECTOR_CNT; index < OS_HWI_MAX_NUM; index++) {
         g_hwiForm[index].pfnHook = HalHwiDefaultHandler;
-        g_hwiForm[index].uwParam = 0;
+        g_hwiForm[index].param = 0;
     }
 }
 
 typedef VOID (*HwiProcFunc)(VOID *arg);
-__attribute__((section(".interrupt.text"))) VOID HalHwiInterruptDone(HWI_HANDLE_T hwiNum)
+__attribute__((section(".interrupt.text"))) VOID HalHwiInterruptDone(HwiHandle hwiNum)
 {
     g_intCount++;
 
     OsHookCall(LOS_HOOK_TYPE_ISR_ENTER, hwiNum);
 
-    HWI_HANDLE_FORM_S *hwiForm = &g_hwiForm[hwiNum];
+    HwiHandleForm *hwiForm = &g_hwiForm[hwiNum];
     HwiProcFunc func = (HwiProcFunc)(hwiForm->pfnHook);
-    func(hwiForm->uwParam);
+    func(hwiForm->param);
 
     ++g_hwiFormCnt[hwiNum];
 
@@ -130,7 +130,7 @@ __attribute__((section(".interrupt.text"))) VOID HalHwiInterruptDone(HWI_HANDLE_
     g_intCount--;
 }
 
-LITE_OS_SEC_TEXT UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT UINT32 HalGetHwiFormCnt(HwiHandle hwiNum)
 {
     if (hwiNum < OS_HWI_MAX_NUM) {
         return g_hwiFormCnt[hwiNum];
@@ -139,7 +139,7 @@ LITE_OS_SEC_TEXT UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum)
     return LOS_NOK;
 }
 
-LITE_OS_SEC_TEXT HWI_HANDLE_FORM_S *HalGetHwiForm(VOID)
+LITE_OS_SEC_TEXT HwiHandleForm *HalGetHwiForm(VOID)
 {
     return g_hwiForm;
 }
@@ -161,11 +161,11 @@ inline UINT32 ArchIsIntActive(VOID)
  Output      : None
  Return      : LOS_OK on success or error code on failure
  *****************************************************************************/
-LITE_OS_SEC_TEXT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
-                                      HWI_PRIOR_T hwiPrio,
-                                      HWI_MODE_T hwiMode,
-                                      HWI_PROC_FUNC hwiHandler,
-                                      HWI_ARG_T irqParam)
+LITE_OS_SEC_TEXT UINT32 ArchHwiCreate(HwiHandle hwiNum,
+                                      HwiPrio hwiPrio,
+                                      HwiMode hwiMode,
+                                      HwiProcFunc hwiHandler,
+                                      HwiIrqParam *irqParam)
 {
     UINT32 intSave;
 
@@ -186,8 +186,11 @@ LITE_OS_SEC_TEXT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
 
     intSave = LOS_IntLock();
     g_hwiForm[hwiNum].pfnHook = hwiHandler;
-    g_hwiForm[hwiNum].uwParam = (VOID *)irqParam;
-
+    if (irqParam != NULL) {
+        g_hwiForm[hwiNum].param = (VOID *)irqParam->arg;
+    } else {
+        g_hwiForm[hwiNum].param = NULL;
+    }
     if (hwiNum >= OS_RISCV_SYS_VECTOR_CNT) {
         HalSetLocalInterPri(hwiNum, hwiPrio);
     }
@@ -203,7 +206,7 @@ LITE_OS_SEC_TEXT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
  Input       : hwiNum   --- hwi num to delete
  Return      : LOS_OK on success or error code on failure
  *****************************************************************************/
-LITE_OS_SEC_TEXT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT UINT32 ArchHwiDelete(HwiHandle hwiNum)
 {
     UINT32 intSave;
 
@@ -213,7 +216,7 @@ LITE_OS_SEC_TEXT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
 
     intSave = LOS_IntLock();
     g_hwiForm[hwiNum].pfnHook = HalHwiDefaultHandler;
-    g_hwiForm[hwiNum].uwParam = 0;
+    g_hwiForm[hwiNum].param = 0;
     LOS_IntRestore(intSave);
     return LOS_OK;
 }
@@ -290,7 +293,7 @@ STATIC VOID ExcInfoDisplay(const LosExcContext *excBufAddr)
 
     if (LOS_TaskIsRunning()) {
         PRINTK("taskName = %s\n", g_losTask.runTask->taskName);
-        PRINTK("taskID = %u\n", g_losTask.runTask->taskID);
+        PRINTK("taskId = %u\n", g_losTask.runTask->taskId);
     } else {
         PRINTK("The exception occurs during system startup!\n");
     }

@@ -98,7 +98,7 @@ STATIC VOID OsTraceSetFrame(TraceEventFrame *frame, UINT32 eventType, UINTPTR id
     }
 
     TRACE_LOCK(intSave);
-    frame->curTask   = OsTraceGetMaskTid(LOS_CurTaskIDGet());
+    frame->curTask   = OsTraceGetMaskTid(LOS_CurTaskIdGet());
     frame->identity  = identity;
     frame->curTime   = LOS_SysCycleGet();
     frame->eventType = eventType;
@@ -126,7 +126,7 @@ VOID OsTraceSetObj(ObjData *obj, const LosTaskCB *tcb)
     errno_t ret;
     (VOID)memset_s(obj, sizeof(ObjData), 0, sizeof(ObjData));
 
-    obj->id   = OsTraceGetMaskTid(tcb->taskID);
+    obj->id   = OsTraceGetMaskTid(tcb->taskId);
     obj->prio = tcb->priority;
 
     ret = strncpy_s(obj->name, LOSCFG_TRACE_OBJ_MAX_NAME_SIZE, tcb->taskName, LOSCFG_TRACE_OBJ_MAX_NAME_SIZE - 1);
@@ -225,13 +225,13 @@ VOID TraceAgent(VOID)
 STATIC UINT32 OsCreateTraceAgentTask(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S taskInitParam;
+    TskInitParam taskInitParam;
 
-    (VOID)memset_s((VOID *)(&taskInitParam), sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    taskInitParam.pfnTaskEntry = (TSK_ENTRY_FUNC)TraceAgent;
-    taskInitParam.usTaskPrio = LOSCFG_TRACE_TASK_PRIORITY;
+    (VOID)memset_s((VOID *)(&taskInitParam), sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    taskInitParam.pfnTaskEntry = (TskEntryFunc)TraceAgent;
+    taskInitParam.taskPrio = LOSCFG_TRACE_TASK_PRIORITY;
     taskInitParam.pcName = "TraceAgent";
-    taskInitParam.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    taskInitParam.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
 #if (LOSCFG_KERNEL_SMP == 1)
     taskInitParam.usCpuAffiMask = CPUID_TO_AFFI_MASK(ArchCurrCpuid());
 #endif

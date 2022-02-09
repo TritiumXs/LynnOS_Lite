@@ -49,9 +49,9 @@ static VOID HwiF01(VOID)
     UINT8 delIndex;
     UINT8 pro;
     CHAR acName[TASK_NAME_NUM];
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE + 0x100;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE + 0x100;
 
     TestHwiClear(HWI_NUM_TEST);
 
@@ -65,7 +65,7 @@ static VOID HwiF01(VOID)
     g_testCount = 0;
 
     for (g_index = startIndex; g_index < LOSCFG_BASE_CORE_TSK_LIMIT + 1; pro++, g_testCount++, g_index++) {
-        task1.usTaskPrio = pro;
+        task1.taskPrio = pro;
         (void)sprintf_s(acName, TASK_NAME_NUM, "Tsk086_%d", g_index);
         task1.pcName = acName;
 

@@ -37,13 +37,13 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
 
-    ret = LOS_SemCreate(1, &g_usSemID);
+    ret = LOS_SemCreate(1, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_SEM_INVALID, ret);
 
     return LOS_OK;

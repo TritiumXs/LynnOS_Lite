@@ -168,11 +168,11 @@ extern "C" {
  * @ingroup los_event
  * Event control structure
  */
-typedef struct tagEvent {
-    UINT32 uwEventID;        /**< Event mask in the event control block,
+typedef struct TagEvent {
+    UINT32 eventId;          /**< Event mask in the event control block,
                                   indicating the event that has been logically processed. */
     LOS_DL_LIST stEventList; /**< Event control block linked list */
-} EVENT_CB_S, *PEVENT_CB_S;
+} LosEventCB, *LosPEventCB;
 /**
  * @ingroup los_event
  * @brief Initialize an event control block.
@@ -192,7 +192,7 @@ typedef struct tagEvent {
  * <ul><li>los_event.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_EventClear
  */
-extern UINT32 LOS_EventInit(PEVENT_CB_S eventCB);
+extern UINT32 LOS_EventInit(LosPEventCB eventCB);
 
 /**
  * @ingroup los_event
@@ -203,11 +203,11 @@ extern UINT32 LOS_EventInit(PEVENT_CB_S eventCB);
  * and event reading mode, and process the event based on the event reading mode. The event ID must point to valid memory.
  * @attention
  * <ul>
- * <li>When the mode is LOS_WAITMODE_CLR, the eventID is passed-out.</li>
- * <li>Otherwise the eventID is passed-in.</li>
+ * <li>When the mode is LOS_WAITMODE_CLR, the eventId is passed-out.</li>
+ * <li>Otherwise the eventId is passed-in.</li>
  * </ul>
  *
- * @param eventID      [IN/OUT] Pointer to the ID of the event to be checked.
+ * @param eventId      [IN/OUT] Pointer to the ID of the event to be checked.
  * @param eventMask    [IN] Mask of the event expected to occur by the user, indicating the event obtained after
  * it is logically processed that matches the ID pointed to by mode.
  * @param mode         [IN] Event reading mode. The modes include LOS_WAITMODE_AND, LOS_WAITMODE_OR, LOS_WAITMODE_CLR.
@@ -218,7 +218,7 @@ extern UINT32 LOS_EventInit(PEVENT_CB_S eventCB);
  * <ul><li>los_event.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_EventRead | LOS_EventWrite
  */
-extern UINT32 LOS_EventPoll(UINT32 *eventID, UINT32 eventMask, UINT32 mode);
+extern UINT32 LOS_EventPoll(UINT32 *eventId, UINT32 eventMask, UINT32 mode);
 
 /**
  * @ingroup los_event
@@ -236,7 +236,7 @@ extern UINT32 LOS_EventPoll(UINT32 *eventID, UINT32 eventMask, UINT32 mode);
  *
  * @param eventCB      [IN/OUT] Pointer to the event control block to be checked. This parameter must point to valid memory.
  * @param eventMask    [IN]     Mask of the event expected to occur by the user, indicating the event obtained after
- *                              it is logically processed that matches the ID pointed to by eventID.
+ *                              it is logically processed that matches the ID pointed to by eventId.
  * @param mode         [IN]     Event reading mode.
  * @param timeOut      [IN]     Timeout interval of event reading (unit: Tick).
  *
@@ -252,7 +252,7 @@ extern UINT32 LOS_EventPoll(UINT32 *eventID, UINT32 eventMask, UINT32 mode);
  * <ul><li>los_event.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_EventPoll | LOS_EventWrite
  */
-extern UINT32 LOS_EventRead(PEVENT_CB_S eventCB, UINT32 eventMask, UINT32 mode, UINT32 timeOut);
+extern UINT32 LOS_EventRead(LosPEventCB eventCB, UINT32 eventMask, UINT32 mode, UINT32 timeOut);
 
 /**
  * @ingroup los_event
@@ -279,7 +279,7 @@ extern UINT32 LOS_EventRead(PEVENT_CB_S eventCB, UINT32 eventMask, UINT32 mode, 
  * <ul><li>los_event.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_EventPoll | LOS_EventRead
  */
-extern UINT32 LOS_EventWrite(PEVENT_CB_S eventCB, UINT32 events);
+extern UINT32 LOS_EventWrite(LosPEventCB eventCB, UINT32 events);
 
 /**
  * @ingroup los_event
@@ -304,7 +304,7 @@ extern UINT32 LOS_EventWrite(PEVENT_CB_S eventCB, UINT32 events);
  * <ul><li>los_event.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_EventPoll | LOS_EventRead | LOS_EventWrite
  */
-extern UINT32 LOS_EventClear(PEVENT_CB_S eventCB, UINT32 eventMask);
+extern UINT32 LOS_EventClear(LosPEventCB eventCB, UINT32 eventMask);
 
 /**
  * @ingroup los_event
@@ -327,10 +327,10 @@ extern UINT32 LOS_EventClear(PEVENT_CB_S eventCB, UINT32 eventMask);
  * <ul><li>los_event.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_EventPoll | LOS_EventRead | LOS_EventWrite
  */
-extern UINT32 LOS_EventDestroy(PEVENT_CB_S eventCB);
+extern UINT32 LOS_EventDestroy(LosPEventCB eventCB);
 
-extern UINT32 OsEventReadOnce(PEVENT_CB_S eventCB, UINT32 eventMask, UINT32 mode, UINT32 timeOut);
-extern UINT32 OsEventWriteOnce(PEVENT_CB_S eventCB, UINT32 events);
+extern UINT32 OsEventReadOnce(LosPEventCB eventCB, UINT32 eventMask, UINT32 mode, UINT32 timeOut);
+extern UINT32 OsEventWriteOnce(LosPEventCB eventCB, UINT32 events);
 
 #ifdef __cplusplus
 #if __cplusplus

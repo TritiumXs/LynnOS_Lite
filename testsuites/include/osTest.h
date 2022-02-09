@@ -48,7 +48,6 @@
 #include "los_event.h"
 #include "los_memory.h"
 #include "los_queue.h"
-#include "los_cpup.h"
 #include "los_tick.h"
 #include "los_swtmr.h"
 #include "los_mux.h"
@@ -104,27 +103,26 @@ extern "C" {
 
 extern UINT32 volatile g_testCount;
 extern UINT32 g_testTskHandle;
-extern UINT32 g_testTaskID01;
-extern UINT32 g_testTaskID02;
-extern UINT32 g_testTaskID03;
-extern UINT32 g_testTaskID04;
+extern UINT32 g_testTaskId01;
+extern UINT32 g_testTaskId02;
+extern UINT32 g_testTaskId03;
+extern UINT32 g_testTaskId04;
 extern UINT32 g_hwiNum1;
 extern UINT32 g_hwiNum2;
-extern UINT32 g_usSemID;
-extern UINT32 g_usSemID2;
+extern UINT32 g_testSemId;
+extern UINT32 g_testSemId2;
 extern UINT32 g_mutexTest;
 
-extern UINT16 g_usSwTmrID;
-extern UINT32 g_usSemID;
-extern UINT32 g_testQueueID01;
-extern UINT32 g_testQueueID02;
-extern UINT32 g_testQueueID03;
+extern UINT16 g_testSwtmrId;
+extern UINT32 g_testQueueId01;
+extern UINT32 g_testQueueId02;
+extern UINT32 g_testQueueId03;
 extern UINT32 g_testTskHandle;
 extern UINT32 g_leavingTaskNum;
 extern UINT32 g_testTaskIdArray[LOSCFG_BASE_CORE_TSK_LIMIT];
 extern UINT16 g_index;
-extern UINT32 g_usSemID3[];
-extern EVENT_CB_S g_exampleEvent;
+extern UINT32 g_testSemId3[];
+extern LosEventCB g_exampleEvent;
 
 #ifndef LOS_TASK_MIN_TEST_STACK_SIZE
 #define LOS_TASK_MIN_TEST_STACK_SIZE LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE + 0x20
@@ -311,12 +309,12 @@ extern UINT32 TaskUsedCountGet(VOID);
 #define dprintf printf
 #define IT_SEM_COUNT_MAX OS_SEM_COUNTING_MAX_COUNT
 
-extern EVENT_CB_S g_pstEventCb01;
-extern EVENT_CB_S g_pstEventCb02;
-extern EVENT_CB_S g_pstEventCb03;
+extern LosEventCB g_pstEventCb01;
+extern LosEventCB g_pstEventCb02;
+extern LosEventCB g_pstEventCb03;
 
 
-extern UINT32 TEST_TskDelete(UINT32 taskID);
+extern UINT32 TEST_TskDelete(UINT32 taskId);
 extern UINT32 TestSemDelete(UINT32 semHandle);
 extern UINT32 TestHwiDelete(UINT32 hwiNum);
 extern VOID TEST_HwiDeleteAll(VOID);
@@ -325,12 +323,12 @@ extern VOID TestHwiClear(UINT32 hwiNum);
 #ifdef __RISC_V__
 extern UINT64 LosCpuCycleGet(VOID);
 #else
-typedef struct tagHwiHandleForm {
-    HWI_PROC_FUNC pfnHook;
-    UINT32 uwPrioMask;
-} HWI_HANDLE_FORM_S;
+typedef struct TagHwiHandleForm {
+    HwiProcFunc pfnHook;
+    UINT32 prioMask;
+} HwiHandleForm;
 #endif
-#define TEST_HwiCreate(ID, prio, mode, Func, arg) LOS_HwiCreate(ID, prio, mode, Func, arg)
+#define TEST_HwiCreate(id, prio, mode, Func, arg) LOS_HwiCreate(id, prio, mode, Func, arg)
 #define uart_printf_func printf
 
 extern VOID ItSuiteLosTask(void);
@@ -371,8 +369,8 @@ extern VOID ItSuite_CMSIS_Wait_add(VOID);
 
 #define OS_MS_TO_TICK(ms) (((ms) * (UINT64)LOSCFG_BASE_CORE_TICK_PER_SECOND) / 1000)
 
-extern UINT32 g_usSemID;
-extern UINT32 g_auwTestTaskID[LOSCFG_BASE_CORE_TSK_LIMIT];
+extern UINT32 g_testSemId;
+extern UINT32 g_testTaskId[LOSCFG_BASE_CORE_TSK_LIMIT];
 
 extern LosQueueCB *g_pstAllQueue;
 extern UINT32 g_taskMaxNum;

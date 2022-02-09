@@ -45,10 +45,10 @@ extern "C" {
 #define INFO_TYPE_AND_SIZE      8
 
 #define MAX_SCENE_INFO_SIZE     (INFO_TYPE_AND_SIZE + sizeof(ExcInfo) + sizeof(EXC_CONTEXT_S))
-#define MAX_TSK_INFO_SIZE       (INFO_TYPE_AND_SIZE + sizeof(TSK_INFO_S) * (LOSCFG_BASE_CORE_TSK_LIMIT + 1))
+#define MAX_TSK_INFO_SIZE       (INFO_TYPE_AND_SIZE + sizeof(TskInfo) * (LOSCFG_BASE_CORE_TSK_LIMIT + 1))
 
 #if (LOSCFG_BASE_IPC_QUEUE == 1)
-#define MAX_QUEUE_INFO_SIZE     (INFO_TYPE_AND_SIZE + sizeof(QUEUE_INFO_S) * LOSCFG_BASE_IPC_QUEUE_LIMIT)
+#define MAX_QUEUE_INFO_SIZE     (INFO_TYPE_AND_SIZE + sizeof(QueueInfo) * LOSCFG_BASE_IPC_QUEUE_LIMIT)
 #else
 #define MAX_QUEUE_INFO_SIZE     (0)
 #endif
@@ -82,13 +82,13 @@ typedef struct {
 typedef struct {
     ExcInfoType flag;
     UINT32      length;
-    TSK_INFO_S  taskInfo[LOSCFG_BASE_CORE_TSK_LIMIT + 1];
+    TskInfo     taskInfo[LOSCFG_BASE_CORE_TSK_LIMIT + 1];
 } ExcTaskInfoArray;
 
 typedef struct {
     ExcInfoType  flag;
     UINT32       length;
-    QUEUE_INFO_S queueInfo[LOSCFG_BASE_CORE_TSK_LIMIT];
+    QueueInfo    queueInfo[LOSCFG_BASE_CORE_TSK_LIMIT];
 } ExcQueueInfoArray;
 
 typedef struct {

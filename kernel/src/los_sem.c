@@ -69,7 +69,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsSemInit(VOID)
     /* Connect all the semaphore CBs in a doubly linked list. */
     for (index = 0; index < LOSCFG_BASE_IPC_SEM_LIMIT; index++) {
         semNode = ((LosSemCB *)g_allSem) + index;
-        semNode->semID = index;
+        semNode->semId = index;
         semNode->semStat = OS_SEM_UNUSED;
         LOS_ListTailInsert(&g_unusedSemList, &semNode->semList);
     }
@@ -114,7 +114,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsSemCreate(UINT16 count, UINT16 maxCount, UINT32 *
     semCreated->semStat = OS_SEM_USED;
     semCreated->maxSemCount = maxCount;
     LOS_ListInit(&semCreated->semList);
-    *semHandle = (UINT32)semCreated->semID;
+    *semHandle = (UINT32)semCreated->semId;
     LOS_IntRestore(intSave);
     OsHookCall(LOS_HOOK_TYPE_SEM_CREATE, semCreated);
     return LOS_OK;

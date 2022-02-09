@@ -39,31 +39,31 @@ static VOID TaskF01(VOID)
 
     g_testCount++;
 
-    g_pevent.uwEventID = 0;
+    g_pevent.eventId = 0;
     LOS_EventInit(&g_pevent);
 
     LOS_EventWrite(&g_pevent, 0x10);
 
     ret = LOS_EventRead(&g_pevent, 0x00000110, LOS_WAITMODE_OR, LOS_WAIT_FOREVER);
-    ICUNIT_GOTO_EQUAL(ret, g_pevent.uwEventID, ret, EXIT);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 0x10, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(ret, g_pevent.eventId, ret, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 0x10, g_pevent.eventId, EXIT);
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
 
     g_testCount++;
 
     LOS_EventWrite(&g_pevent, 0x110);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 0x110, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 0x110, g_pevent.eventId, EXIT);
 
     ret = LOS_EventRead(&g_pevent, 0x00000110, LOS_WAITMODE_AND, 0);
-    ICUNIT_GOTO_EQUAL(ret, g_pevent.uwEventID, ret, EXIT);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 0x110, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(ret, g_pevent.eventId, ret, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 0x110, g_pevent.eventId, EXIT);
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // 2, Here, assert that g_testCount is equal to 2.
 
     g_testCount++;
 
     ret = LOS_EventRead(&g_pevent, 0x00000011, LOS_WAITMODE_AND, 0);
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 0x110, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 0x110, g_pevent.eventId, EXIT);
 
     g_testCount++;
 
@@ -75,7 +75,7 @@ EXIT:
     ret = LOS_EventDestroy(&g_pevent);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     return;
 }
@@ -84,22 +84,22 @@ EXIT:
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1;
-    (void)memset_s(&task1, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    TskInitParam task1;
+    (void)memset_s(&task1, sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "EventTsk7";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the test task.
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the test task.
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     ICUNIT_GOTO_EQUAL(g_testCount, 4, g_testCount, EXIT); // 4, Here, assert that g_testCount is equal to 4.
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 }
 

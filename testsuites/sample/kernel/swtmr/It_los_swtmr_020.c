@@ -38,7 +38,7 @@ static VOID Case1(UINT32 arg)
 #if SELF_DELETED
     UINT32 ret;
 
-    ret = LOS_SwtmrStart(g_testTaskID01);
+    ret = LOS_SwtmrStart(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 #endif
 
@@ -63,7 +63,7 @@ static UINT32 Testcase(VOID)
 #endif
     );
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
-    g_testTaskID01 = swTmrID;
+    g_testTaskId01 = swTmrID;
 
     ret = LOS_SwtmrStart(swTmrID);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);

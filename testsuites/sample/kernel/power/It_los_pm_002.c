@@ -35,8 +35,8 @@
 
 #define myprintf // printf
 #define TEST_LOOP 5
-static EVENT_CB_S g_pmTestEvent;
-static UINT32 g_taskID1, g_taskID2;
+static LosEventCB g_pmTestEvent;
+static UINT32 g_taskId1, g_taskId2;
 static UINT32 g_deviceCount = 0;
 static UINT32 g_sysCount = 0;
 static volatile UINT32 g_pmTestCount = 0;
@@ -84,12 +84,12 @@ static UINT32 SystemPmEarly(UINT32 mode)
 {
     UINT32 ret;
 
-    ret = LOS_TaskSuspend(g_taskID2);
+    ret = LOS_TaskSuspend(g_taskId2);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskSuspend(g_taskID1);
+    ret = LOS_TaskSuspend(g_taskId1);
     if (ret != LOS_OK) {
-        (VOID)LOS_TaskResume(g_taskID2);
+        (VOID)LOS_TaskResume(g_taskId2);
     }
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
@@ -102,10 +102,10 @@ static VOID SystemPmLate(UINT32 mode)
 
     ICUNIT_ASSERT_EQUAL_VOID(mode, LOS_SYS_LIGHT_SLEEP, mode);
 
-    ret = LOS_TaskResume(g_taskID2);
+    ret = LOS_TaskResume(g_taskId2);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ret = LOS_TaskResume(g_taskID1);
+    ret = LOS_TaskResume(g_taskId1);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 }
 
@@ -212,7 +212,7 @@ static void TaskSampleEntry1(void)
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
+    TskInitParam task1 = { 0 };
     g_sysCount = 0;
     g_deviceCount = 0;
     g_testCount = 0;
@@ -229,25 +229,25 @@ static UINT32 TestCase(VOID)
     ret = LOS_PmModeSet(LOS_SYS_LIGHT_SLEEP);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)PmTestTask;
-    task1.uwStackSize = 0x2000; /* 0x2000 pm task stack size */
+    task1.pfnTaskEntry = (TskEntryFunc)PmTestTask;
+    task1.stackSize = 0x2000; /* 0x2000 pm task stack size */
     task1.pcName = "pmTask";
-    task1.usTaskPrio = 5; /* 5: pm task prio */
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    task1.taskPrio = 5; /* 5: pm task prio */
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskSampleEntry1;
-    task1.uwStackSize  = 0x1000; /* 0x1000 task stack size */
+    task1.pfnTaskEntry = (TskEntryFunc)TaskSampleEntry1;
+    task1.stackSize  = 0x1000; /* 0x1000 task stack size */
     task1.pcName       = "TaskSampleEntry1";
-    task1.usTaskPrio   = 10; /* 10: task prio */
-    ret = LOS_TaskCreate(&g_taskID1, &task1);
+    task1.taskPrio   = 10; /* 10: task prio */
+    ret = LOS_TaskCreate(&g_taskId1, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskSampleEntry2;
-    task1.uwStackSize  = 0x1000; /* 0x1000 task stack size */
+    task1.pfnTaskEntry = (TskEntryFunc)TaskSampleEntry2;
+    task1.stackSize  = 0x1000; /* 0x1000 task stack size */
     task1.pcName       = "TaskSampleEntry2";
-    task1.usTaskPrio   = 12; /* 12: task prio */
-    ret = LOS_TaskCreate(&g_taskID2, &task1);
+    task1.taskPrio   = 12; /* 12: task prio */
+    ret = LOS_TaskCreate(&g_taskId2, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     (VOID)LOS_EventRead(&g_pmTestEvent, 0xff, LOS_WAITMODE_OR | LOS_WAITMODE_CLR, LOS_WAIT_FOREVER);
@@ -258,9 +258,9 @@ static UINT32 TestCase(VOID)
     ret = LOS_PmModeSet(LOS_SYS_NORMAL_SLEEP);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    (VOID)LOS_TaskDelete(g_taskID1);
-    (VOID)LOS_TaskDelete(g_taskID2);
-    (VOID)LOS_TaskDelete(g_testTaskID01);
+    (VOID)LOS_TaskDelete(g_taskId1);
+    (VOID)LOS_TaskDelete(g_taskId2);
+    (VOID)LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 }
 

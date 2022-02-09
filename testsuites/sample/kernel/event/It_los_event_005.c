@@ -40,21 +40,21 @@ static UINT32 Testcase(VOID)
     ret = LOS_EventWrite(NULL, 0x1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_EVENT_PTR_NULL, ret);
 
-    g_pevent.uwEventID = 0;
+    g_pevent.eventId = 0;
     LOS_EventInit(&g_pevent);
 
     LOS_EventWrite(&g_pevent, 0x1);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 1, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 1, g_pevent.eventId, EXIT);
 
     LOS_EventWrite(&g_pevent, 0);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 1, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 1, g_pevent.eventId, EXIT);
 
     LOS_EventWrite(&g_pevent, 0x10);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 0x11, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 0x11, g_pevent.eventId, EXIT);
 
     ret = LOS_EventWrite(&g_pevent, 0xFFFFFFFF);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_EVENT_SETBIT_INVALID, ret, EXIT);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 0x11, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 0x11, g_pevent.eventId, EXIT);
 EXIT:
 
     ret = LOS_EventClear(&g_pevent, 0);

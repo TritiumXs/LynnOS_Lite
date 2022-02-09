@@ -44,7 +44,7 @@ static VOID TaskF01(VOID)
 {
     UINT32 i;
     for (i = 0; i < 10; ++i) { // run 10 times.
-        LOS_Atomic64Dec(&g_testAtomicID05);
+        LOS_Atomic64Dec(&g_testAtomicId05);
     }
 
     ++g_testCount;
@@ -54,7 +54,7 @@ static VOID TaskF02(VOID)
 {
     UINT64 i;
     for (i = 0; i < 10; ++i) { // run 10 times.
-        LOS_AtomicCmpXchg64bits(&g_testAtomicID05, g_testAtomicID05, g_testAtomicID05);
+        LOS_AtomicCmpXchg64bits(&g_testAtomicId05, g_testAtomicId05, g_testAtomicId05);
     }
 
     ++g_testCount;
@@ -64,12 +64,12 @@ static UINT32 TestCase(VOID)
 {
     UINT32 ret, i;
     UINT32 taskId[DB_ATOMIC_MUTI_TASK_NUM];
-    TSK_INIT_PARAM_S task[DB_ATOMIC_MUTI_TASK_NUM] = {0, };
+    TskInitParam task[DB_ATOMIC_MUTI_TASK_NUM] = {0, };
     CHAR taskName[DB_ATOMIC_MUTI_TASK_NUM][20] = {"", }; // max taskName size is 20.
     CHAR buf[10] = ""; // max buf size is 10.
     Atomic uCount = 0;
     g_testCount = 0;
-    g_testAtomicID05 = 0xffffffffff;
+    g_testAtomicId05 = 0xffffffffff;
     UINT32 uLoop = g_taskMaxNum - TASK_EXISTED_NUM;
 
     if (uLoop > DB_ATOMIC_MUTI_TASK_NUM) {
@@ -82,14 +82,14 @@ static UINT32 TestCase(VOID)
 
         if (i % 2 == 0) { // 2 is index.
             uCount++;
-            task[i].pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+            task[i].pfnTaskEntry = (TskEntryFunc)TaskF01;
         } else {
-            task[i].pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+            task[i].pfnTaskEntry = (TskEntryFunc)TaskF02;
         }
-        task[i].pcName       = taskName[i];
-        task[i].uwStackSize  = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-        task[i].usTaskPrio   = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2 has higher priority than TASK_PRIO_TEST
-        task[i].uwResved     = LOS_TASK_STATUS_DETACHED;
+        task[i].pcName     = taskName[i];
+        task[i].stackSize  = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+        task[i].taskPrio   = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2 has higher priority than TASK_PRIO_TEST
+        task[i].resved     = LOS_TASK_STATUS_DETACHED;
     }
     for (i = 0; i < uLoop; i++) {
         ret = LOS_TaskCreate(&taskId[i], &task[i]);
@@ -98,7 +98,7 @@ static UINT32 TestCase(VOID)
 
     LOS_TaskDelay(20); // delay 20 ticks.
     ICUNIT_GOTO_EQUAL(g_testCount, uLoop, g_testCount, EXIT);
-    ICUNIT_GOTO_EQUAL(g_testAtomicID05, (0xffffffffff - 10 * uCount), g_testAtomicID05, EXIT);  // run 10 times.
+    ICUNIT_GOTO_EQUAL(g_testAtomicId05, (0xffffffffff - 10 * uCount), g_testAtomicId05, EXIT);  // run 10 times.
 EXIT:
     for (i = 0; i < uLoop; i++) {
         (VOID)LOS_TaskDelete(taskId[i]);

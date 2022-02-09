@@ -48,10 +48,10 @@
 #define ARG_CP_UINT32 ADDR(
 #define ARG_CP_LosMuxCB ADDR(
 #define ARG_CP_LosQueueCB ADDR(
-#define ARG_CP_SWTMR_CTRL_S ADDR(
+#define ARG_CP_LosSwtmrCB ADDR(
 #define ARG_UINT32 ARGS(
 #define ARG_VOID_PTR ARGS(
-#define ARG_PEVENT_CB_S ARGS(
+#define ARG_LosPEventCB ARGS(
 #define ARG_void ADDRn(
 #define ARG(a) ARG_##a)
 

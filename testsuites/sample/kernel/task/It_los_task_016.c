@@ -56,7 +56,7 @@ static VOID TaskF02(UINT32 arg)
 
 static VOID TaskF01(UINT32 arg)
 {
-    ICUNIT_ASSERT_EQUAL_VOID(arg, 0xffff, arg); // 0xffff, Here, assert that uwArg is equal to 0xffff.
+    ICUNIT_ASSERT_EQUAL_VOID(arg, 0xffff, arg); // 0xffff, Here, assert that arg is equal to 0xffff.
     g_testCount++;
     return;
 }
@@ -64,37 +64,37 @@ static VOID TaskF01(UINT32 arg)
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk016A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 1;
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
-    task1.uwArg = 0xffff; // 0xffff, Used to verify incoming parameter.
+    task1.taskPrio = TASK_PRIO_TEST - 1;
+    task1.resved = LOS_TASK_STATUS_DETACHED;
+    task1.arg = 0xffff; // 0xffff, Used to verify incoming parameter.
 
     g_testCount = 0;
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 1, g_testCount);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
-    task1.uwArg = 0;
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF02;
+    task1.arg = 0;
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 2, g_testCount); // 2, Here, assert that g_testCount is equal to 2.
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF03;
-    task1.uwArg = -1;
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF03;
+    task1.arg = -1;
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 3, g_testCount); // 3, Here, assert that g_testCount is equal to 3.
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF04;
-    task1.uwArg = 1;
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF04;
+    task1.arg = 1;
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 4, g_testCount); // 4, Here, assert that g_testCount is equal to 4.

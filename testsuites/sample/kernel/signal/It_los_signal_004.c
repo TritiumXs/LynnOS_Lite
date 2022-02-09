@@ -60,20 +60,20 @@ STATIC VOID TaskF01(VOID)
 
 STATIC UINT32 Testcase(VOID)
 {
-    TSK_INIT_PARAM_S task = {0};
-    UINT32 taskID;
+    TskInitParam task = {0};
+    UINT32 taskId;
     UINT32 ret;
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "Signal";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
 
-    ret = LOS_TaskCreate(&taskID, &task);
+    ret = LOS_TaskCreate(&taskId, &task);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     LOS_TaskDelay(20);
-    ret = LOS_SignalSend(taskID, SIGUSR1);
+    ret = LOS_SignalSend(taskId, SIGUSR1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_ASSERT_EQUAL(g_taskErrorFlag, 0, g_taskErrorFlag);
     ICUNIT_ASSERT_EQUAL(g_taskEnd, 1, g_taskEnd);

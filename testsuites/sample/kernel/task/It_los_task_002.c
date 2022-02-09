@@ -35,31 +35,31 @@
 
 static VOID TaskF01(VOID)
 {
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return;
 }
 
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
+    TskInitParam task1 = { 0 };
 
     task1.pfnTaskEntry = NULL;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk002A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 1;
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.taskPrio = TASK_PRIO_TEST - 1;
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_ENTRY_NULL, ret);
 
     task1.pcName = "";
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     task1.pcName = NULL;
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_NAME_EMPTY, ret);
 
     return LOS_OK;

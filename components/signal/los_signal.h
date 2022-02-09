@@ -213,7 +213,7 @@ UINT32 LOS_SignalWait(const sigset_t *set, siginfo_t *info, UINT32 timeout);
  *
  * @attention None.
  *
- * @param taskID   [IN] Send a signal to this task.
+ * @param taskId   [IN] Send a signal to this task.
  * @param sigNo    [IN] The signal num.
  *
  * @retval: LOS_ERRNO_SIGNAL_NO_MEMORY Type#UINT32: The memory requests failed.
@@ -223,7 +223,7 @@ UINT32 LOS_SignalWait(const sigset_t *set, siginfo_t *info, UINT32 timeout);
  * <ul><li>los_signal.h: the header file that contains the API declaration.</li></ul>
  * @see None
  */
-UINT32 LOS_SignalSend(UINT32 taskID, INT32 sigNo);
+UINT32 LOS_SignalSend(UINT32 taskId, INT32 sigNo);
 
 #ifdef __cplusplus
 #if __cplusplus

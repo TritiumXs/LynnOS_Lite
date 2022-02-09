@@ -39,7 +39,7 @@ static VOID TaskF01(void)
 {
     UINT32 ret;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_ERRNO_SEM_TIMEOUT, ret);
 }
 
@@ -48,8 +48,8 @@ static UINT32 Testcase(VOID)
     UINT32 ret;
     UINT32 i;
     CHAR   acName[10] = {0};
-    TSK_INIT_PARAM_S task = { 0 };
-    UINT32 puwTaskID[LOSCFG_BASE_CORE_TSK_LIMIT];
+    TskInitParam task = { 0 };
+    UINT32 taskId[LOSCFG_BASE_CORE_TSK_LIMIT];
 
     UINT32 actTaskused = 0;
     LosTaskCB *taskCB = NULL;
@@ -60,29 +60,29 @@ static UINT32 Testcase(VOID)
         }
     }
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task.stackSize = TASK_STACK_SIZE_TEST;
 
-    ret = LOS_SemCreate(0, &g_usSemID);
+    ret = LOS_SemCreate(0, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     for (i = 0; i < LOSCFG_BASE_CORE_TSK_LIMIT - actTaskused; i++) {
         (void)sprintf_s(acName, sizeof(acName), "Sem1_%d", i);
         task.pcName = acName;
-        task.usTaskPrio = TASK_PRIO_TEST - 1;
-        ret = LOS_TaskCreate(&puwTaskID[i], &task);
+        task.taskPrio = TASK_PRIO_TEST - 1;
+        ret = LOS_TaskCreate(&taskId[i], &task);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, i, EXIT);
     }
-    ret = LOS_SemPend(g_usSemID, 0x1);
+    ret = LOS_SemPend(g_testSemId, 0x1);
     ICUNIT_TRACK_EQUAL(ret, LOS_ERRNO_SEM_TIMEOUT, ret);
 
 EXIT:
     for (i = 0; i < LOSCFG_BASE_CORE_TSK_LIMIT - actTaskused; i++) {
-        ret = LOS_TaskDelete(puwTaskID[i]);
+        ret = LOS_TaskDelete(taskId[i]);
         ICUNIT_TRACK_EQUAL(ret, LOS_OK, ret);
     }
 
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

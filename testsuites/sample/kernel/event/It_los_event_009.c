@@ -60,26 +60,26 @@ static VOID TaskF01(VOID)
     g_testCount++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1;
-    (void)memset_s(&task1, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    TskInitParam task1;
+    (void)memset_s(&task1, sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "EventTsk9";
-    task1.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    task1.usTaskPrio = 24; // Set the priority of the current task to 24.
+    task1.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    task1.taskPrio = 24; // Set the priority of the current task to 24.
 
     g_testCount = 0;
-    g_pevent.uwEventID = 0;
+    g_pevent.eventId = 0;
 
     LOS_EventInit(&g_pevent);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 3, g_testCount); // 3, Here, assert that g_testCount is equal to 3.

@@ -39,7 +39,7 @@ static VOID TaskF01(void)
 
     g_testCount++;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 6, g_testCount, EXIT); // 6, Here, assert that g_testCount is equal to 6.
@@ -47,7 +47,7 @@ static VOID TaskF01(void)
     g_testCount++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static VOID TaskF02(void)
@@ -56,7 +56,7 @@ static VOID TaskF02(void)
 
     g_testCount++;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 5, g_testCount, EXIT); // 5, Here, assert that g_testCount is equal to 5.
@@ -64,7 +64,7 @@ static VOID TaskF02(void)
     g_testCount++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 }
 
 static VOID TaskF03(void)
@@ -73,7 +73,7 @@ static VOID TaskF03(void)
 
     g_testCount++;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 4, g_testCount, EXIT); // 4, Here, assert that g_testCount is equal to 4.
@@ -81,7 +81,7 @@ static VOID TaskF03(void)
     g_testCount++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID03);
+    LOS_TaskDelete(g_testTaskId03);
 }
 
 static VOID HwiF01(void)
@@ -89,13 +89,13 @@ static VOID HwiF01(void)
     UINT32 ret;
     TestHwiClear(HWI_NUM_TEST);
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_TRACK_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_TRACK_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_TRACK_EQUAL(ret, LOS_OK, ret);
 
     g_testCount++;
@@ -104,35 +104,35 @@ static VOID HwiF01(void)
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task = { 0 };
+    TskInitParam task = { 0 };
 
     g_testCount = 0;
 
-    ret = LOS_SemCreate(0, &g_usSemID);
+    ret = LOS_SemCreate(0, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "Sem33_1";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT1);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF02;
     task.pcName = "Sem33_2";
-    task.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF03;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF03;
     task.pcName = "Sem33_3";
-    task.usTaskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority, it is higher than the current task.
+    task.taskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority, it is higher than the current task.
 
-    ret = LOS_TaskCreate(&g_testTaskID03, &task);
+    ret = LOS_TaskCreate(&g_testTaskId03, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 3, g_testCount, EXIT2); // 3, Here, assert that g_testCount is equal to 3.
@@ -146,17 +146,17 @@ static UINT32 Testcase(VOID)
     TestHwiDelete(HWI_NUM_TEST);
     ICUNIT_GOTO_EQUAL(g_testCount, 7, g_testCount, EXIT2); // 7, Here, assert that g_testCount is equal to 7.
 
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT2:
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 EXIT1:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 EXIT:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

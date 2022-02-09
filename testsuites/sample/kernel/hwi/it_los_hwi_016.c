@@ -45,14 +45,14 @@ static VOID TaskF03(VOID)
     ICUNIT_GOTO_EQUAL(g_testCount, 4, g_testCount, EXIT); // Compare wiht the expected value 4.
     g_testCount++;
 
-    LOS_TaskDelete(g_testTaskID03);
+    LOS_TaskDelete(g_testTaskId03);
     return;
 
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID02);
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_TaskDelete(g_testTaskID03);
+    LOS_TaskDelete(g_testTaskId02);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_TaskDelete(g_testTaskId03);
     return;
 }
 
@@ -61,14 +61,14 @@ static VOID TaskF02(VOID)
     ICUNIT_GOTO_EQUAL(g_testCount, 3, g_testCount, EXIT); // Compare wiht the expected value 3.
     g_testCount++;
 
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
     return;
 
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID03);
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId03);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_TaskDelete(g_testTaskId02);
     return;
 }
 
@@ -81,58 +81,60 @@ static VOID TaskF01(VOID)
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // Compare wiht the expected value 2.
     g_testCount++;
 
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     TestHwiDelete(HWI_NUM_TEST);
     return;
 
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID03);
-    LOS_TaskDelete(g_testTaskID02);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId03);
+    LOS_TaskDelete(g_testTaskId02);
+    LOS_TaskDelete(g_testTaskId01);
     return;
 }
 
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    HWI_PRIOR_T hwiPrio = 1;
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
-    TSK_INIT_PARAM_S task;
+    HwiPrio hwiPrio = 1;
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = 0;
+    TskInitParam task;
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "HwiTsk016A";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority, it is higher than the current task.
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority, it is higher than the current task.
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
 
     LOS_TaskLock();
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF02;
     task.pcName = "HwiTsk016B";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF03;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF03;
     task.pcName = "HwiTsk016C";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID03, &task);
+    ret = LOS_TaskCreate(&g_testTaskId03, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF01, &irqParam);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT3);
 
     LOS_TaskUnlock();
@@ -142,18 +144,18 @@ static UINT32 Testcase(VOID)
     return LOS_OK;
 
 EXIT3:
-    LOS_TaskDelete(g_testTaskID03);
-    LOS_TaskDelete(g_testTaskID02);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId03);
+    LOS_TaskDelete(g_testTaskId02);
+    LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 
 EXIT2:
-    LOS_TaskDelete(g_testTaskID02);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId02);
+    LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 
 EXIT1:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 }
 

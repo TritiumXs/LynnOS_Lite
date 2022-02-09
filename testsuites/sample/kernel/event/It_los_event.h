@@ -44,13 +44,13 @@ extern "C" {
 #define TASK_NAME_NUM 10
 #define IT_TASK_LOOP 20
 
-extern EVENT_CB_S g_pevent;
+extern LosEventCB g_pevent;
 
-extern UINT32 g_testTaskID01;
-extern UINT32 g_testTaskID02;
-extern UINT32 g_testTaskID03;
-extern UINT32 g_testQueueID01;
-extern UINT32 g_idleTaskID;
+extern UINT32 g_testTaskId01;
+extern UINT32 g_testTaskId02;
+extern UINT32 g_testTaskId03;
+extern UINT32 g_testQueueId01;
+extern UINT32 g_idleTaskId;
 extern UINT32 g_testTskHandle;
 extern UINT32 g_usSwTmrMaxNum;
 

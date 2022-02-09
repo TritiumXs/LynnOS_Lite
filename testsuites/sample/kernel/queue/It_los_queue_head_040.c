@@ -39,65 +39,66 @@ static VOID ItQueueHead040F01(VOID)
 
     g_testCount++;
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0xf);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0xf);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     g_testCount++;
 
-    ret = LOS_QueueWriteHead(g_testQueueID01, buff2, QUEUE_BASE_MSGSIZE, 0xf);
+    ret = LOS_QueueWriteHead(g_testQueueId01, buff2, QUEUE_BASE_MSGSIZE, 0xf);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWriteHead(g_testQueueID01, buff2, QUEUE_BASE_MSGSIZE, 0xf);
+    ret = LOS_QueueWriteHead(g_testQueueId01, buff2, QUEUE_BASE_MSGSIZE, 0xf);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     g_testCount++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     CHAR buff1[8] = "UniDSP";
-    TSK_INIT_PARAM_S task1 = { 0 };
+    TskInitParam task1 = { 0 };
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)ItQueueHead040F01;
+    task1.pfnTaskEntry = (TskEntryFunc)ItQueueHead040F01;
     task1.pcName = "TskName53";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
-    task1.usTaskPrio = 23; // 23, Set the priority according to the task purpose,a smaller number means a higher priority.
+    task1.stackSize = TASK_STACK_SIZE_TEST;
+    // 23, Set the priority according to the task purpose, a smaller number means a higher priority.
+    task1.taskPrio = 23;
 
     g_testCount = 0;
 
-    ret = LOS_QueueCreate("Q1", 1, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", 1, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ret = LOS_QueueDelete(LOSCFG_BASE_IPC_QUEUE_LIMIT + 1);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_NOT_FOUND, ret, EXIT);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_IN_TSKUSE, ret, EXIT);
 
-    ret = LOS_QueueWriteHead(g_testQueueID01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
+    ret = LOS_QueueWriteHead(g_testQueueId01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // Compare wiht the expected value 2.
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_IN_TSKUSE, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
+    ret = LOS_QueueRead(g_testQueueId01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 3, g_testCount, EXIT); // Compare wiht the expected value 3.
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_NOT_CREATE, ret, EXIT);
 EXIT:
 

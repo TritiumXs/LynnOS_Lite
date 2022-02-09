@@ -302,7 +302,7 @@ LWIP_STATIC unsigned int get_hostip(const char *hname)
 
 #endif
 
-static int ping_taskid = -1;
+static int ping_taskId = -1;
 static int ping_kill = 0;
 #define LWIP_SHELL_CMD_PING_TIMEOUT 2000
 #define LWIP_SHELL_CMD_PING_RETRY_TIMES 4
@@ -375,7 +375,7 @@ LWIP_STATIC int OsPingFunc(u32_t *parg)
     } else {
         (void)memset_s(iecho, sizeof(struct icmp_echo_hdr) + data_len, 0, sizeof(struct icmp_echo_hdr) + data_len);
     }
-    iecho->id = htons((u16_t)LOS_CurTaskIDGet());
+    iecho->id = htons((u16_t)LOS_CurTaskIdGet());
     ICMPH_TYPE_SET(iecho, (u8_t)ICMP_ECHO);
     forever = (cnt ? 0 : 1);
     i = 0;
@@ -528,7 +528,7 @@ static void ping_cmd(u32_t *parg)
         PRINTK("Ping cmd failed due to some errors\n");
     }
 
-    ping_taskid = -1;
+    ping_taskId = -1;
 }
 
 u32_t OsShellPing(int argc, const char **argv)
@@ -540,7 +540,7 @@ u32_t OsShellPing(int argc, const char **argv)
     u32_t interval = 1000; /* default ping interval */
     u32_t data_len = 48; /* default data length */
     ip4_addr_t dst_ipaddr;
-    TSK_INIT_PARAM_S stPingTask;
+    TskInitParam stPingTask;
     u32_t *parg = NULL;
 
     if ((argc < 1) || (argv == NULL)) {
@@ -576,18 +576,18 @@ u32_t OsShellPing(int argc, const char **argv)
 
     /* start one task if ping forever or ping count greater than 60 */
     if (count == 0 || count > LWIP_SHELL_CMD_PING_RETRY_TIMES) {
-        if (ping_taskid > 0) {
+        if (ping_taskId > 0) {
             free(parg);
             PRINTK("Ping task already running and only support one now\n");
             return LOS_NOK;
         }
-        stPingTask.pfnTaskEntry = (TSK_ENTRY_FUNC)ping_cmd;
-        stPingTask.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+        stPingTask.pfnTaskEntry = (TskEntryFunc)ping_cmd;
+        stPingTask.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
         stPingTask.pcName = "ping_task";
-        stPingTask.usTaskPrio = 8; /* higher than shell */
-        stPingTask.uwResved = LOS_TASK_STATUS_DETACHED;
-        stPingTask.uwArg = (UINTPTR)parg;
-        ret = LOS_TaskCreate((UINT32 *)(&ping_taskid), &stPingTask);
+        stPingTask.taskPrio = 8; /* 8, set task priority higher than shell */
+        stPingTask.resved = LOS_TASK_STATUS_DETACHED;
+        stPingTask.arg = (UINTPTR)parg;
+        ret = LOS_TaskCreate((UINT32 *)(&ping_taskId), &stPingTask);
         if (ret != LOS_OK) {
             free(parg);
             PRINTK("ping_task create failed 0x%08x.\n", ret);

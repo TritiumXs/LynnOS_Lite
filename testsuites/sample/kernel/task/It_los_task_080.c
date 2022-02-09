@@ -52,31 +52,33 @@ static VOID TaskF02(VOID)
 
     return;
 EXIT:
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
     return;
 }
 
 static VOID TaskF01(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST; // Set reasonable stack space
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF02;
+    task1.stackSize = TASK_STACK_SIZE_TEST; // Set reasonable stack space
     task1.pcName = "Tsk080B";
-    task1.usTaskPrio = TASK_PRIO_TEST - 1;
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.taskPrio = TASK_PRIO_TEST - 1;
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
-    HWI_PRIOR_T hwiPrio = 3; // Set reasonable priority for interrupt.
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
+    HwiPrio hwiPrio = 3; // Set reasonable priority for interrupt.
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 0, g_testCount, EXIT);
     g_testCount++;
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF01, &irqParam);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     TestHwiTrigger(HWI_NUM_TEST);
@@ -85,7 +87,7 @@ static VOID TaskF01(VOID)
 
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return;
 }
@@ -93,26 +95,26 @@ EXIT:
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST; // Set reasonable stack space
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST; // Set reasonable stack space
     task1.pcName = "Tsk080A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     LOS_TaskDelay(10); // 10, set delay time
 
     ICUNIT_GOTO_EQUAL(g_testCount, 4, g_testCount, EXIT); // 4, Here, assert that g_testCount is equal to 4.
-    LOS_TaskDelete(g_testTaskID02);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId02);
+    LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return LOS_OK;
 }

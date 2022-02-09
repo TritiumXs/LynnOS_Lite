@@ -47,13 +47,15 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
+#define EXIT0_IRQ  9
+
 UINT8 __attribute__ ((aligned (8))) g_memStart[OS_SYS_MEM_SIZE];
 
 VOID TaskSampleEntry2(VOID)
 {
     while (1) {
         printf("TaskSampleEntry2 running...\n");
-        LOS_TaskDelay(10000); /* 10 Seconds */
+        LOS_TaskDelay(10000); // 10000 Ticks, Task delay 10 seconds.
     }
 }
 
@@ -61,7 +63,7 @@ VOID TaskSampleEntry1(VOID)
 {
     while (1) {
         printf("TaskSampleEntry1 running...\n");
-        LOS_TaskDelay(2000); /* 2 Seconds */
+        LOS_TaskDelay(2000); // 2000 Ticks, Task delay 2 seconds.
     }
 }
 
@@ -77,37 +79,40 @@ VOID EXTI0_IRQHandler(VOID)
 
 VOID TaskSample(VOID)
 {
-    UINT32 uwRet;
-    UINT32 taskID1;
-    UINT32 taskID2;
-    TSK_INIT_PARAM_S stTask = {0};
+    UINT32 ret;
+    UINT32 taskId1;
+    UINT32 taskId2;
+    TskInitParam stTask = {0};
 
-    stTask.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskSampleEntry1;
-    stTask.uwStackSize = 0x0800;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = (UINT32)ECLIC_LEVEL_TRIGGER;
+
+    stTask.pfnTaskEntry = (TskEntryFunc)TaskSampleEntry1;
+    stTask.stackSize = 0x0800;
     stTask.pcName = "TaskSampleEntry1";
-    stTask.usTaskPrio = 6; /* Os task priority is 6 */
-    uwRet = LOS_TaskCreate(&taskID1, &stTask);
-    if (uwRet != LOS_OK) {
+    stTask.taskPrio = 6; /* Os task priority is 6 */
+    ret = LOS_TaskCreate(&taskId1, &stTask);
+    if (ret != LOS_OK) {
         printf("Task1 create failed\n");
     }
 
-    stTask.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskSampleEntry2;
-    stTask.uwStackSize = 0x0800;
+    stTask.pfnTaskEntry = (TskEntryFunc)TaskSampleEntry2;
+    stTask.stackSize = 0x0800;
     stTask.pcName = "TaskSampleEntry2";
-    stTask.usTaskPrio = 7; /* Os task priority is 7 */
-    uwRet = LOS_TaskCreate(&taskID2, &stTask);
-    if (uwRet != LOS_OK) {
+    stTask.taskPrio = 7; /* Os task priority is 7 */
+    ret = LOS_TaskCreate(&taskId2, &stTask);
+    if (ret != LOS_OK) {
         printf("Task2 create failed\n");
     }
 
     LOS_HwiInit();
-    LOS_HwiCreate(EXTI0_IRQn, 9, ECLIC_NON_VECTOR_INTERRUPT, EXTI0_IRQHandler, ECLIC_LEVEL_TRIGGER);
+    LOS_HwiCreate(EXTI0_IRQn, EXIT0_IRQ, ECLIC_NON_VECTOR_INTERRUPT, EXTI0_IRQHandler, &irqParam);
 }
 
 VOID RunTaskSample(VOID)
 {
-    UINT32 ret;
-    ret = LOS_KernelInit();
+    UINT32 ret = LOS_KernelInit();
     if (ret == LOS_OK) {
         TaskSample();
         LOS_Start();

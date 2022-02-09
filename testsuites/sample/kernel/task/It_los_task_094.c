@@ -60,63 +60,63 @@ EXIT:
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk094A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
-    task1.uwResved = LOS_TASK_ATTR_JOINABLE;
-    task1.uwArg = 0xffff;
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.resved = LOS_TASK_ATTR_JOINABLE;
+    task1.arg = 0xffff;
 
     g_testCount = 0;
-    ret = LOS_TaskCreateOnly(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreateOnly(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_GOTO_EQUAL(g_testCount, 0, g_testCount, EXIT);
 
-    LOS_TaskResume(g_testTaskID01);
+    LOS_TaskResume(g_testTaskId01);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
-    task1.uwArg = 0;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF02;
+    task1.arg = 0;
     task1.pcName = "Tsk094B";
-    task1.usTaskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority base on testsuite task`s priority.
-    ret = LOS_TaskCreateOnly(&g_testTaskID02, &task1);
+    task1.taskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority base on testsuite task`s priority.
+    ret = LOS_TaskCreateOnly(&g_testTaskId02, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
 
-    LOS_TaskResume(g_testTaskID02);
+    LOS_TaskResume(g_testTaskId02);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // 2, Here, assert that g_testCount is equal to 2.
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF03;
-    task1.uwArg = -1;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF03;
+    task1.arg = -1;
     task1.pcName = "Tsk094C";
-    task1.usTaskPrio = TASK_PRIO_TEST - 4; // 4, set new task priority base on testsuite task`s priority.
-    ret = LOS_TaskCreateOnly(&g_testTaskID03, &task1);
+    task1.taskPrio = TASK_PRIO_TEST - 4; // 4, set new task priority base on testsuite task`s priority.
+    ret = LOS_TaskCreateOnly(&g_testTaskId03, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // 2, Here, assert that g_testCount is equal to 2.
 
-    LOS_TaskResume(g_testTaskID03);
+    LOS_TaskResume(g_testTaskId03);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 3, g_testCount, EXIT); // 3, Here, assert that g_testCount is equal to 3.
 
-    ret = LOS_TaskJoin(g_testTaskID01, NULL);
+    ret = LOS_TaskJoin(g_testTaskId01, NULL);
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
 
-    ret = LOS_TaskJoin(g_testTaskID02, NULL);
+    ret = LOS_TaskJoin(g_testTaskId02, NULL);
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
 
-    ret = LOS_TaskJoin(g_testTaskID03, NULL);
+    ret = LOS_TaskJoin(g_testTaskId03, NULL);
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_TaskDelete(g_testTaskID02);
-    LOS_TaskDelete(g_testTaskID03);
-    LOS_TaskJoin(g_testTaskID01, NULL);
-    LOS_TaskJoin(g_testTaskID02, NULL);
-    LOS_TaskJoin(g_testTaskID03, NULL);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_TaskDelete(g_testTaskId02);
+    LOS_TaskDelete(g_testTaskId03);
+    LOS_TaskJoin(g_testTaskId01, NULL);
+    LOS_TaskJoin(g_testTaskId02, NULL);
+    LOS_TaskJoin(g_testTaskId03, NULL);
     return LOS_OK;
 }
 

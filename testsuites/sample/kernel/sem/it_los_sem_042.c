@@ -43,14 +43,14 @@ static VOID TaskF01(void)
     g_testCount++;
 
     for (index = 0; index < IT_SEMLOOP; index++) {
-        ret = LOS_SemPost(g_usSemID);
+        ret = LOS_SemPost(g_testSemId);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-        ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+        ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     }
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     g_testCount++;
@@ -60,32 +60,32 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     UINT32 loop;
-    TSK_INIT_PARAM_S task = { 0 };
+    TskInitParam task = { 0 };
 
     for (loop = 0; loop < IT_SEMLOOP; loop++) {
-        task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+        task.pfnTaskEntry = (TskEntryFunc)TaskF01;
         task.pcName = "SemTsk8";
-        task.uwStackSize = TASK_STACK_SIZE_TEST;
-        task.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+        task.stackSize = TASK_STACK_SIZE_TEST;
+        task.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
 
         g_testCount = 0;
-        ret = LOS_SemCreate(0, &g_usSemID);
+        ret = LOS_SemCreate(0, &g_testSemId);
         ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-        ret = LOS_TaskCreate(&g_testTaskID01, &task);
+        ret = LOS_TaskCreate(&g_testTaskId01, &task);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
         ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
 
-        ret = LOS_TaskDelete(g_testTaskID01);
+        ret = LOS_TaskDelete(g_testTaskId01);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-        ret = LOS_SemDelete(g_usSemID);
+        ret = LOS_SemDelete(g_testSemId);
         ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     }
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_SemDelete(g_usSemID);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_SemDelete(g_testSemId);
 
     return LOS_OK;
 }

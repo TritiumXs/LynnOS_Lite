@@ -36,28 +36,28 @@
 static VOID TaskF01(VOID)
 {
     g_testCount++;
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return;
 }
 
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "TskB099";
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
 
     g_testCount = 0;
 
     LOS_TaskLock();
 
-    ret = LOS_TaskCreateOnly(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreateOnly(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT3);
     ICUNIT_GOTO_EQUAL(g_testCount, 0, g_testCount, EXIT3);
 
-    LOS_TaskResume(g_testTaskID01);
+    LOS_TaskResume(g_testTaskId01);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 0, g_testCount, EXIT1);
 
@@ -70,7 +70,7 @@ static UINT32 TestCase(VOID)
 EXIT1:
     LOS_TaskUnlock();
 EXIT2:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return LOS_OK;
 EXIT3:

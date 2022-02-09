@@ -59,29 +59,29 @@ ExcInfo g_excInfo = {0};
  * @ingroup los_hwi
  * hardware interrupt form mapping handling function array.
  */
-STATIC HWI_PROC_FUNC g_hwiForm[OS_VECTOR_CNT] = {0};
+STATIC HwiProcFunc g_hwiForm[OS_VECTOR_CNT] = {0};
 
 #if (LOSCFG_PLATFORM_HWI_WITH_ARG == 1)
 
 typedef struct {
-    HWI_PROC_FUNC pfnHandler;
+    HwiProcFunc pfnHandler;
     VOID *pParm;
-} HWI_HANDLER_FUNC;
+} HwiHandlerFunc;
 
 /* *
  * @ingroup los_hwi
  * hardware interrupt handler form mapping handling function array.
  */
-STATIC HWI_HANDLER_FUNC g_hwiHandlerForm[OS_VECTOR_CNT] = {{ (HWI_PROC_FUNC)0, (HWI_ARG_T)0 }};
+STATIC HwiHandlerFunc g_hwiHandlerForm[OS_VECTOR_CNT] = {{ (HwiProcFunc)0, (HwiArg)0 }};
 
 /* *
  * @ingroup los_hwi
  * Set interrupt vector table.
  */
-VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg)
+VOID OsSetVector(UINT32 num, HwiProcFunc vector, VOID *arg)
 {
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
-        g_hwiForm[num + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)HalInterrupt;
+        g_hwiForm[num + OS_SYS_VECTOR_CNT] = (HwiProcFunc)HalInterrupt;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT].pfnHandler = vector;
         g_hwiHandlerForm[num + OS_SYS_VECTOR_CNT].pParm = arg;
     }
@@ -92,13 +92,13 @@ VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg)
  * @ingroup los_hwi
  * hardware interrupt handler form mapping handling function array.
  */
-STATIC HWI_PROC_FUNC g_hwiHandlerForm[OS_VECTOR_CNT] = {0};
+STATIC HwiProcFunc g_hwiHandlerForm[OS_VECTOR_CNT] = {0};
 
 /* *
  * @ingroup los_hwi
  * Set interrupt vector table.
  */
-VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector)
+VOID OsSetVector(UINT32 num, HwiProcFunc vector)
 {
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
         g_hwiForm[num + OS_SYS_VECTOR_CNT] = HalInterrupt;
@@ -124,7 +124,7 @@ STATIC UINT32 HwiNumGet(VOID)
     return (31 - CLZ(status));
 }
 
-STATIC UINT32 HwiUnmask(HWI_HANDLE_T hwiNum)
+STATIC UINT32 HwiUnmask(HwiHandle hwiNum)
 {
     if (hwiNum >= OS_HWI_MAX_NUM) {
         return OS_ERRNO_HWI_NUM_INVALID;
@@ -135,7 +135,7 @@ STATIC UINT32 HwiUnmask(HWI_HANDLE_T hwiNum)
     return LOS_OK;
 }
 
-STATIC UINT32 HwiMask(HWI_HANDLE_T hwiNum)
+STATIC UINT32 HwiMask(HwiHandle hwiNum)
 {
     if (hwiNum >= OS_HWI_MAX_NUM) {
         return OS_ERRNO_HWI_NUM_INVALID;
@@ -231,21 +231,21 @@ LITE_OS_SEC_TEXT VOID HalInterrupt(VOID)
  Description : create hardware interrupt
  Input       : hwiNum   --- hwi num to create
                hwiPrio  --- priority of the hwi
-               mode     --- unused
-               handler --- hwi handler
-               arg      --- param of the hwi handler
+               hwiMode  --- unused
+               hwiHandler --- hwi handler
+               irqParam   --- param of the hwi handler
  Output      : None
  Return      : LOS_OK on success or error code on failure
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
-                                           HWI_PRIOR_T hwiPrio,
-                                           HWI_MODE_T mode,
-                                           HWI_PROC_FUNC handler,
-                                           HWI_ARG_T arg)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiCreate(HwiHandle hwiNum,
+                                           HwiPrio hwiPrio,
+                                           HwiMode hwiMode,
+                                           HwiProcFunc hwiHandler,
+                                           HwiIrqParam *irqParam)
 {
     UINT32 intSave;
 
-    if (handler == NULL) {
+    if (hwiHandler == NULL) {
         return OS_ERRNO_HWI_PROC_FUNC_NULL;
     }
 
@@ -253,15 +253,19 @@ LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
         return OS_ERRNO_HWI_NUM_INVALID;
     }
 
-    if (g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] != (HWI_PROC_FUNC)HalHwiDefaultHandler) {
+    if (g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] != (HwiProcFunc)HalHwiDefaultHandler) {
         return OS_ERRNO_HWI_ALREADY_CREATED;
     }
 
     intSave = LOS_IntLock();
 #if (LOSCFG_PLATFORM_HWI_WITH_ARG == 1)
-    OsSetVector(hwiNum, handler, arg);
+    if (irqParam != NULL) {
+        OsSetVector(hwiNum, hwiHandler, irqParam->arg);
+    } else {
+        OsSetVector(hwiNum, hwiHandler, NULL);
+    }
 #else
-    OsSetVector(hwiNum, handler);
+    OsSetVector(hwiNum, hwiHandler);
 #endif
     HwiUnmask(hwiNum);
     LOS_IntRestore(intSave);
@@ -276,7 +280,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
  Output      : None
  Return      : LOS_OK on success or error code on failure
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiDelete(HwiHandle hwiNum)
 {
     UINT32 intSave;
 
@@ -287,7 +291,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
     HwiMask(hwiNum);
 
     intSave = LOS_IntLock();
-    g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] = (HWI_PROC_FUNC)HalHwiDefaultHandler;
+    g_hwiForm[hwiNum + OS_SYS_VECTOR_CNT] = (HwiProcFunc)HalHwiDefaultHandler;
     LOS_IntRestore(intSave);
 
     return LOS_OK;
@@ -308,9 +312,9 @@ STATIC VOID OsExcCurTaskInfo(const ExcInfo *excInfo)
 {
     PRINTK("Current task info:\n");
     if (excInfo->phase == OS_EXC_IN_TASK) {
-        LosTaskCB *taskCB = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
+        LosTaskCB *taskCB = OS_TCB_FROM_TID(LOS_CurTaskIdGet());
         PRINTK("Task name = %s\n", taskCB->taskName);
-        PRINTK("Task ID   = %d\n", taskCB->taskID);
+        PRINTK("Task ID   = %d\n", taskCB->taskId);
         PRINTK("Task SP   = 0x%x\n", taskCB->stackPointer);
         PRINTK("Task ST   = 0x%x\n", taskCB->topOfStack);
         PRINTK("Task SS   = 0x%x\n", taskCB->stackSize);
@@ -435,7 +439,7 @@ LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, U
 
     if (g_losTask.runTask != NULL) {
         g_excInfo.phase = OS_EXC_IN_TASK;
-        g_excInfo.thrdPid = g_losTask.runTask->taskID;
+        g_excInfo.thrdPid = g_losTask.runTask->taskId;
     } else {
         g_excInfo.phase = OS_EXC_IN_INIT;
         g_excInfo.thrdPid = OS_NULL_INT;
@@ -463,9 +467,9 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
     for (val = OS_SYS_VECTOR_CNT; val < OS_VECTOR_CNT; val++) {
 #if (LOSCFG_PLATFORM_HWI_WITH_ARG == 1)
         g_hwiForm[val].pfnHook = HalHwiDefaultHandler;
-        g_hwiForm[val].uwParam = 0;
+        g_hwiForm[val].param = 0;
 #else
-        g_hwiForm[val] = (HWI_PROC_FUNC)HalHwiDefaultHandler;
+        g_hwiForm[val] = (HwiProcFunc)HalHwiDefaultHandler;
 #endif
     }
 

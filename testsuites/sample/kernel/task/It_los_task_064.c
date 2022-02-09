@@ -42,7 +42,7 @@ static VOID HwiF01(VOID)
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 2, g_testCount); // 2, Here, assert that g_testCount is equal to 2.
     g_testCount++;
 
-    ret = LOS_TaskSuspend(g_testTaskID01);
+    ret = LOS_TaskSuspend(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 }
 
@@ -64,22 +64,22 @@ static VOID TaskF02(VOID)
     for (index = 0; index < TASK_LOOP_NUM; index++) {
     }
 
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 }
 
 static VOID TaskF01(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF02;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk064B";
-    task1.usTaskPrio = TASK_PRIO_TEST - 1;
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.taskPrio = TASK_PRIO_TEST - 1;
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount++;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task1);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     LOS_TaskDelay(2); // 2, set delay time
@@ -87,22 +87,22 @@ static VOID TaskF01(VOID)
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 5, g_testCount); // 5, Here, assert that g_testCount is equal to 5.
     g_testCount++;
 
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk064A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     LOS_TaskDelay(20); // 20, set delay time
@@ -110,7 +110,7 @@ static UINT32 TestCase(VOID)
     ICUNIT_ASSERT_EQUAL(g_testCount, 4, g_testCount); // 4, Here, assert that g_testCount is equal to 4.
     g_testCount++;
 
-    ret = LOS_TaskResume(g_testTaskID01);
+    ret = LOS_TaskResume(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 6, g_testCount); // 6, Here, assert that g_testCount is equal to 6.

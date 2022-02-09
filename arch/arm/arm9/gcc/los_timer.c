@@ -51,7 +51,7 @@
 #define OS_TIMER_READ_CTL_ADDR      (OS_TIMER_REG_BASE + 16)
 #define OS_TIMER_READ_VAL_ADDR      (OS_TIMER_REG_BASE + 20)
 
-STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler);
+STATIC UINT32 SysTickStart(HwiProcFunc handler);
 STATIC UINT64 SysTickReload(UINT64 nextResponseTime);
 STATIC UINT64 SysTickCycleGet(UINT32 *period);
 STATIC VOID SysTickLock(VOID);
@@ -69,7 +69,7 @@ STATIC ArchTickTimer g_archTickTimer = {
     .tickHandler = NULL,
 };
 
-STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
+STATIC UINT32 SysTickStart(HwiProcFunc handler)
 {
     UINT32 intSave = LOS_IntLock();
     UINT32 value;
@@ -91,7 +91,7 @@ STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
     value |= OS_TIMER_ENABLE; // Enable timer.
     WRITE_UINT32(value, OS_TIMER_CTL_REG_ADDR);
 
-    (VOID)ArchHwiCreate(OS_TIMER_IRQ_NUM, 0, 0, (HWI_PROC_FUNC)handler, 0);
+    (VOID)ArchHwiCreate(OS_TIMER_IRQ_NUM, 0, 0, (HwiProcFunc)handler, 0);
     LOS_IntRestore(intSave);
 
     return LOS_OK;

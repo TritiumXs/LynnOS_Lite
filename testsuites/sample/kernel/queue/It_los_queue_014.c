@@ -40,20 +40,20 @@ static UINT32 Testcase(VOID)
     CHAR buff1[] = "UniDSPOS";
     CHAR buff2[9] = ""; // 9, QUEUE_BASE_MSGSIZE + 1
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, 0, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, 0, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_READSIZE_ISZERO, ret, EXIT);
     for (index = 0; index < 9; index++) { // 9, QUEUE_BASE_MSGSIZE + 1
         ICUNIT_GOTO_EQUAL(buff2[index], '\0', buff2[index], EXIT);
     }
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

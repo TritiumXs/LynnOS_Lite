@@ -33,7 +33,7 @@
 #include "osTest.h"
 #include "It_los_event.h"
 
-EVENT_CB_S g_pevent;
+LosEventCB g_pevent;
 
 VOID ItSuiteLosEvent()
 {

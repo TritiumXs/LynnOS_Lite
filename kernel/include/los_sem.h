@@ -304,7 +304,7 @@ typedef struct {
     UINT16 semStat;      /**< Semaphore state */
     UINT16 semCount;     /**< Number of available semaphores */
     UINT16 maxSemCount;  /**< Max number of available semaphores */
-    UINT16 semID;        /**< Semaphore control structure ID */
+    UINT16 semId;        /**< Semaphore control structure ID */
     LOS_DL_LIST semList; /**< Queue of tasks that are waiting on a semaphore */
 } LosSemCB;
 
@@ -338,7 +338,7 @@ extern LosSemCB *g_allSem;
  * Obtain a semaphore ID.
  *
  */
-#define GET_SEM(semid) (((LosSemCB *)g_allSem) + (semid))
+#define GET_SEM(semId) (((LosSemCB *)g_allSem) + (semId))
 
 /**
  * @ingroup los_sem

@@ -54,8 +54,8 @@ static VOID TaskF01(void)
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task;
-    TSK_INIT_PARAM_S task2;
+    TskInitParam task;
+    TskInitParam task2;
 
     ret = LOS_MuxCreate(&g_mutexTest);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
@@ -64,21 +64,21 @@ static UINT32 Testcase(VOID)
 
     LOS_TaskLock();
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task.usTaskPrio = (TASK_PRIO_TEST - 1); // 1, set new task priority, it is higher than the current task.
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task.taskPrio = (TASK_PRIO_TEST - 1); // 1, set new task priority, it is higher than the current task.
     task.pcName = "VMuteB9_1";
-    task.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    task.uwResved = 0;
+    task.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    task.resved = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
 
-    task2.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task2.usTaskPrio = (TASK_PRIO_TEST - 2); // 2, set new task priority, it is higher than the current task.
+    task2.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task2.taskPrio = (TASK_PRIO_TEST - 2); // 2, set new task priority, it is higher than the current task.
     task2.pcName = "VMuteB9_2";
-    task2.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    task2.uwResved = 0;
+    task2.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    task2.resved = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task2);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task2);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     LOS_TaskUnlock();
@@ -90,9 +90,9 @@ static UINT32 Testcase(VOID)
 
     LOS_TaskDelay(30); // 30, set delay time.
 
-    ret = LOS_TaskDelete(g_testTaskID02);
+    ret = LOS_TaskDelete(g_testTaskId02);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ret = LOS_MuxDelete(g_mutexTest);

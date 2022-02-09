@@ -56,13 +56,13 @@ static VOID TaskF01(VOID)
     }
 
     ret = LOS_EventRead(&g_pevent, 0x1FFFF, LOS_WAITMODE_AND, LOS_WAIT_FOREVER);
-    ICUNIT_GOTO_EQUAL(ret, g_pevent.uwEventID, ret, EXIT);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 0x1FFFF, g_pevent.uwEventID, EXIT);
+    ICUNIT_GOTO_EQUAL(ret, g_pevent.eventId, ret, EXIT);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 0x1FFFF, g_pevent.eventId, EXIT);
 
     g_testCount1++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static UINT32 Testcase(VOID)
@@ -71,13 +71,14 @@ static UINT32 Testcase(VOID)
 
     UINT32 swTmrID;
 
-    TSK_INIT_PARAM_S task1;
-    (void)memset_s(&task1, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    TskInitParam task1;
+    (void)memset_s(&task1, sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "EventTsk27";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the test task.
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
+    // TASK_PRIO_TEST - 2, set new task priority, it is higher than the test task.
+    task1.taskPrio = TASK_PRIO_TEST - 2;
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
     g_uwEventMask = 1;
@@ -86,10 +87,11 @@ static UINT32 Testcase(VOID)
 
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     /* 2, Timeout interval of a periodic software timer. */
-    ret = LOS_SwtmrCreate(2, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID, 0xffff,
+    ret = LOS_SwtmrCreate(2, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID, 0xffff,
         OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE);
 #else
-    ret = LOS_SwtmrCreate(2, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID, 0xffff); // 2, Timeout interval of a periodic software timer.
+    /* 2, Timeout interval of a periodic software timer. */
+    ret = LOS_SwtmrCreate(2, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID, 0xffff);
 #endif
 
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
@@ -97,7 +99,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_SwtmrStart(swTmrID);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
     LOS_TaskDelay(16); // 16, set delay time.
@@ -105,7 +107,7 @@ static UINT32 Testcase(VOID)
     ICUNIT_GOTO_EQUAL(g_testCount1, 1, g_testCount1, EXIT1);
 
 EXIT1:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
 EXIT:
     LOS_SwtmrDelete(swTmrID);

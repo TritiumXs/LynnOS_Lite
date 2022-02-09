@@ -128,8 +128,8 @@ STATIC INLINE UINT32 OsStackAddrGet(UINTPTR *stackStart, UINTPTR *stackEnd, UINT
         if ((SP >= CSTACK_START_ADDR) && (SP < CSTACK_END_ADDR)) {
             *stackEnd = CSTACK_END_ADDR;
         } else {
-            UINT32 taskID = LOS_CurTaskIDGet();
-            LosTaskCB *taskCB = OS_TCB_FROM_TID(taskID);
+            UINT32 taskId = LOS_CurTaskIdGet();
+            LosTaskCB *taskCB = OS_TCB_FROM_TID(taskId);
             *stackEnd = (UINTPTR)taskCB->topOfStack + taskCB->stackSize;
             if ((SP < (UINTPTR)taskCB->topOfStack) || (SP >= *stackEnd)) {
                 PRINT_ERR("msp statck [0x%x, 0x%x], cur task stack [0x%x, 0x%x], cur sp(0x%x) is overflow!\n",
@@ -149,12 +149,12 @@ STATIC INLINE UINT32 OsStackAddrGet(UINTPTR *stackStart, UINTPTR *stackEnd, UINT
             PRINTK("msp, start = %x, end = %x\n", *stackStart, *stackEnd);
         } else {
             *stackStart = HalPspGet();
-            UINT32 taskID = LOS_CurTaskIDGet();
-            LosTaskCB *taskCB = OS_TCB_FROM_TID(taskID);
+            UINT32 taskId = LOS_CurTaskIdGet();
+            LosTaskCB *taskCB = OS_TCB_FROM_TID(taskId);
             *stackEnd = (UINTPTR)taskCB->topOfStack + taskCB->stackSize;
             if ((*stackStart < (UINTPTR)taskCB->topOfStack) || (*stackStart >= *stackEnd)) {
                 PRINT_ERR("psp stack [0x%x, 0x%x], cur sp(0x%x) is overflow, cur task id is %d!\n",
-                          taskCB->topOfStack, *stackEnd, *stackStart, taskID);
+                          taskCB->topOfStack, *stackEnd, *stackStart, taskId);
                 return LOS_NOK;
             }
             PRINTK("psp, start = %x, end = %x\n", *stackStart, *stackEnd);
@@ -217,7 +217,7 @@ WEAK BOOL IsValidFP(UINTPTR fp)
     }
 
     if (LOS_TaskIsRunning()) {
-        taskCB = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
+        taskCB = OS_TCB_FROM_TID(LOS_CurTaskIdGet());
         stackTop = taskCB->topOfStack;
         stackBottom = taskCB->topOfStack + taskCB->stackSize;
         irqStackTop = (UINTPTR)CSTACK_START_ADDR;
@@ -337,8 +337,8 @@ STATIC INLINE UINT32 OsStackAddrGet(UINTPTR *stackStart, UINTPTR *stackEnd, UINT
         if ((SP >= CSTACK_START_ADDR) && (SP < CSTACK_END_ADDR)) {
             *stackEnd = CSTACK_END_ADDR;
         } else {
-            UINT32 taskID = LOS_CurTaskIDGet();
-            LosTaskCB *taskCB = OS_TCB_FROM_TID(taskID);
+            UINT32 taskId = LOS_CurTaskIdGet();
+            LosTaskCB *taskCB = OS_TCB_FROM_TID(taskId);
             *stackEnd = (UINTPTR)taskCB->topOfStack + taskCB->stackSize;
             if ((SP < (UINTPTR)taskCB->topOfStack) || (SP >= *stackEnd)) {
                 PRINT_ERR("msp statck [0x%x, 0x%x], cur task stack [0x%x, 0x%x], cur sp(0x%x) is overflow!\n",
@@ -357,12 +357,12 @@ STATIC INLINE UINT32 OsStackAddrGet(UINTPTR *stackStart, UINTPTR *stackEnd, UINT
             }
         } else {
             *stackStart = OsSpGet();
-            UINT32 taskID = LOS_CurTaskIDGet();
-            LosTaskCB *taskCB = OS_TCB_FROM_TID(taskID);
+            UINT32 taskId = LOS_CurTaskIdGet();
+            LosTaskCB *taskCB = OS_TCB_FROM_TID(taskId);
             *stackEnd = (UINTPTR)taskCB->topOfStack + taskCB->stackSize;
             if ((*stackStart < (UINTPTR)taskCB->topOfStack) || (*stackStart >= *stackEnd)) {
                 PRINT_ERR("psp stack [0x%x, 0x%x], cur sp(0x%x) is overflow, cur task id is %d!\n",
-                          taskCB->topOfStack, *stackEnd, *stackStart, taskID);
+                          taskCB->topOfStack, *stackEnd, *stackStart, taskId);
                 return LOS_NOK;
             }
         }
@@ -432,8 +432,8 @@ BOOL FindSuitableStack(UINTPTR regSP, UINTPTR *start, UINTPTR *end)
     BOOL found = FALSE;
 
     if (LOS_TaskIsRunning()) {
-        UINT32 taskID = LOS_CurTaskIDGet();
-        LosTaskCB *taskCB = OS_TCB_FROM_TID(taskID);
+        UINT32 taskId = LOS_CurTaskIdGet();
+        LosTaskCB *taskCB = OS_TCB_FROM_TID(taskId);
         stackStart = taskCB->topOfStack;
         stackEnd = taskCB->topOfStack + taskCB->stackSize;
         if (IsValidSP(regSP, stackStart, stackEnd)) {
@@ -546,8 +546,8 @@ BOOL FindSuitableStack(UINTPTR regSP, UINTPTR *start, UINTPTR *end)
     BOOL found = FALSE;
 
     if (LOS_TaskIsRunning()) {
-        UINT32 taskID = LOS_CurTaskIDGet();
-        LosTaskCB *taskCB = OS_TCB_FROM_TID(taskID);
+        UINT32 taskId = LOS_CurTaskIdGet();
+        LosTaskCB *taskCB = OS_TCB_FROM_TID(taskId);
         stackStart = taskCB->topOfStack;
         stackEnd = taskCB->topOfStack + taskCB->stackSize;
         if (IsValidSP(regSP, stackStart, stackEnd)) {
@@ -659,7 +659,7 @@ VOID LOS_RecordLR(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount, UINTPTR SP)
     UINT32 count = 0;
     UINT32 index = 0;
     LosTaskCB *taskCB = NULL;
-    UINT32 taskID;
+    UINT32 taskId;
     UINT32 stackStart, stackEnd;
     UINTPTR framePtr, tmpFramePtr, linkReg;
 
@@ -672,8 +672,8 @@ VOID LOS_RecordLR(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount, UINTPTR SP)
     }
 
     if (LOS_TaskIsRunning()) {
-        taskID = LOS_CurTaskIDGet();
-        taskCB = OS_TCB_FROM_TID(taskID);
+        taskId = LOS_CurTaskIdGet();
+        taskCB = OS_TCB_FROM_TID(taskId);
         stackStart = taskCB->topOfStack;
         stackEnd = stackStart + taskCB->stackSize;
     } else {
@@ -761,7 +761,7 @@ VOID LOS_BackTrace(VOID)
 
     if (LOS_TaskIsRunning()) {
         PRINTK("taskName = %s\n", g_losTask.runTask->taskName);
-        PRINTK("taskID   = %u\n", g_losTask.runTask->taskID);
+        PRINTK("taskId   = %u\n", g_losTask.runTask->taskId);
     }
 
     PRINTK("----- traceback start -----\r\n");

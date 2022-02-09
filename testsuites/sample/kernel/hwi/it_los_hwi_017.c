@@ -42,21 +42,23 @@ static VOID HwiF02(VOID)
 static VOID TaskF01(VOID)
 {
     UINT32 ret;
-    HWI_PRIOR_T hwiPrio = 1;
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
+    HwiPrio hwiPrio = 1;
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = 0;
 
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
     g_testCount++;
 
     TestHwiDelete(HWI_NUM_TEST);
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF02, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF02, &irqParam);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return;
 }
@@ -64,18 +66,18 @@ EXIT:
 static VOID HwiF01(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task;
+    TskInitParam task;
 
     TestHwiClear(HWI_NUM_TEST);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "HwiTsk017A";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
+    task.resved = LOS_TASK_STATUS_DETACHED;
     g_testCount++;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     return;
@@ -84,13 +86,15 @@ static VOID HwiF01(VOID)
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    HWI_PRIOR_T hwiPrio = OS_HWI_PRIO_LOWEST;
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
+    HwiPrio hwiPrio = OS_HWI_PRIO_LOWEST;
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+irqParam.arg = 0;
 
     g_testCount = 0;
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF01, &irqParam);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     TestHwiTrigger(HWI_NUM_TEST);

@@ -36,7 +36,7 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     UINT32 swTmrID;
-    QUEUE_INFO_S queueInfo;
+    QueueInfo queueInfo;
 
     swTmrID = LOSCFG_BASE_IPC_QUEUE_LIMIT + 1;
     ret = LOS_QueueInfoGet(swTmrID, &queueInfo);

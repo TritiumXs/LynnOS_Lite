@@ -409,9 +409,9 @@ STATIC VOID OsExcCurTaskInfo(const ExcInfo *excInfo)
 {
     PRINTK("Current task info:\n");
     if (excInfo->phase == OS_EXC_IN_TASK) {
-        LosTaskCB *taskCB = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
+        LosTaskCB *taskCB = OS_TCB_FROM_TID(LOS_CurTaskIdGet());
         PRINTK("Task name = %s\n", taskCB->taskName);
-        PRINTK("Task ID   = %d\n", taskCB->taskID);
+        PRINTK("Task ID   = %d\n", taskCB->taskId);
         PRINTK("Task SP   = %p\n", taskCB->stackPointer);
         PRINTK("Task ST   = 0x%x\n", taskCB->topOfStack);
         PRINTK("Task SS   = 0x%x\n", taskCB->stackSize);
@@ -540,7 +540,7 @@ LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, U
             g_excInfo.thrdPid = pid;
         } else {
             g_excInfo.phase = OS_EXC_IN_TASK;
-            g_excInfo.thrdPid = g_losTask.runTask->taskID;
+            g_excInfo.thrdPid = g_losTask.runTask->taskId;
         }
     } else {
         g_excInfo.phase = OS_EXC_IN_INIT;

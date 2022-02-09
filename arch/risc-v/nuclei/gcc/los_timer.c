@@ -42,11 +42,11 @@
 
 #define SYSTICK_TICK_CONST  (SOC_TIMER_FREQ / LOSCFG_BASE_CORE_TICK_PER_SECOND)
 
-STATIC HWI_PROC_FUNC g_sysTickHandler = (HWI_PROC_FUNC)NULL;
+STATIC HwiProcFunc g_sysTickHandler = (HwiProcFunc)NULL;
 
 extern UINT32 g_intCount;
 
-STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler);
+STATIC UINT32 SysTickStart(HwiProcFunc handler);
 STATIC UINT64 SysTickReload(UINT64 nextResponseTime);
 STATIC UINT64 SysTickCycleGet(UINT32 *period);
 STATIC VOID SysTickLock(VOID);
@@ -64,7 +64,7 @@ STATIC ArchTickTimer g_archTickTimer = {
     .tickHandler = NULL,
 };
 
-STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
+STATIC UINT32 SysTickStart(HwiProcFunc handler)
 {
     ArchTickTimer *tick = &g_archTickTimer;
     tick->freq = OS_SYS_CLOCK;

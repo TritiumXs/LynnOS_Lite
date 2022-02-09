@@ -39,7 +39,7 @@
 
 UINT32 g_intCount = 0;
 
-STATIC UINT32 HwiUnmask(HWI_HANDLE_T hwiNum)
+STATIC UINT32 HwiUnmask(HwiHandle hwiNum)
 {
     if (hwiNum >= OS_HWI_MAX_NUM) {
         return OS_ERRNO_HWI_NUM_INVALID;
@@ -50,7 +50,7 @@ STATIC UINT32 HwiUnmask(HWI_HANDLE_T hwiNum)
     return LOS_OK;
 }
 
-STATIC UINT32 HwiMask(HWI_HANDLE_T hwiNum)
+STATIC UINT32 HwiMask(HwiHandle hwiNum)
 {
     if (hwiNum >= OS_HWI_MAX_NUM) {
         return OS_ERRNO_HWI_NUM_INVALID;
@@ -61,7 +61,7 @@ STATIC UINT32 HwiMask(HWI_HANDLE_T hwiNum)
     return LOS_OK;
 }
 
-STATIC UINT32 HwiSetPriority(HWI_HANDLE_T hwiNum, UINT8 priority)
+STATIC UINT32 HwiSetPriority(HwiHandle hwiNum, UINT8 priority)
 {
     if (hwiNum >= OS_HWI_MAX_NUM) {
         return OS_ERRNO_HWI_NUM_INVALID;
@@ -86,35 +86,35 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiInit(VOID)
  Description : create hardware interrupt
  Input       : hwiNum       --- hwi num to create
                hwiPrio      --- priority of the hwi
-               mode         --- hwi interrupt mode, between vector or non-vector
-               handler      --- hwi handler
-               arg          --- set trig mode of the hwi handler
+               hwiMode      --- hwi interrupt mode, between vector or non-vector
+               hwiHandler   --- hwi handler
+               irqParam     --- set trig mode of the hwi handler
                                 Level Triggerred = 0
                                 Postive/Rising Edge Triggered = 1
                                 Negtive/Falling Edge Triggered = 3
  Output      : None
  Return      : LOS_OK on success or error code on failure
  *****************************************************************************/
-UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
-                     HWI_PRIOR_T hwiPrio,
-                     HWI_MODE_T mode,
-                     HWI_PROC_FUNC handler,
-                     HWI_ARG_T arg)
+UINT32 ArchHwiCreate(HwiHandle hwiNum,
+                     HwiPrio hwiPrio,
+                     HwiMode hwiMode,
+                     HwiProcFunc hwiHandler,
+                     HwiIrqParam *irqParam)
 {
     if (hwiNum > SOC_INT_MAX) {
         return OS_ERRNO_HWI_NUM_INVALID;
     }
-    if (mode > ECLIC_VECTOR_INTERRUPT) {
+    if (hwiMode > ECLIC_VECTOR_INTERRUPT) {
         return OS_ERRNO_HWI_MODE_INVALID;
     }
-    if (arg > ECLIC_NEGTIVE_EDGE_TRIGGER) {
+    if ((irqParam == NULL) || (irqParam->arg > ECLIC_NEGTIVE_EDGE_TRIGGER)) {
         return OS_ERRNO_HWI_ARG_INVALID;
     }
 
     /* set interrupt vector mode */
-    ECLIC_SetShvIRQ(hwiNum, mode);
+    ECLIC_SetShvIRQ(hwiNum, hwiMode);
     /* set interrupt trigger mode and polarity */
-    ECLIC_SetTrigIRQ(hwiNum, arg);
+    ECLIC_SetTrigIRQ(hwiNum, irqParam->arg);
     /* set interrupt level */
     // default to 0
     ECLIC_SetLevelIRQ(hwiNum, 0);
@@ -124,9 +124,9 @@ UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
     /* set interrupt priority */
     // low 16 bit for priority
     ECLIC_SetPriorityIRQ(hwiNum, (hwiPrio & 0xffff));
-    if (handler != NULL) {
+    if (hwiHandler != NULL) {
         /* set interrupt handler entry to vector table */
-        ECLIC_SetVector(hwiNum, (rv_csr_t)handler);
+        ECLIC_SetVector(hwiNum, (rv_csr_t)hwiHandler);
     }
     /* enable interrupt */
     HwiUnmask(hwiNum);
@@ -139,7 +139,7 @@ UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
  Input       : hwiNum   --- hwi num to delete
  Return      : LOS_OK on success or error code on failure
  *****************************************************************************/
-LITE_OS_SEC_TEXT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum)
+LITE_OS_SEC_TEXT UINT32 ArchHwiDelete(HwiHandle hwiNum)
 {
     // change func to default func
     ECLIC_SetVector(hwiNum, (rv_csr_t)HalHwiDefaultHandler);
@@ -171,7 +171,7 @@ LITE_OS_SEC_TEXT_INIT VOID HalHwiDefaultHandler(VOID)
  **************************************************************************** */
 VOID HalDisplayTaskInfo(VOID)
 {
-    TSK_INFO_S taskInfo;
+    TskInfo taskInfo;
     UINT32 index;
     UINT32 ret;
 
@@ -184,7 +184,7 @@ VOID HalDisplayTaskInfo(VOID)
             continue;
         }
         PRINTK("%d    %d     %s      %s \r\n",
-               taskInfo.uwTaskID, taskInfo.usTaskPrio, OsConvertTskStatus(taskInfo.usTaskStatus), taskInfo.acName);
+               taskInfo.taskId, taskInfo.taskPrio, OsConvertTskStatus(taskInfo.taskStatus), taskInfo.acName);
     }
     return;
 }

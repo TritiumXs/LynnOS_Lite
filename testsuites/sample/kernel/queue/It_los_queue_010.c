@@ -38,25 +38,25 @@ static UINT32 Testcase(VOID)
     CHAR buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
     CHAR buff2[QUEUE_SHORT_BUFFER_LENGTH] = "";
 
-    g_testQueueID01 = LOSCFG_BASE_IPC_QUEUE_LIMIT - 1;
+    g_testQueueId01 = LOSCFG_BASE_IPC_QUEUE_LIMIT - 1;
 
-    // 30,Set a value greater than QUEUE_BASE_MSGSIZE,for test erro code LOS_ERRNO_QUEUE_READ_SIZE_TOO_SMALL
-    ret = LOS_QueueCreate("Q1", 0xFF, &g_testQueueID01, 0, 30);
+    // 30, Set a value greater than QUEUE_BASE_MSGSIZE,for test erro code LOS_ERRNO_QUEUE_READ_SIZE_TOO_SMALL
+    ret = LOS_QueueCreate("Q1", 0xFF, &g_testQueueId01, 0, 30);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_READ_SIZE_TOO_SMALL, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 }

@@ -41,12 +41,12 @@ static VOID TaskF01(VOID)
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk021A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 1;
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.taskPrio = TASK_PRIO_TEST - 1;
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
     ret = LOS_TaskCreate(NULL, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_ID_INVALID, ret);

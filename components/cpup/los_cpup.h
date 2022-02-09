@@ -265,7 +265,7 @@ extern UINT32 LOS_HistorySysCpuUsage(UINT16 mode);
  * the CPU usage fails to be obtained.</li>
  * </ul>
  *
- * @param taskID   [IN] UINT32. Task ID.
+ * @param taskId   [IN] UINT32. Task ID.
  *
  * @retval #OS_ERRNO_CPUP_NO_INIT             0x02001e02: The CPU usage is not initialized.
  * @retval #OS_ERRNO_CPUP_TSK_ID_INVALID      0x02001e05: The target task ID is invalid.
@@ -275,7 +275,7 @@ extern UINT32 LOS_HistorySysCpuUsage(UINT16 mode);
  * <ul><li>los_cpup.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_HistoryTaskCpuUsage
  */
-extern UINT32 LOS_TaskCpuUsage(UINT32 taskID);
+extern UINT32 LOS_TaskCpuUsage(UINT32 taskId);
 
 /**
  * @ingroup los_cpup
@@ -291,7 +291,7 @@ extern UINT32 LOS_TaskCpuUsage(UINT32 taskID);
  * the CPU usage fails to be obtained.</li>
  * </ul>
  *
- * @param taskID   [IN] UINT32. Task ID.
+ * @param taskId   [IN] UINT32. Task ID.
  * @param mode     [IN] UINT16. Task mode. The parameter value 0 indicates that the CPU usage within 10s
  * will be obtained, and the parameter value 1 indicates that the CPU usage in the former 1s will be obtained.
  * Other values indicate that the CPU usage in the period that is less than 1s will be obtained.
@@ -304,7 +304,7 @@ extern UINT32 LOS_TaskCpuUsage(UINT32 taskID);
  * <ul><li>los_cpup.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_HistorySysCpuUsage
  */
-extern UINT32 LOS_HistoryTaskCpuUsage(UINT32 taskID, UINT16 mode);
+extern UINT32 LOS_HistoryTaskCpuUsage(UINT32 taskId, UINT16 mode);
 
 /**
  * @ingroup los_cpup
@@ -341,13 +341,13 @@ extern UINT32 LOS_AllTaskCpuUsage(CPUP_INFO_S *cpupInfo, UINT16 mode);
  * @attention
  * <ul>
  * <li>This API can be called only after the CPU usage is initialized. Otherwise, -1 will be returned.</li>
- * <li> Only in SYS_CPU_USAGE type, uwTaskID is invalid.</li>
+ * <li> Only in SYS_CPU_USAGE type, taskId is invalid.</li>
  * </ul>
  *
  * @param type        [IN] cpup type, SYS_CPU_USAGE and TASK_CPU_USAGE
  * @param mode        [IN] mode,CPUP_IN_10S = usage in 10s,CPUP_IN_1S = usage in last 1s,
  * CPUP_LESS_THAN_1S = less than 1s, if the input mode is none of them, it will be as CPUP_LESS_THAN_1S.
- * @param taskID      [IN] task ID, Only in SYS_CPU_USAGE type, taskID is invalid
+ * @param taskId      [IN] task ID, Only in SYS_CPU_USAGE type, taskId is invalid
  *
  * @retval #OS_ERROR           -1:CPU usage info obtain failed.
  * @retval #LOS_OK              0:CPU usage info is successfully obtained.
@@ -355,7 +355,7 @@ extern UINT32 LOS_AllTaskCpuUsage(CPUP_INFO_S *cpupInfo, UINT16 mode);
  * <ul><li>los_monitor.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_CpupUsageMonitor
  */
-extern UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E mode, UINT32 taskID);
+extern UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E mode, UINT32 taskId);
 
 #ifdef __cplusplus
 #if __cplusplus

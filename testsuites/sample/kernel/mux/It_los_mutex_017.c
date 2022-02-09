@@ -40,7 +40,7 @@ static VOID HwiF01(void)
     TestHwiClear(HWI_NUM_TEST);
 
     ret = LOS_MuxPost(g_mutexTest);
-    ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
+    ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_ERRNO_MUX_IN_INTERR, ret);
 
     g_testCount++;
 }
@@ -56,7 +56,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_MuxPend(g_mutexTest, 0);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, 1, 0, (HWI_PROC_FUNC)HwiF01, 0);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, 1, 0, (HwiProcFunc)HwiF01, 0);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     TestHwiTrigger(HWI_NUM_TEST);
@@ -64,7 +64,7 @@ static UINT32 Testcase(VOID)
     ICUNIT_ASSERT_EQUAL(g_testCount, 1, g_testCount); // 1, Here, assert that g_testCount is equal to 1.
 
     ret = LOS_MuxPost(g_mutexTest);
-    ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_MUX_INVALID, ret);
+    ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ret = LOS_MuxDelete(g_mutexTest);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);

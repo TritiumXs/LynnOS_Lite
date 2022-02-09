@@ -37,7 +37,7 @@ static VOID Case1(UINT32 arg)
 {
 #if SELF_DELETED
     UINT32 ret;
-    ret = LOS_SwtmrDelete(g_testTaskID01);
+    ret = LOS_SwtmrDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 #endif
 
@@ -62,14 +62,14 @@ static UINT32 Testcase(VOID)
 #endif
     );
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
-    g_testTaskID01 = swTmrID;
+    g_testTaskId01 = swTmrID;
 
     ret = LOS_SwtmrStart(swTmrID);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ret = LOS_TaskDelay(10); // 10, set delay time.
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
-    
+
     // 1, Here, assert that g_testCount is equal to this .
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
 

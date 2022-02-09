@@ -261,29 +261,29 @@ enum EnSwTmrType {
 * <ul><li>los_swtmr.h: the header file that contains the API declaration.</li></ul>
 * @see None.
 */
-typedef VOID (*SWTMR_PROC_FUNC)(UINT32 para);
+typedef VOID (*SwtmrProcFunc)(UINT32 para);
 
 /**
  * @ingroup los_swtmr
  * Software timer control structure
  */
-typedef struct tagSwTmrCtrl {
-    struct tagSwTmrCtrl *pstNext;       /* Pointer to the next software timer                    */
-    UINT8               ucState;        /* Software timer state                                  */
-    UINT8               ucMode;         /* Software timer mode                                   */
-    UINT8               ucOverrun;      /* Times that a software timer repeats timing            */
+typedef struct TagSwTmrCtrl {
+    struct TagSwTmrCtrl *pstNext;       /* Pointer to the next software timer                    */
+    UINT8               state;          /* Software timer state                                  */
+    UINT8               mode;           /* Software timer mode                                   */
+    UINT8               overRun;        /* Times that a software timer repeats timing            */
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
-    UINT8               ucRouses;       /* wake up enable                                        */
-    UINT8               ucSensitive;    /* align enable                                          */
+    UINT8               rouses;         /* wake up enable                                        */
+    UINT8               sensitive;      /* align enable                                          */
 #endif
-    UINT32              usTimerID;      /* Software timer ID                                     */
-    UINT32              uwInterval;     /* Timeout interval of a periodic software timer         */
-    UINT32              uwArg;          /* Parameter passed in when the callback function
+    UINT32              swtmrId;        /* Software timer ID                                     */
+    UINT32              interval;       /* Timeout interval of a periodic software timer         */
+    UINT32              arg;            /* Parameter passed in when the callback function
                                            that handles software timer timeout is called         */
-    SWTMR_PROC_FUNC     pfnHandler;     /* Callback function that handles software timer timeout */
+    SwtmrProcFunc       pfnHandler;     /* Callback function that handles software timer timeout */
     SortLinkList        stSortList;
     UINT64              startTime;
-} SWTMR_CTRL_S;
+} LosSwtmrCB;
 
 
 /**
@@ -297,7 +297,7 @@ typedef struct tagSwTmrCtrl {
  * <li>The specific timer must be created first</li>
  * </ul>
  *
- * @param  swtmrID  [IN] Software timer ID created by LOS_SwtmrCreate.
+ * @param  swtmrId  [IN] Software timer ID created by LOS_SwtmrCreate.
  *
  * @retval #LOS_ERRNO_SWTMR_ID_INVALID       Invalid software timer ID.
  * @retval #LOS_ERRNO_SWTMR_NOT_CREATED      The software timer is not created.
@@ -307,7 +307,7 @@ typedef struct tagSwTmrCtrl {
  * <ul><li>los_swtmr.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_SwtmrStop | LOS_SwtmrCreate
  */
-extern UINT32 LOS_SwtmrStart(UINT32 swtmrID);
+extern UINT32 LOS_SwtmrStart(UINT32 swtmrId);
 
 /**
  * @ingroup los_swtmr
@@ -320,7 +320,7 @@ extern UINT32 LOS_SwtmrStart(UINT32 swtmrID);
  * <li>The specific timer should be created and started firstly.</li>
  * </ul>
  *
- * @param  swtmrID  [IN] Software timer ID created by LOS_SwtmrCreate.
+ * @param  swtmrId  [IN] Software timer ID created by LOS_SwtmrCreate.
  *
  * @retval #LOS_ERRNO_SWTMR_ID_INVALID       Invalid software timer ID.
  * @retval #LOS_ERRNO_SWTMR_NOT_CREATED      The software timer is not created.
@@ -331,7 +331,7 @@ extern UINT32 LOS_SwtmrStart(UINT32 swtmrID);
  * <ul><li>los_swtmr.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_SwtmrStart | LOS_SwtmrCreate
  */
-extern UINT32 LOS_SwtmrStop(UINT32 swtmrID);
+extern UINT32 LOS_SwtmrStop(UINT32 swtmrId);
 
 /**
  * @ingroup los_swtmr
@@ -339,13 +339,13 @@ extern UINT32 LOS_SwtmrStop(UINT32 swtmrID);
  *
  * @par Description:
  * This API is used to obtain the number of remaining Ticks configured on the software timer of which the ID is
- * specified by usSwTmrID.
+ * specified by swtmrId.
  * @attention
  * <ul>
  * <li>The specific timer should be created and started successfully, error happends otherwise.</li>
  * </ul>
  *
- * @param  swtmrID  [IN]  Software timer ID created by LOS_SwtmrCreate.
+ * @param  swtmrId  [IN]  Software timer ID created by LOS_SwtmrCreate.
  * @param  tick     [OUT] Number of remaining Ticks configured on the software timer.
  *
  * @retval #LOS_ERRNO_SWTMR_ID_INVALID      Invalid software timer ID.
@@ -357,7 +357,7 @@ extern UINT32 LOS_SwtmrStop(UINT32 swtmrID);
  * <ul><li>los_swtmr.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_SwtmrCreate
  */
-extern UINT32 LOS_SwtmrTimeGet(UINT32 swtmrID, UINT32 *tick);
+extern UINT32 LOS_SwtmrTimeGet(UINT32 swtmrId, UINT32 *tick);
 
 /**
  * @ingroup los_swtmr
@@ -377,7 +377,7 @@ extern UINT32 LOS_SwtmrTimeGet(UINT32 swtmrID, UINT32 *tick);
  * types of modes, one-off, periodic, and continuously periodic after one-off, of which the third mode is not
  * supported temporarily.
  * @param  handler      [IN] Callback function that handles software timer timeout.
- * @param  swtmrID      [OUT] Software timer ID created by LOS_SwtmrCreate.
+ * @param  swtmrId      [OUT] Software timer ID created by LOS_SwtmrCreate.
  * @param  arg          [IN] Parameter passed in when the callback function that handles software timer timeout is
  * called.
  *
@@ -395,16 +395,16 @@ extern UINT32 LOS_SwtmrTimeGet(UINT32 swtmrID, UINT32 *tick);
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
 extern UINT32 LOS_SwtmrCreate(UINT32 interval,
                               UINT8 mode,
-                              SWTMR_PROC_FUNC handler,
-                              UINT32 *swtmrID,
+                              SwtmrProcFunc handler,
+                              UINT32 *swtmrId,
                               UINT32 arg,
                               UINT8 rouses,
                               UINT8 sensitive);
 #else
 extern UINT32 LOS_SwtmrCreate(UINT32 interval,
                               UINT8 mode,
-                              SWTMR_PROC_FUNC handler,
-                              UINT32 *swtmrID,
+                              SwtmrProcFunc handler,
+                              UINT32 *swtmrId,
                               UINT32 arg);
 #endif
 
@@ -419,7 +419,7 @@ extern UINT32 LOS_SwtmrCreate(UINT32 interval,
  * <li>The specific timer should be created and then stopped firstly.</li>
  * </ul>
  *
- * @param  swtmrID     [IN] Software timer ID created by LOS_SwtmrCreate.
+ * @param  swtmrId     [IN] Software timer ID created by LOS_SwtmrCreate.
  *
  * @retval #LOS_ERRNO_SWTMR_ID_INVALID        Invalid software timer ID.
  * @retval #LOS_ERRNO_SWTMR_NOT_CREATED       The software timer is not created.
@@ -429,7 +429,7 @@ extern UINT32 LOS_SwtmrCreate(UINT32 interval,
  * <ul><li>los_swtmr.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_SwtmrCreate
  */
-extern UINT32 LOS_SwtmrDelete(UINT32 swtmrID);
+extern UINT32 LOS_SwtmrDelete(UINT32 swtmrId);
 
 /**
  * @ingroup los_swtmr
@@ -446,15 +446,15 @@ enum SwtmrState {
  * Structure of the callback function that handles software timer timeout
  */
 typedef struct {
-    SWTMR_PROC_FUNC     handler;        /**< Callback function that handles software timer timeout */
-    UINT32              arg;            /**< Parameter passed in when the callback function
-                                             that handles software timer timeout is called */
-    UINT32              swtmrID;        /**< The id used to obtain the software timer handle */
+    SwtmrProcFunc     handler;        /**< Callback function that handles software timer timeout */
+    UINT32            arg;            /**< Parameter passed in when the callback function
+                                           that handles software timer timeout is called */
+    UINT32            swtmrId;        /**< The id used to obtain the software timer handle */
 } SwtmrHandlerItem;
 
-extern SWTMR_CTRL_S *g_swtmrCBArray;
+extern LosSwtmrCB *g_swtmrCBArray;
 
-#define OS_SWT_FROM_SID(swtmrId)    ((SWTMR_CTRL_S *)g_swtmrCBArray + ((swtmrId) % LOSCFG_BASE_CORE_SWTMR_LIMIT))
+#define OS_SWT_FROM_SID(swtmrId)    ((LosSwtmrCB *)g_swtmrCBArray + ((swtmrId) % LOSCFG_BASE_CORE_SWTMR_LIMIT))
 
 /**
  * @ingroup los_swtmr

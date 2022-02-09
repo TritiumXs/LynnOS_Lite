@@ -46,33 +46,33 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-#define OS_MEMBOX_NEXT(addr, blkSize) (LOS_MEMBOX_NODE *)(VOID *)((UINT8 *)(addr) + (blkSize))
+#define OS_MEMBOX_NEXT(addr, blkSize) (LosMemBoxNode *)(VOID *)((UINT8 *)(addr) + (blkSize))
 
-#define OS_MEMBOX_NODE_HEAD_SIZE sizeof(LOS_MEMBOX_NODE)
+#define OS_MEMBOX_NODE_HEAD_SIZE sizeof(LosMemBoxNode)
 
 /**
  * @ingroup los_membox
  * Structure of a free node in a memory pool
  */
-typedef struct tagMEMBOX_NODE {
-    struct tagMEMBOX_NODE *pstNext; /**< Free node's pointer to the next node in a memory pool */
-} LOS_MEMBOX_NODE;
+typedef struct TagMemBoxNode {
+    struct TagMemBoxNode *pstNext; /**< Free node's pointer to the next node in a memory pool */
+} LosMemBoxNode;
 
 /**
  * @ingroup los_membox
  * Memory pool information structure
  */
-typedef struct LOS_MEMBOX_INFO {
-    UINT32 uwBlkSize;            /**< Block size */
-    UINT32 uwBlkNum;             /**< Block number */
-    UINT32 uwBlkCnt;             /**< The number of allocated blocks */
+typedef struct LosMemBoxInfo {
+    UINT32 blkSize;            /**< Block size */
+    UINT32 blkNum;             /**< Block number */
+    UINT32 blkCnt;             /**< The number of allocated blocks */
 #if (LOSCFG_PLATFORM_EXC == 1)
-    struct LOS_MEMBOX_INFO *nextMemBox; /**< Point to the next membox */
+    struct LosMemBoxInfo *nextMemBox; /**< Point to the next membox */
 #endif
-    LOS_MEMBOX_NODE stFreeList;  /**< Free list */
-} LOS_MEMBOX_INFO;
+    LosMemBoxNode stFreeList;  /**< Free list */
+} LosMemBoxInfo;
 
-typedef LOS_MEMBOX_INFO OS_MEMBOX_S;
+typedef LosMemBoxInfo OsMemBox;
 
 #if (LOSCFG_PLATFORM_EXC == 1)
 UINT32 OsMemboxExcInfoGet(UINT32 memNumMax, MemInfoCB *memExcInfo);
@@ -89,7 +89,7 @@ UINT32 OsMemboxExcInfoGet(UINT32 memNumMax, MemInfoCB *memExcInfo);
  * Memory pool size
  */
 #define LOS_MEMBOX_SIZE(blkSize, blkNum) \
-    (sizeof(LOS_MEMBOX_INFO) + (LOS_MEMBOX_ALIGNED((blkSize) + OS_MEMBOX_NODE_HEAD_SIZE) * (blkNum)))
+    (sizeof(LosMemBoxInfo) + (LOS_MEMBOX_ALIGNED((blkSize) + OS_MEMBOX_NODE_HEAD_SIZE) * (blkNum)))
 
 /**
  * @ingroup los_membox
@@ -103,7 +103,7 @@ UINT32 OsMemboxExcInfoGet(UINT32 memNumMax, MemInfoCB *memExcInfo);
  * <ul>
  * <li>The poolSize parameter value should match the following two conditions :
  * 1) Be less than or equal to the Memory pool size;
- * 2) Be greater than the size of LOS_MEMBOX_INFO.</li>
+ * 2) Be greater than the size of LosMemBoxInfo.</li>
  * </ul>
  *
  * @param pool     [IN] Memory pool address.

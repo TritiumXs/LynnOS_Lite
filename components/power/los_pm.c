@@ -50,7 +50,7 @@ typedef UINT32 (*Suspend)(UINT32 mode);
 typedef struct {
     CHAR         *name;
     UINT32       count;
-    UINT32       swtmrID;
+    UINT32       swtmrId;
     LOS_DL_LIST  list;
 } OsPmLockCB;
 
@@ -70,7 +70,7 @@ typedef struct {
 
 #define PM_EVENT_LOCK_MASK    0xF
 #define PM_EVENT_LOCK_RELEASE 0x1
-STATIC EVENT_CB_S g_pmEvent;
+STATIC LosEventCB g_pmEvent;
 STATIC LosPmCB g_pmCB;
 STATIC LosPmSysctrl g_sysctrl;
 
@@ -543,7 +543,7 @@ VOID LOS_PmLockInfoShow(VOID)
 }
 #endif
 
-UINT32 OsPmLockRequest(const CHAR *name, UINT32 swtmrID)
+UINT32 OsPmLockRequest(const CHAR *name, UINT32 swtmrId)
 {
     UINT32 intSave;
     UINT32 ret = LOS_ERRNO_PM_NOT_LOCK;
@@ -572,13 +572,13 @@ UINT32 OsPmLockRequest(const CHAR *name, UINT32 swtmrID)
         }
         lock->name = (CHAR *)name;
         lock->count = 1;
-        lock->swtmrID = swtmrID;
+        lock->swtmrId = swtmrId;
         LOS_ListTailInsert(head, &lock->list);
     } else if (lock->count < OS_PM_LOCK_MAX) {
         lock->count++;
     }
 
-    if ((lock->swtmrID != OS_INVALID) && (lock->count > 1)) {
+    if ((lock->swtmrId != OS_INVALID) && (lock->count > 1)) {
         lock->count--;
         LOS_IntRestore(intSave);
         return LOS_ERRNO_PM_ALREADY_LOCK;
@@ -652,7 +652,7 @@ UINT32 LOS_PmLockRelease(const CHAR *name)
     LOS_IntRestore(intSave);
 
     if (lockFree != NULL) {
-        (VOID)LOS_SwtmrDelete(lockFree->swtmrID);
+        (VOID)LOS_SwtmrDelete(lockFree->swtmrId);
         (VOID)LOS_MemFree((VOID *)OS_SYS_MEM_ADDR, lockFree);
     }
 
@@ -675,7 +675,7 @@ STATIC VOID OsPmSwtmrHandler(UINT32 arg)
 UINT32 LOS_PmTimeLockRequest(const CHAR *name, UINT64 millisecond)
 {
     UINT32 ticks;
-    UINT32 swtmrID;
+    UINT32 swtmrId;
     UINT32 ret;
 
     if ((name == NULL) || !millisecond) {
@@ -684,22 +684,22 @@ UINT32 LOS_PmTimeLockRequest(const CHAR *name, UINT64 millisecond)
 
     ticks = (UINT32)((millisecond + OS_MS_PER_TICK - 1) / OS_MS_PER_TICK);
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
-    ret = LOS_SwtmrCreate(ticks, LOS_SWTMR_MODE_ONCE, OsPmSwtmrHandler, &swtmrID, (UINT32)(UINTPTR)name,
+    ret = LOS_SwtmrCreate(ticks, LOS_SWTMR_MODE_ONCE, OsPmSwtmrHandler, &swtmrId, (UINT32)(UINTPTR)name,
                           OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE);
 #else
-    ret = LOS_SwtmrCreate(ticks, LOS_SWTMR_MODE_ONCE, OsPmSwtmrHandler, &swtmrID, (UINT32)(UINTPTR)name);
+    ret = LOS_SwtmrCreate(ticks, LOS_SWTMR_MODE_ONCE, OsPmSwtmrHandler, &swtmrId, (UINT32)(UINTPTR)name);
 #endif
     if (ret != LOS_OK) {
         return ret;
     }
 
-    ret = OsPmLockRequest(name, swtmrID);
+    ret = OsPmLockRequest(name, swtmrId);
     if (ret != LOS_OK) {
-        (VOID)LOS_SwtmrDelete(swtmrID);
+        (VOID)LOS_SwtmrDelete(swtmrId);
         return ret;
     }
 
-    ret = LOS_SwtmrStart(swtmrID);
+    ret = LOS_SwtmrStart(swtmrId);
     if (ret != LOS_OK) {
         (VOID)LOS_PmLockRelease(name);
     }

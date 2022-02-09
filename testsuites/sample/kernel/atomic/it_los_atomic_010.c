@@ -45,7 +45,7 @@ static VOID TaskF01(VOID)
     INT64 i;
 
     for (i = 0; i < TEST_LOOP; ++i) {
-        LOS_Atomic64Inc(&g_testAtomicID05);
+        LOS_Atomic64Inc(&g_testAtomicId05);
     }
 
     ++g_testCount;
@@ -54,22 +54,22 @@ static VOID TaskF01(VOID)
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    g_testAtomicID05 = 0;
+    g_testAtomicId05 = 0;
     g_testCount = 0;
 
-    TSK_INIT_PARAM_S stTask1 = {0};
-    stTask1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    TskInitParam stTask1 = {0};
+    stTask1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     stTask1.pcName       = "Atomic_010";
-    stTask1.uwStackSize  = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    stTask1.usTaskPrio   = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2 has higher priority than TASK_PRIO_TEST
-    stTask1.uwResved     = LOS_TASK_STATUS_DETACHED;
+    stTask1.stackSize    = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    stTask1.taskPrio     = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2 has higher priority than TASK_PRIO_TEST
+    stTask1.resved       = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &stTask1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &stTask1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     LOS_TaskDelay(20); // delay 20 ticks.
 
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
-    ICUNIT_GOTO_EQUAL(g_testAtomicID05, TEST_LOOP, g_testAtomicID05, EXIT);
+    ICUNIT_GOTO_EQUAL(g_testAtomicId05, TEST_LOOP, g_testAtomicId05, EXIT);
 EXIT:
     return LOS_OK;
 }

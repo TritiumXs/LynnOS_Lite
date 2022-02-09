@@ -41,7 +41,7 @@ int *__errno_location(void)
     LosTaskCB *runTask = NULL;
 
     if (OS_INT_INACTIVE) {
-        runTask = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
+        runTask = OS_TCB_FROM_TID(LOS_CurTaskIdGet());
         return &runTask->errorNo;
     } else {
         return &g_isrErrno;

@@ -39,7 +39,7 @@
 #include "los_event.h"
 #include "los_task.h"
 
-EVENT_CB_S g_shellInputEvent;
+LosEventCB g_shellInputEvent;
 #define SHELL_CMD_MAX_SIZE 64
 
 #define VISIABLE_CHAR(ch) ((ch) > 0x1F && (ch) < 0x7F)
@@ -247,8 +247,8 @@ VOID ShellTaskEntry(VOID)
 LITE_OS_SEC_TEXT_MINOR UINT32 LosShellInit(VOID)
 {
     UINT32 ret;
-    UINT32 taskID1;
-    TSK_INIT_PARAM_S task1 = { 0 };
+    UINT32 taskId1;
+    TskInitParam task1 = { 0 };
 
     ret = LOS_EventInit(&g_shellInputEvent);
     if (ret != LOS_OK) {
@@ -256,11 +256,11 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LosShellInit(VOID)
         return ret;
     }
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)ShellTaskEntry;
-    task1.uwStackSize  = 0x1000;
+    task1.pfnTaskEntry = (TskEntryFunc)ShellTaskEntry;
+    task1.stackSize  = 0x1000;
     task1.pcName       = "ShellTaskEntry";
-    task1.usTaskPrio   = LOSCFG_SHELL_PRIO;
-    ret = LOS_TaskCreate(&taskID1, &task1);
+    task1.taskPrio   = LOSCFG_SHELL_PRIO;
+    ret = LOS_TaskCreate(&taskId1, &task1);
     if (ret != LOS_OK) {
         PRINTK("Create Shell Task failed! ERROR: 0x%x\n", ret);
         return ret;

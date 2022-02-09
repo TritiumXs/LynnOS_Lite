@@ -40,8 +40,8 @@ static VOID SwtmrF01(VOID)
     ret = LOS_EventWrite(&g_pevent, 0xF);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ret = LOS_EventPoll(&g_pevent.uwEventID, 0xF, LOS_WAITMODE_AND);
-    ICUNIT_ASSERT_EQUAL_VOID(ret, g_pevent.uwEventID, ret);
+    ret = LOS_EventPoll(&g_pevent.eventId, 0xF, LOS_WAITMODE_AND);
+    ICUNIT_ASSERT_EQUAL_VOID(ret, g_pevent.eventId, ret);
     ICUNIT_ASSERT_EQUAL_VOID(ret, 0xF, ret);
 
     g_testCount++;
@@ -56,10 +56,10 @@ static UINT32 Testcase(VOID)
     LOS_EventInit(&g_pevent);
 
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
-    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID, 0xffff,
+    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID, 0xffff,
         OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE);
 #else
-    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID, 0xffff);
+    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID, 0xffff);
 #endif
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 

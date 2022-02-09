@@ -66,17 +66,17 @@ static UINT32 Testcase(VOID)
     UINT32 ret;
 
     g_testCount = 0;
-    g_eventCB0.uwEventID = 0;
+    g_eventCB0.eventId = 0;
     LOS_EventInit(&g_eventCB0);
     // 1, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF02, &g_swtmrId1, 0xffff
+    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF02, &g_swtmrId1, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
     );
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
     // 20, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(20, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &g_swtmrId2, 0xffff
+    ret = LOS_SwtmrCreate(20, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &g_swtmrId2, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif

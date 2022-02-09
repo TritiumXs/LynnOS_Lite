@@ -103,12 +103,12 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
     return -1;
 }
 
-int timer_create(clockid_t clockID, struct sigevent *restrict evp, timer_t *restrict timerID)
+int timer_create(clockid_t clockId, struct sigevent *restrict evp, timer_t *restrict timerId)
 {
     UINT32 ret;
-    UINT32 swtmrID;
+    UINT32 swtmrId;
 
-    if (!timerID || (clockID != CLOCK_REALTIME) || !evp) {
+    if (!timerId || (clockId != CLOCK_REALTIME) || !evp) {
         errno = EINVAL;
         return -1;
     }
@@ -118,8 +118,8 @@ int timer_create(clockid_t clockID, struct sigevent *restrict evp, timer_t *rest
         return -1;
     }
 
-    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_ONCE, (SWTMR_PROC_FUNC)evp->sigev_notify_function,
-                          &swtmrID, (UINT32)(UINTPTR)evp->sigev_value.sival_ptr
+    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_ONCE, (SwtmrProcFunc)evp->sigev_notify_function,
+                          &swtmrId, (UINT32)(UINTPTR)evp->sigev_value.sival_ptr
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
                           , OS_SWTMR_ROUSES_IGNORE, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
@@ -129,14 +129,14 @@ int timer_create(clockid_t clockID, struct sigevent *restrict evp, timer_t *rest
         return -1;
     }
 
-    *timerID = (timer_t)(UINTPTR)swtmrID;
+    *timerId = (timer_t)(UINTPTR)swtmrId;
     return 0;
 }
 
-int timer_delete(timer_t timerID)
+int timer_delete(timer_t timerId)
 {
-    UINT32 swtmrID = (UINT32)(UINTPTR)timerID;
-    if (LOS_SwtmrDelete(swtmrID) != LOS_OK) {
+    UINT32 swtmrId = (UINT32)(UINTPTR)timerId;
+    if (LOS_SwtmrDelete(swtmrId) != LOS_OK) {
         errno = EINVAL;
         return -1;
     }
@@ -144,13 +144,13 @@ int timer_delete(timer_t timerID)
     return 0;
 }
 
-int timer_settime(timer_t timerID, int flags,
+int timer_settime(timer_t timerId, int flags,
                   const struct itimerspec *restrict value,
                   struct itimerspec *restrict oldValue)
 {
     UINT32 intSave;
-    UINT32 swtmrID = (UINT32)(UINTPTR)timerID;
-    SWTMR_CTRL_S *swtmr = NULL;
+    UINT32 swtmrId = (UINT32)(UINTPTR)timerId;
+    LosSwtmrCB *swtmr = NULL;
     UINT32 interval, expiry, ret;
 
     if (flags != 0) {
@@ -179,21 +179,21 @@ int timer_settime(timer_t timerID, int flags,
     }
 
     if (oldValue) {
-        (VOID)timer_gettime(timerID, oldValue);
+        (VOID)timer_gettime(timerId, oldValue);
     }
 
-    ret = LOS_SwtmrStop(swtmrID);
+    ret = LOS_SwtmrStop(swtmrId);
     if ((ret != LOS_OK) && (ret != LOS_ERRNO_SWTMR_NOT_STARTED)) {
         errno = EINVAL;
         return -1;
     }
 
     intSave = LOS_IntLock();
-    swtmr = OS_SWT_FROM_SID(swtmrID);
-    swtmr->ucMode = (interval ? LOS_SWTMR_MODE_PERIOD : LOS_SWTMR_MODE_NO_SELFDELETE);
-    swtmr->uwInterval = (interval ? interval : expiry);
+    swtmr = OS_SWT_FROM_SID(swtmrId);
+    swtmr->mode = (interval ? LOS_SWTMR_MODE_PERIOD : LOS_SWTMR_MODE_NO_SELFDELETE);
+    swtmr->interval = (interval ? interval : expiry);
 
-    swtmr->ucOverrun = 0;
+    swtmr->overRun = 0;
     LOS_IntRestore(intSave);
 
     if ((value->it_value.tv_sec == 0) && (value->it_value.tv_nsec == 0)) {
@@ -205,7 +205,7 @@ int timer_settime(timer_t timerID, int flags,
         return 0;
     }
 
-    if (LOS_SwtmrStart(swtmr->usTimerID) != LOS_OK) {
+    if (LOS_SwtmrStart(swtmr->swtmrId) != LOS_OK) {
         errno = EINVAL;
         return -1;
     }
@@ -213,11 +213,11 @@ int timer_settime(timer_t timerID, int flags,
     return 0;
 }
 
-int timer_gettime(timer_t timerID, struct itimerspec *value)
+int timer_gettime(timer_t timerId, struct itimerspec *value)
 {
     UINT32 tick = 0;
-    SWTMR_CTRL_S *swtmr = NULL;
-    UINT32 swtmrID = (UINT32)(UINTPTR)timerID;
+    LosSwtmrCB *swtmr = NULL;
+    UINT32 swtmrId = (UINT32)(UINTPTR)timerId;
     UINT32 ret;
 
     if (value == NULL) {
@@ -225,10 +225,10 @@ int timer_gettime(timer_t timerID, struct itimerspec *value)
         return -1;
     }
 
-    swtmr = OS_SWT_FROM_SID(swtmrID);
+    swtmr = OS_SWT_FROM_SID(swtmrId);
 
     /* get expire time */
-    ret = LOS_SwtmrTimeGet(swtmr->usTimerID, &tick);
+    ret = LOS_SwtmrTimeGet(swtmr->swtmrId, &tick);
     if ((ret != LOS_OK) && (ret != LOS_ERRNO_SWTMR_NOT_STARTED)) {
         errno = EINVAL;
         return -1;
@@ -237,19 +237,19 @@ int timer_gettime(timer_t timerID, struct itimerspec *value)
         tick = 0;
     }
     OsTick2TimeSpec(&value->it_value, tick);
-    OsTick2TimeSpec(&value->it_interval, (swtmr->ucMode == LOS_SWTMR_MODE_ONCE) ? 0 : swtmr->uwInterval);
+    OsTick2TimeSpec(&value->it_interval, (swtmr->mode == LOS_SWTMR_MODE_ONCE) ? 0 : swtmr->interval);
     return 0;
 }
 
-int timer_getoverrun(timer_t timerID)
+int timer_getoverrun(timer_t timerId)
 {
-    SWTMR_CTRL_S *swtmr = NULL;
-    swtmr = OS_SWT_FROM_SID((UINT32)(UINTPTR)timerID);
+    LosSwtmrCB *swtmr = NULL;
+    swtmr = OS_SWT_FROM_SID((UINT32)(UINTPTR)timerId);
 
-    if ((swtmr->ucOverrun) >= (UINT8)DELAYTIMER_MAX) {
+    if ((swtmr->overRun) >= (UINT8)DELAYTIMER_MAX) {
         return (INT32)DELAYTIMER_MAX;
     }
-    return (int)swtmr->ucOverrun;
+    return (int)swtmr->overRun;
 }
 
 STATIC VOID OsGetHwTime(struct timespec *hwTime)
@@ -286,14 +286,14 @@ STATIC VOID OsSetRealTime(const struct timespec *realTime)
     LOS_IntRestore(intSave);
 }
 
-int clock_settime(clockid_t clockID, const struct timespec *tp)
+int clock_settime(clockid_t clockId, const struct timespec *tp)
 {
     if (!ValidTimeSpec(tp)) {
         errno = EINVAL;
         return -1;
     }
 
-    switch (clockID) {
+    switch (clockId) {
         case CLOCK_REALTIME:
             /* we only support the realtime clock currently */
             OsSetRealTime(tp);
@@ -325,14 +325,14 @@ int clock_settime(clockid_t clockID, const struct timespec *tp)
     }
 }
 
-int clock_gettime(clockid_t clockID, struct timespec *tp)
+int clock_gettime(clockid_t clockId, struct timespec *tp)
 {
     if (tp == NULL) {
         errno = EINVAL;
         return -1;
     }
 
-    switch (clockID) {
+    switch (clockId) {
         case CLOCK_MONOTONIC_RAW:
         case CLOCK_MONOTONIC:
         case CLOCK_MONOTONIC_COARSE:
@@ -365,14 +365,14 @@ int clock_gettime(clockid_t clockID, struct timespec *tp)
     }
 }
 
-int clock_getres(clockid_t clockID, struct timespec *tp)
+int clock_getres(clockid_t clockId, struct timespec *tp)
 {
     if (tp == NULL) {
         errno = EINVAL;
         return -1;
     }
 
-    switch (clockID) {
+    switch (clockId) {
         case CLOCK_MONOTONIC_RAW:
         case CLOCK_MONOTONIC:
         case CLOCK_REALTIME:

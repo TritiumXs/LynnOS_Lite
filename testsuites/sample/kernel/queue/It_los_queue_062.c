@@ -40,22 +40,22 @@ static UINT32 Testcase(VOID)
 
     g_testCount = 0;
 
-    ret = LOS_QueueCreate("Q1", 10, &g_testQueueID01, 0, 0); // 10, Create a queue with 10 nodes for test
+    ret = LOS_QueueCreate("Q1", 10, &g_testQueueId01, 0, 0); // 10, Create a queue with 10 nodes for test
     ICUNIT_GOTO_NOT_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buffer1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buffer1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_NOT_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buffer2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buffer2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_NOT_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_NOT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 }

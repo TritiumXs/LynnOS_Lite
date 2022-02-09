@@ -40,26 +40,30 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-typedef UINT32 HWI_HANDLE_T;
+typedef UINT32 HwiHandle;
 
-typedef UINT16 HWI_PRIOR_T;
+typedef UINT16 HwiPrio;
 
-typedef UINT16 HWI_MODE_T;
+typedef UINT16 HwiMode;
 
-typedef UINT32 HWI_ARG_T;
+typedef UINT32 HwiArg;
 
 #if (LOSCFG_PLATFORM_HWI_WITH_ARG == 1)
-typedef VOID (*HWI_PROC_FUNC)(VOID *parm);
+typedef VOID (*HwiProcFunc)(VOID *parm);
 #else
-typedef VOID (*HWI_PROC_FUNC)(void);
+typedef VOID (*HwiProcFunc)(void);
 #endif
+typedef struct tagIrqParam {
+    HwiArg arg;
+    VOID *pDevId;
+} HwiIrqParam;
 
 typedef struct {
-    UINT32 (*triggerIrq)(HWI_HANDLE_T hwiNum);
-    UINT32 (*clearIrq)(HWI_HANDLE_T hwiNum);
-    UINT32 (*enableIrq)(HWI_HANDLE_T hwiNum);
-    UINT32 (*disableIrq)(HWI_HANDLE_T hwiNum);
-    UINT32 (*setIrqPriority)(HWI_HANDLE_T hwiNum, UINT8 priority);
+    UINT32 (*triggerIrq)(HwiHandle hwiNum);
+    UINT32 (*clearIrq)(HwiHandle hwiNum);
+    UINT32 (*enableIrq)(HwiHandle hwiNum);
+    UINT32 (*disableIrq)(HwiHandle hwiNum);
+    UINT32 (*setIrqPriority)(HwiHandle hwiNum, UINT8 priority);
     UINT32 (*getCurIrqNum)(VOID);
 } HwiControllerOps;
 
@@ -102,12 +106,12 @@ UINT32 ArchIntUnLock(VOID);
  * @attention
  * <ul>
  * <li>The hardware interrupt module is usable only when the configuration item for hardware interrupt tailoring is enabled.</li>
- * <li>Hardware interrupt number value range: [OS_USER_HWI_MIN,OS_USER_HWI_MAX]. The value range applicable for a Cortex-A7 platform is [32,95].</li>
+ * <li>Hardware interrupt number value range: [OS_USER_HWI_MIN,OS_USER_HWI_MAX]. </li>
  * <li>OS_HWI_MAX_NUM specifies the maximum number of interrupts that can be created.</li>
  * <li>Before executing an interrupt on a platform, refer to the chip manual of the platform.</li>
  * </ul>
  *
- * @param  hwiNum   [IN] Type#HWI_HANDLE_T: hardware interrupt number. The value range applicable for a Cortex-A7 platform is [32,95].
+ * @param  hwiNum   [IN] Type#HwiHandle: hardware interrupt number.
  *
  * @retval #OS_ERRNO_HWI_NUM_INVALID              0x02000900: Invalid interrupt number.
  * @retval #LOS_OK                                0         : The interrupt is successfully delete.
@@ -115,7 +119,7 @@ UINT32 ArchIntUnLock(VOID);
  * <ul><li>los_interrupt.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum);
+UINT32 ArchHwiDelete(HwiHandle hwiNum);
 
 /**
  * @ingroup  los_interrupt
@@ -127,16 +131,16 @@ UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum);
  * @attention
  * <ul>
  * <li>The hardware interrupt module is usable only when the configuration item for hardware interrupt tailoring is enabled.</li>
- * <li>Hardware interrupt number value range: [OS_USER_HWI_MIN,OS_USER_HWI_MAX]. The value range applicable for a Cortex-A7 platform is [32,95].</li>
+ * <li>Hardware interrupt number value range: [OS_USER_HWI_MIN,OS_USER_HWI_MAX]. </li>
  * <li>OS_HWI_MAX_NUM specifies the maximum number of interrupts that can be created.</li>
  * <li>Before executing an interrupt on a platform, refer to the chip manual of the platform.</li>
  * </ul>
  *
- * @param  hwiNum   [IN] Type#HWI_HANDLE_T: hardware interrupt number. The value range applicable for a Cortex-A7 platform is [32,95].
- * @param  hwiPrio  [IN] Type#HWI_PRIOR_T: hardware interrupt priority. Ignore this parameter temporarily.
- * @param  mode     [IN] Type#HWI_MODE_T: hardware interrupt mode. Ignore this parameter temporarily.
- * @param  handler  [IN] Type#HWI_PROC_FUNC: interrupt handler used when a hardware interrupt is triggered.
- * @param  arg      [IN] Type#HWI_ARG_T: input parameter of the interrupt handler used when a hardware interrupt is triggered.
+ * @param  hwiNum   [IN] Type#HwiHandle: hardware interrupt number.
+ * @param  hwiPrio  [IN] Type#HwiPrio: hardware interrupt priority. Ignore this parameter temporarily.
+ * @param  mode     [IN] Type#HwiMode: hardware interrupt mode. Ignore this parameter temporarily.
+ * @param  handler  [IN] Type#HwiProcFunc: interrupt handler used when a hardware interrupt is triggered.
+ * @param  arg      [IN] Type#HwiArg: input parameter of the interrupt handler used when a hardware interrupt is triggered.
  *
  * @retval #OS_ERRNO_HWI_PROC_FUNC_NULL               0x02000901: Null hardware interrupt handling function.
  * @retval #OS_ERRNO_HWI_NUM_INVALID                  0x02000900: Invalid interrupt number.
@@ -147,13 +151,13 @@ UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum);
  * <ul><li>los_interrupt.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
-                     HWI_PRIOR_T hwiPrio,
-                     HWI_MODE_T mode,
-                     HWI_PROC_FUNC handler,
-                     HWI_ARG_T arg);
+UINT32 ArchHwiCreate(HwiHandle hwiNum,
+                     HwiPrio hwiPrio,
+                     HwiMode hwiMode,
+                     HwiProcFunc hwiHandler,
+                     HwiIrqParam *irqParam);
 
-STATIC INLINE UINT32 ArchIntTrigger(HWI_HANDLE_T hwiNum)
+STATIC INLINE UINT32 ArchIntTrigger(HwiHandle hwiNum)
 {
     if (g_archHwiOps.triggerIrq == NULL) {
         return LOS_NOK;
@@ -161,7 +165,7 @@ STATIC INLINE UINT32 ArchIntTrigger(HWI_HANDLE_T hwiNum)
     return g_archHwiOps.triggerIrq(hwiNum);
 }
 
-STATIC INLINE UINT32 ArchIntEnable(HWI_HANDLE_T hwiNum)
+STATIC INLINE UINT32 ArchIntEnable(HwiHandle hwiNum)
 {
     if (g_archHwiOps.enableIrq == NULL) {
         return LOS_NOK;
@@ -169,7 +173,7 @@ STATIC INLINE UINT32 ArchIntEnable(HWI_HANDLE_T hwiNum)
     return g_archHwiOps.enableIrq(hwiNum);
 }
 
-STATIC INLINE UINT32 ArchIntDisable(HWI_HANDLE_T hwiNum)
+STATIC INLINE UINT32 ArchIntDisable(HwiHandle hwiNum)
 {
     if (g_archHwiOps.disableIrq == NULL) {
         return LOS_NOK;
@@ -177,7 +181,7 @@ STATIC INLINE UINT32 ArchIntDisable(HWI_HANDLE_T hwiNum)
     return g_archHwiOps.disableIrq(hwiNum);
 }
 
-STATIC INLINE UINT32 ArchIntClear(HWI_HANDLE_T hwiNum)
+STATIC INLINE UINT32 ArchIntClear(HwiHandle hwiNum)
 {
     if (g_archHwiOps.clearIrq == NULL) {
         return LOS_NOK;
@@ -185,7 +189,7 @@ STATIC INLINE UINT32 ArchIntClear(HWI_HANDLE_T hwiNum)
     return g_archHwiOps.clearIrq(hwiNum);
 }
 
-STATIC INLINE UINT32 ArchIntSetPriority(HWI_HANDLE_T hwiNum, HWI_PRIOR_T priority)
+STATIC INLINE UINT32 ArchIntSetPriority(HwiHandle hwiNum, HwiPrio priority)
 {
     if (g_archHwiOps.setIrqPriority == NULL) {
         return LOS_NOK;

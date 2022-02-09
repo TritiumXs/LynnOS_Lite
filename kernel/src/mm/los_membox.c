@@ -44,55 +44,55 @@
 #define OS_MEMBOX_MAX_TASKID    ((1 << OS_MEMBOX_TASKID_BITS) - 1)
 #define OS_MEMBOX_TASKID_GET(addr) (((UINTPTR)(addr)) & OS_MEMBOX_MAX_TASKID)
 
-STATIC INLINE VOID OsMemBoxSetMagic(LOS_MEMBOX_NODE *node)
+STATIC INLINE VOID OsMemBoxSetMagic(LosMemBoxNode *node)
 {
-    UINT8 taskID = (UINT8)LOS_CurTaskIDGet();
-    node->pstNext = (LOS_MEMBOX_NODE *)(OS_MEMBOX_MAGIC | taskID);
+    UINT8 queueId = (UINT8)LOS_CurTaskIdGet();
+    node->pstNext = (LosMemBoxNode *)(OS_MEMBOX_MAGIC | queueId);
 }
 
-STATIC INLINE UINT32 OsMemBoxCheckMagic(LOS_MEMBOX_NODE *node)
+STATIC INLINE UINT32 OsMemBoxCheckMagic(LosMemBoxNode *node)
 {
-    UINT32 taskID = OS_MEMBOX_TASKID_GET(node->pstNext);
-    if (taskID > (LOSCFG_BASE_CORE_TSK_LIMIT + 1)) {
+    UINT32 queueId = OS_MEMBOX_TASKID_GET(node->pstNext);
+    if (queueId > (LOSCFG_BASE_CORE_TSK_LIMIT + 1)) {
         return LOS_NOK;
     } else {
-        return (node->pstNext == (LOS_MEMBOX_NODE *)(OS_MEMBOX_MAGIC | taskID)) ? LOS_OK : LOS_NOK;
+        return (node->pstNext == (LosMemBoxNode *)(OS_MEMBOX_MAGIC | queueId)) ? LOS_OK : LOS_NOK;
     }
 }
 
 #define OS_MEMBOX_USER_ADDR(addr) \
     ((VOID *)((UINT8 *)(addr) + OS_MEMBOX_NODE_HEAD_SIZE))
 #define OS_MEMBOX_NODE_ADDR(addr) \
-    ((LOS_MEMBOX_NODE *)(VOID *)((UINT8 *)(addr) - OS_MEMBOX_NODE_HEAD_SIZE))
+    ((LosMemBoxNode *)(VOID *)((UINT8 *)(addr) - OS_MEMBOX_NODE_HEAD_SIZE))
 #define MEMBOX_LOCK(state)       ((state) = ArchIntLock())
 #define MEMBOX_UNLOCK(state)     ArchIntRestore(state)
 
-STATIC INLINE UINT32 OsCheckBoxMem(const LOS_MEMBOX_INFO *boxInfo, const VOID *node)
+STATIC INLINE UINT32 OsCheckBoxMem(const LosMemBoxInfo *boxInfo, const VOID *node)
 {
     UINT32 offset;
 
-    if (boxInfo->uwBlkSize == 0) {
+    if (boxInfo->blkSize == 0) {
         return LOS_NOK;
     }
 
     offset = (UINT32)((UINTPTR)node - (UINTPTR)(boxInfo + 1));
-    if ((offset % boxInfo->uwBlkSize) != 0) {
+    if ((offset % boxInfo->blkSize) != 0) {
         return LOS_NOK;
     }
 
-    if ((offset / boxInfo->uwBlkSize) >= boxInfo->uwBlkNum) {
+    if ((offset / boxInfo->blkSize) >= boxInfo->blkNum) {
         return LOS_NOK;
     }
 
-    return OsMemBoxCheckMagic((LOS_MEMBOX_NODE *)node);
+    return OsMemBoxCheckMagic((LosMemBoxNode *)node);
 }
 
 #if (LOSCFG_PLATFORM_EXC == 1)
-STATIC LOS_MEMBOX_INFO *g_memBoxHead = NULL;
+STATIC LosMemBoxInfo *g_memBoxHead = NULL;
 STATIC VOID OsMemBoxAdd(VOID *pool)
 {
-    LOS_MEMBOX_INFO *nextPool = g_memBoxHead;
-    LOS_MEMBOX_INFO *curPool = NULL;
+    LosMemBoxInfo *nextPool = g_memBoxHead;
+    LosMemBoxInfo *curPool = NULL;
 
     while (nextPool != NULL) {
         curPool = nextPool;
@@ -105,14 +105,14 @@ STATIC VOID OsMemBoxAdd(VOID *pool)
         curPool->nextMemBox = pool;
     }
 
-    ((LOS_MEMBOX_INFO *)pool)->nextMemBox = NULL;
+    ((LosMemBoxInfo *)pool)->nextMemBox = NULL;
 }
 #endif
 
 UINT32 LOS_MemboxInit(VOID *pool, UINT32 poolSize, UINT32 blkSize)
 {
-    LOS_MEMBOX_INFO *boxInfo = (LOS_MEMBOX_INFO *)pool;
-    LOS_MEMBOX_NODE *node = NULL;
+    LosMemBoxInfo *boxInfo = (LosMemBoxInfo *)pool;
+    LosMemBoxNode *node = NULL;
     UINT32 index;
     UINT32 intSave;
 
@@ -124,25 +124,25 @@ UINT32 LOS_MemboxInit(VOID *pool, UINT32 poolSize, UINT32 blkSize)
         return LOS_NOK;
     }
 
-    if (poolSize < sizeof(LOS_MEMBOX_INFO)) {
+    if (poolSize < sizeof(LosMemBoxInfo)) {
         return LOS_NOK;
     }
 
     MEMBOX_LOCK(intSave);
-    boxInfo->uwBlkSize = LOS_MEMBOX_ALIGNED(blkSize + OS_MEMBOX_NODE_HEAD_SIZE);
-    boxInfo->uwBlkNum = (poolSize - sizeof(LOS_MEMBOX_INFO)) / boxInfo->uwBlkSize;
-    boxInfo->uwBlkCnt = 0;
-    if (boxInfo->uwBlkNum == 0) {
+    boxInfo->blkSize = LOS_MEMBOX_ALIGNED(blkSize + OS_MEMBOX_NODE_HEAD_SIZE);
+    boxInfo->blkNum = (poolSize - sizeof(LosMemBoxInfo)) / boxInfo->blkSize;
+    boxInfo->blkCnt = 0;
+    if (boxInfo->blkNum == 0) {
         MEMBOX_UNLOCK(intSave);
         return LOS_NOK;
     }
 
-    node = (LOS_MEMBOX_NODE *)(boxInfo + 1);
+    node = (LosMemBoxNode *)(boxInfo + 1);
 
     boxInfo->stFreeList.pstNext = node;
 
-    for (index = 0; index < boxInfo->uwBlkNum - 1; ++index) {
-        node->pstNext = OS_MEMBOX_NEXT(node, boxInfo->uwBlkSize);
+    for (index = 0; index < boxInfo->blkNum - 1; ++index) {
+        node->pstNext = OS_MEMBOX_NEXT(node, boxInfo->blkSize);
         node = node->pstNext;
     }
 
@@ -159,9 +159,9 @@ UINT32 LOS_MemboxInit(VOID *pool, UINT32 poolSize, UINT32 blkSize)
 
 VOID *LOS_MemboxAlloc(VOID *pool)
 {
-    LOS_MEMBOX_INFO *boxInfo = (LOS_MEMBOX_INFO *)pool;
-    LOS_MEMBOX_NODE *node = NULL;
-    LOS_MEMBOX_NODE *nodeTmp = NULL;
+    LosMemBoxInfo *boxInfo = (LosMemBoxInfo *)pool;
+    LosMemBoxNode *node = NULL;
+    LosMemBoxNode *nodeTmp = NULL;
     UINT32 intSave;
 
     if (pool == NULL) {
@@ -174,7 +174,7 @@ VOID *LOS_MemboxAlloc(VOID *pool)
         nodeTmp = node->pstNext;
         node->pstNext = nodeTmp->pstNext;
         OsMemBoxSetMagic(nodeTmp);
-        boxInfo->uwBlkCnt++;
+        boxInfo->blkCnt++;
     }
     MEMBOX_UNLOCK(intSave);
 
@@ -183,7 +183,7 @@ VOID *LOS_MemboxAlloc(VOID *pool)
 
 UINT32 LOS_MemboxFree(VOID *pool, VOID *box)
 {
-    LOS_MEMBOX_INFO *boxInfo = (LOS_MEMBOX_INFO *)pool;
+    LosMemBoxInfo *boxInfo = (LosMemBoxInfo *)pool;
     UINT32 ret = LOS_NOK;
     UINT32 intSave;
 
@@ -193,14 +193,14 @@ UINT32 LOS_MemboxFree(VOID *pool, VOID *box)
 
     MEMBOX_LOCK(intSave);
     do {
-        LOS_MEMBOX_NODE *node = OS_MEMBOX_NODE_ADDR(box);
+        LosMemBoxNode *node = OS_MEMBOX_NODE_ADDR(box);
         if (OsCheckBoxMem(boxInfo, node) != LOS_OK) {
             break;
         }
 
         node->pstNext = boxInfo->stFreeList.pstNext;
         boxInfo->stFreeList.pstNext = node;
-        boxInfo->uwBlkCnt--;
+        boxInfo->blkCnt--;
         ret = LOS_OK;
     } while (0);
     MEMBOX_UNLOCK(intSave);
@@ -210,28 +210,28 @@ UINT32 LOS_MemboxFree(VOID *pool, VOID *box)
 
 VOID LOS_MemboxClr(VOID *pool, VOID *box)
 {
-    LOS_MEMBOX_INFO *boxInfo = (LOS_MEMBOX_INFO *)pool;
+    LosMemBoxInfo *boxInfo = (LosMemBoxInfo *)pool;
 
     if ((pool == NULL) || (box == NULL)) {
         return;
     }
 
-    (VOID)memset_s(box, (boxInfo->uwBlkSize - OS_MEMBOX_NODE_HEAD_SIZE), 0,
-                   (boxInfo->uwBlkSize - OS_MEMBOX_NODE_HEAD_SIZE));
+    (VOID)memset_s(box, (boxInfo->blkSize - OS_MEMBOX_NODE_HEAD_SIZE), 0,
+                   (boxInfo->blkSize - OS_MEMBOX_NODE_HEAD_SIZE));
 }
 
 VOID LOS_ShowBox(VOID *pool)
 {
     UINT32 index;
     UINT32 intSave;
-    LOS_MEMBOX_INFO *boxInfo = (LOS_MEMBOX_INFO *)pool;
-    LOS_MEMBOX_NODE *node = NULL;
+    LosMemBoxInfo *boxInfo = (LosMemBoxInfo *)pool;
+    LosMemBoxNode *node = NULL;
 
     if (pool == NULL) {
         return;
     }
     MEMBOX_LOCK(intSave);
-    PRINT_INFO("membox(%p, 0x%x, 0x%x):\r\n", pool, boxInfo->uwBlkSize, boxInfo->uwBlkNum);
+    PRINT_INFO("membox(%p, 0x%x, 0x%x):\r\n", pool, boxInfo->blkSize, boxInfo->blkNum);
     PRINT_INFO("free node list:\r\n");
 
     for (node = boxInfo->stFreeList.pstNext, index = 0; node != NULL;
@@ -240,8 +240,8 @@ VOID LOS_ShowBox(VOID *pool)
     }
 
     PRINT_INFO("all node list:\r\n");
-    node = (LOS_MEMBOX_NODE *)(boxInfo + 1);
-    for (index = 0; index < boxInfo->uwBlkNum; ++index, node = OS_MEMBOX_NEXT(node, boxInfo->uwBlkSize)) {
+    node = (LosMemBoxNode *)(boxInfo + 1);
+    for (index = 0; index < boxInfo->blkNum; ++index, node = OS_MEMBOX_NEXT(node, boxInfo->blkSize)) {
         PRINT_INFO("(%u, %p, %p)\r\n", index, node, node->pstNext);
     }
     MEMBOX_UNLOCK(intSave);
@@ -254,17 +254,17 @@ UINT32 LOS_MemboxStatisticsGet(const VOID *boxMem, UINT32 *maxBlk,
         return LOS_NOK;
     }
 
-    *maxBlk = ((OS_MEMBOX_S *)boxMem)->uwBlkNum;
-    *blkCnt = ((OS_MEMBOX_S *)boxMem)->uwBlkCnt;
-    *blkSize = ((OS_MEMBOX_S *)boxMem)->uwBlkSize;
+    *maxBlk = ((OsMemBox *)boxMem)->blkNum;
+    *blkCnt = ((OsMemBox *)boxMem)->blkCnt;
+    *blkSize = ((OsMemBox *)boxMem)->blkSize;
 
     return LOS_OK;
 }
 
 #if (LOSCFG_PLATFORM_EXC == 1)
-STATIC VOID OsMemboxExcInfoGetSub(const LOS_MEMBOX_INFO *pool, MemInfoCB *memExcInfo)
+STATIC VOID OsMemboxExcInfoGetSub(const LosMemBoxInfo *pool, MemInfoCB *memExcInfo)
 {
-    LOS_MEMBOX_NODE *node = NULL;
+    LosMemBoxNode *node = NULL;
     UINTPTR poolStart, poolEnd;
     UINT32 index;
     UINT32 intSave;
@@ -274,18 +274,18 @@ STATIC VOID OsMemboxExcInfoGetSub(const LOS_MEMBOX_INFO *pool, MemInfoCB *memExc
     MEMBOX_LOCK(intSave);
     memExcInfo->type = MEM_MANG_MEMBOX;
     memExcInfo->startAddr = (UINTPTR)pool;
-    memExcInfo->blockSize = pool->uwBlkSize;
-    memExcInfo->size = pool->uwBlkNum; /* Block num */
-    memExcInfo->free = pool->uwBlkNum - pool->uwBlkCnt;
+    memExcInfo->blockSize = pool->blkSize;
+    memExcInfo->size = pool->blkNum; /* Block num */
+    memExcInfo->free = pool->blkNum - pool->blkCnt;
 
     poolStart = (UINTPTR)pool;
-    poolEnd = poolStart + pool->uwBlkSize * pool->uwBlkNum + sizeof(LOS_MEMBOX_INFO);
-    node = (LOS_MEMBOX_NODE *)(pool + 1);
-    for (index = 0; index < pool->uwBlkNum; ++index, node = OS_MEMBOX_NEXT(node, pool->uwBlkSize)) {
+    poolEnd = poolStart + pool->blkSize * pool->blkNum + sizeof(LosMemBoxInfo);
+    node = (LosMemBoxNode *)(pool + 1);
+    for (index = 0; index < pool->blkNum; ++index, node = OS_MEMBOX_NEXT(node, pool->blkSize)) {
         if (((UINTPTR)node < poolStart) || ((UINTPTR)node >= poolEnd)) {
             if (OsMemBoxCheckMagic(node)) {
                 memExcInfo->errorAddr = (UINT32)(UINTPTR)((CHAR *)node + OS_MEMBOX_NODE_HEAD_SIZE);
-                memExcInfo->errorLen = pool->uwBlkSize - OS_MEMBOX_NODE_HEAD_SIZE;
+                memExcInfo->errorLen = pool->blkSize - OS_MEMBOX_NODE_HEAD_SIZE;
                 memExcInfo->errorOwner = OS_MEMBOX_TASKID_GET(node->pstNext);
                 break;
             }
@@ -296,7 +296,7 @@ STATIC VOID OsMemboxExcInfoGetSub(const LOS_MEMBOX_INFO *pool, MemInfoCB *memExc
 
 UINT32 OsMemboxExcInfoGet(UINT32 memNumMax, MemInfoCB *memExcInfo)
 {
-    LOS_MEMBOX_INFO *memBox = g_memBoxHead;
+    LosMemBoxInfo *memBox = g_memBoxHead;
     UINT32 count = 0;
     UINT8 *buffer = (UINT8 *)memExcInfo;
 

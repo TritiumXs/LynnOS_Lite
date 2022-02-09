@@ -31,7 +31,7 @@
 #include "osTest.h"
 #include "It_los_task.h"
 
-static UINT32 g_joinTaskID;
+static UINT32 g_joinTaskId;
 static VOID *TaskJoinf01(void *argument)
 {
     g_testCount++;
@@ -41,7 +41,7 @@ static VOID *TaskJoinf01(void *argument)
 
 static int TaskJoinf02(VOID *argument)
 {
-    UINT32 ret = LOS_TaskDelete(g_joinTaskID);
+    UINT32 ret = LOS_TaskDelete(g_joinTaskId);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
     return 0;
@@ -49,33 +49,33 @@ static int TaskJoinf02(VOID *argument)
 
 static UINT32 TestCase(VOID)
 {
-    UINT32 taskID;
+    UINT32 taskId;
     UINT32 ret;
     UINTPTR temp = 0;
-    TSK_INIT_PARAM_S osTaskInitParam = { 0 };
+    TskInitParam osTaskInitParam = { 0 };
 
     g_testCount = 0;
 
-    osTaskInitParam.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskJoinf01;
-    osTaskInitParam.uwStackSize = OS_TSK_TEST_STACK_SIZE;
+    osTaskInitParam.pfnTaskEntry = (TskEntryFunc)TaskJoinf01;
+    osTaskInitParam.stackSize = OS_TSK_TEST_STACK_SIZE;
     osTaskInitParam.pcName = "Join";
-    osTaskInitParam.usTaskPrio = TASK_PRIO_TEST + 1;
-    osTaskInitParam.uwResved = LOS_TASK_ATTR_JOINABLE;
+    osTaskInitParam.taskPrio = TASK_PRIO_TEST + 1;
+    osTaskInitParam.resved = LOS_TASK_ATTR_JOINABLE;
 
-    ret = LOS_TaskCreate(&g_joinTaskID, &osTaskInitParam);
+    ret = LOS_TaskCreate(&g_joinTaskId, &osTaskInitParam);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    osTaskInitParam.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskJoinf02;
-    osTaskInitParam.uwStackSize = OS_TSK_TEST_STACK_SIZE;
+    osTaskInitParam.pfnTaskEntry = (TskEntryFunc)TaskJoinf02;
+    osTaskInitParam.stackSize = OS_TSK_TEST_STACK_SIZE;
     osTaskInitParam.pcName = "deatch";
-    osTaskInitParam.usTaskPrio = TASK_PRIO_TEST - 1;
+    osTaskInitParam.taskPrio = TASK_PRIO_TEST - 1;
 
-    ret = LOS_TaskCreate(&taskID, &osTaskInitParam);
+    ret = LOS_TaskCreate(&taskId, &osTaskInitParam);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    ret = LOS_TaskJoin(g_joinTaskID, &temp);
+    ret = LOS_TaskJoin(g_joinTaskId, &temp);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
-    ICUNIT_ASSERT_EQUAL(temp, taskID, temp);
+    ICUNIT_ASSERT_EQUAL(temp, taskId, temp);
 
     return LOS_OK;
 }

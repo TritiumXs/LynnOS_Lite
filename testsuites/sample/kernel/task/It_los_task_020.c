@@ -37,7 +37,7 @@ static UINT32 TestCase(VOID)
 {
     UINT32 ret;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, NULL);
+    ret = LOS_TaskCreate(&g_testTaskId01, NULL);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_PTR_NULL, ret);
 
     return LOS_OK;

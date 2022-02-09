@@ -43,10 +43,10 @@ extern "C" {
 #define SYS_EXIST_SWTMR 1
 #define TEST_HWI_RUNTIME 0x100000
 
-extern EVENT_CB_S g_eventCB0;
-extern EVENT_CB_S g_eventCB1;
-extern EVENT_CB_S g_eventCB2;
-extern EVENT_CB_S g_eventCB3;
+extern LosEventCB g_eventCB0;
+extern LosEventCB g_eventCB1;
+extern LosEventCB g_eventCB2;
+extern LosEventCB g_eventCB3;
 
 #define TIMER_LOS_EXPIRATION3 10
 #define TIMER_LOS_EXPIRATION1 4
@@ -54,7 +54,7 @@ extern EVENT_CB_S g_eventCB3;
 #define TIMER_LOS_HANDLER_PARAMETER 0xFF
 #define TIMER_LOS_SELF_DELETED 1
 
-extern UINT32 g_idleTaskID;
+extern UINT32 g_idleTaskId;
 
 static UINT32 g_swtmrId1;
 static UINT32 g_swtmrId2;

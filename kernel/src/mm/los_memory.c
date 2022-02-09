@@ -132,10 +132,10 @@ struct OsMemNodeHead {
         struct OsMemNodeHead *next; /* The next is used for sentinel node points to the expand node */
     } ptr;
 #if (LOSCFG_TASK_MEM_USED == 1)
-    UINT32 taskID;
+    UINT32 queueId;
     UINT32 sizeAndFlag;
 #elif (LOSCFG_MEM_FREE_BY_TASKID == 1)
-    UINT32 taskID : 6;
+    UINT32 queueId : 6;
     UINT32 sizeAndFlag : 26;
 #else
     UINT32 sizeAndFlag;
@@ -305,9 +305,9 @@ STATIC INLINE UINT32 OsMemFree(struct OsMemPoolHead *pool, struct OsMemNodeHead 
 STATIC VOID OsMemInfoPrint(VOID *pool);
 
 #if (LOSCFG_MEM_FREE_BY_TASKID == 1 || LOSCFG_TASK_MEM_USED == 1)
-STATIC INLINE VOID OsMemNodeSetTaskID(struct OsMemUsedNodeHead *node)
+STATIC INLINE VOID OsMemNodeSetTaskId(struct OsMemUsedNodeHead *node)
 {
-    node->header.taskID = LOS_CurTaskIDGet();
+    node->header.queueId = LOS_CurTaskIdGet();
 }
 #endif
 STATIC VOID OsAllMemNodeDoHandle(VOID *pool, VOID (*handle)(struct OsMemNodeHead *curNode, VOID *arg), VOID *arg)
@@ -357,8 +357,8 @@ STATIC VOID GetTaskMemUsedHandle(struct OsMemNodeHead *curNode, VOID *arg)
 #else
     if (OS_MEM_NODE_GET_USED_FLAG(curNode->sizeAndFlag) && !OS_MEM_IS_GAP_NODE(curNode)) {
 #endif
-        if (curNode->taskID < tskMemInfoCnt) {
-            tskMemInfoBuf[curNode->taskID] += OS_MEM_NODE_GET_SIZE(curNode->sizeAndFlag);
+        if (curNode->queueId < tskMemInfoCnt) {
+            tskMemInfoBuf[curNode->queueId] += OS_MEM_NODE_GET_SIZE(curNode->sizeAndFlag);
         }
     }
     return;
@@ -906,7 +906,7 @@ STATIC INLINE VOID *OsMemCreateUsedNode(VOID *addr)
     struct OsMemUsedNodeHead *node = (struct OsMemUsedNodeHead *)addr;
 
 #if (LOSCFG_MEM_FREE_BY_TASKID == 1 || LOSCFG_TASK_MEM_USED == 1)
-    OsMemNodeSetTaskID(node);
+    OsMemNodeSetTaskId(node);
 #endif
 
 #ifdef LOSCFG_KERNEL_LMS
@@ -1037,24 +1037,24 @@ STATIC UINT32 OsMemPoolDelete(VOID *pool)
 UINT32 LOS_MemInit(VOID *pool, UINT32 size)
 {
     if ((pool == NULL) || (size <= OS_MEM_MIN_POOL_SIZE)) {
-        return OS_ERROR;
+        return LOS_NOK;
     }
 
     if (((UINTPTR)pool & (OS_MEM_ALIGN_SIZE - 1)) || \
         (size & (OS_MEM_ALIGN_SIZE - 1))) {
         PRINT_ERR("LiteOS heap memory address or size configured not aligned:address:0x%x,size:0x%x, alignsize:%d\n", \
                   (UINTPTR)pool, size, OS_MEM_ALIGN_SIZE);
-        return OS_ERROR;
+        return LOS_NOK;
     }
 
     if (OsMemPoolInit(pool, size)) {
-        return OS_ERROR;
+        return LOS_NOK;
     }
 
 #if (LOSCFG_MEM_MUL_POOL == 1)
     if (OsMemPoolAdd(pool, size)) {
         (VOID)OsMemPoolDeinit(pool);
-        return OS_ERROR;
+        return LOS_NOK;
     }
 #endif
 
@@ -1067,11 +1067,11 @@ UINT32 LOS_MemInit(VOID *pool, UINT32 size)
 UINT32 LOS_MemDeInit(VOID *pool)
 {
     if (pool == NULL) {
-        return OS_ERROR;
+        return LOS_NOK;
     }
 
     if (OsMemPoolDelete(pool)) {
-        return OS_ERROR;
+        return LOS_NOK;
     }
 
     OsMemPoolDeinit(pool);
@@ -1572,10 +1572,10 @@ VOID *LOS_MemRealloc(VOID *pool, VOID *ptr, UINT32 size)
 }
 
 #if (LOSCFG_MEM_FREE_BY_TASKID == 1)
-STATIC VOID MemNodeFreeByTaskIDHandle(struct OsMemNodeHead *curNode, VOID *arg)
+STATIC VOID MemNodeFreeByTaskIdHandle(struct OsMemNodeHead *curNode, VOID *arg)
 {
     UINT32 *args = (UINT32 *)arg;
-    UINT32 taskID = *args;
+    UINT32 queueId = *args;
     struct OsMemPoolHead *poolHead = (struct OsMemPoolHead *)(UINTPTR)(*(args + 1));
     struct OsMemUsedNodeHead *node = NULL;
     if (!OS_MEM_NODE_GET_USED_FLAG(curNode->sizeAndFlag)) {
@@ -1583,24 +1583,24 @@ STATIC VOID MemNodeFreeByTaskIDHandle(struct OsMemNodeHead *curNode, VOID *arg)
     }
 
     node = (struct OsMemUsedNodeHead *)curNode;
-    if (node->header.taskID == taskID) {
+    if (node->header.queueId == queueId) {
         OsMemFree(poolHead, &node->header);
     }
     return;
 }
 
-UINT32 LOS_MemFreeByTaskID(VOID *pool, UINT32 taskID)
+UINT32 LOS_MemFreeByTaskId(VOID *pool, UINT32 queueId)
 {
-    UINT32 args[2] = { taskID, (UINT32)(UINTPTR)pool };
+    UINT32 args[2] = { queueId, (UINT32)(UINTPTR)pool };
     if (pool == NULL) {
-        return OS_ERROR;
+        return LOS_NOK;
     }
 
-    if (taskID >= LOSCFG_BASE_CORE_TSK_LIMIT) {
-        return OS_ERROR;
+    if (queueId >= LOSCFG_BASE_CORE_TSK_LIMIT) {
+        return LOS_NOK;
     }
 
-    OsAllMemNodeDoHandle(pool, MemNodeFreeByTaskIDHandle, (VOID *)args);
+    OsAllMemNodeDoHandle(pool, MemNodeFreeByTaskIdHandle, (VOID *)args);
 
     return LOS_OK;
 }
@@ -1897,17 +1897,17 @@ STATIC VOID OsMemIntegrityCheckError(struct OsMemPoolHead *pool,
     LosTaskCB *taskCB = NULL;
     if (OS_MEM_NODE_GET_USED_FLAG(preNode->sizeAndFlag)) {
         struct OsMemUsedNodeHead *usedNode = (struct OsMemUsedNodeHead *)preNode;
-        UINT32 taskID = usedNode->header.taskID;
-        if (taskID >= LOSCFG_BASE_CORE_TSK_LIMIT) {
+        UINT32 queueId = usedNode->header.queueId;
+        if (queueId >= LOSCFG_BASE_CORE_TSK_LIMIT) {
             MEM_UNLOCK(pool, intSave);
-            LOS_Panic("Task ID %u in pre node is invalid!\n", taskID);
+            LOS_Panic("Task ID %u in pre node is invalid!\n", queueId);
             return;
         }
 
-        taskCB = OS_TCB_FROM_TID(taskID);
+        taskCB = OS_TCB_FROM_TID(queueId);
         if ((taskCB->taskStatus & OS_TASK_STATUS_UNUSED) || (taskCB->taskEntry == NULL)) {
             MEM_UNLOCK(pool, intSave);
-            LOS_Panic("\r\nTask ID %u in pre node is not created!\n", taskID);
+            LOS_Panic("\r\nTask ID %u in pre node is not created!\n", queueId);
             return;
         }
     } else {
@@ -1915,7 +1915,7 @@ STATIC VOID OsMemIntegrityCheckError(struct OsMemPoolHead *pool,
     }
     MEM_UNLOCK(pool, intSave);
     PRINT_ERR("cur node: 0x%x, pre node: 0x%x, pre node was allocated by task: %d, %s\n",
-              (unsigned int)tmpNode, (unsigned int)preNode, taskCB->taskID, taskCB->taskName);
+              (unsigned int)tmpNode, (unsigned int)preNode, taskCB->taskId, taskCB->taskName);
     LOS_Panic("Memory integrity check error!\n");
 #else
     MEM_UNLOCK(pool, intSave);
@@ -2296,7 +2296,7 @@ UINT32 OsMemSystemInit(VOID)
 STATIC VOID OsMemExcInfoGetSub(struct OsMemPoolHead *pool, MemInfoCB *memExcInfo)
 {
     struct OsMemNodeHead *tmpNode = NULL;
-    UINT32 taskID = OS_TASK_ERRORID;
+    UINT32 queueId = OS_TASK_ERRORID;
     UINT32 intSave = 0;
 
     (VOID)memset(memExcInfo, 0, sizeof(MemInfoCB));
@@ -2316,7 +2316,7 @@ STATIC VOID OsMemExcInfoGetSub(struct OsMemPoolHead *pool, MemInfoCB *memExcInfo
             if (!OS_MEM_MAGIC_VALID(tmpNode) ||
                 !OsMemAddrValidCheck(pool, tmpNode->ptr.prev)) {
 #if (LOSCFG_MEM_FREE_BY_TASKID == 1 || LOSCFG_TASK_MEM_USED == 1)
-                taskID = ((struct OsMemUsedNodeHead *)tmpNode)->header.taskID;
+                queueId = ((struct OsMemUsedNodeHead *)tmpNode)->header.queueId;
 #endif
                 goto ERROUT;
             }
@@ -2333,7 +2333,7 @@ STATIC VOID OsMemExcInfoGetSub(struct OsMemPoolHead *pool, MemInfoCB *memExcInfo
 ERROUT:
     memExcInfo->errorAddr = (UINTPTR)((CHAR *)tmpNode + OS_MEM_NODE_HEAD_SIZE);
     memExcInfo->errorLen = OS_MEM_NODE_GET_SIZE(tmpNode->sizeAndFlag) - OS_MEM_NODE_HEAD_SIZE;
-    memExcInfo->errorOwner = taskID;
+    memExcInfo->errorOwner = queueId;
     MEM_UNLOCK(pool, intSave);
     return;
 }

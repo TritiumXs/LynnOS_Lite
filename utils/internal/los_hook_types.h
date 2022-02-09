@@ -59,12 +59,12 @@ typedef VOID *VOID_PTR;
     LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_MEM_REALLOC, (VOID_PTR pool, VOID_PTR ptr, UINT32 size))                \
     LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_MEM_ALLOCALIGN, (VOID_PTR pool, VOID_PTR ptr, UINT32 size, UINT32 boundary))  \
     /* Hook types supported by event modules */                                                             \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_INIT, (PEVENT_CB_S eventCB))                                      \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_READ, (PEVENT_CB_S eventCB, UINT32 eventMask, UINT32 mode,        \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_INIT, (LosPEventCB eventCB))                                      \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_READ, (LosPEventCB eventCB, UINT32 eventMask, UINT32 mode,        \
                         UINT32 timeout))                                                                    \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_WRITE, (PEVENT_CB_S eventCB, UINT32 events))                      \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_CLEAR, (PEVENT_CB_S eventCB, UINT32 events))                      \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_DESTROY, (PEVENT_CB_S eventCB))                                   \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_WRITE, (LosPEventCB eventCB, UINT32 events))                      \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_CLEAR, (LosPEventCB eventCB, UINT32 events))                      \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_EVENT_DESTROY, (LosPEventCB eventCB))                                   \
     /* Hook types supported by queue modules */                                                             \
     LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_QUEUE_CREATE, (const LosQueueCB *queueCB))                              \
     LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_QUEUE_READ, (const LosQueueCB *queueCB, UINT32 operateType,             \
@@ -97,11 +97,11 @@ typedef VOID *VOID_PTR;
     LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_ISR_ENTER, (UINT32 hwiIndex))                                           \
     LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_ISR_EXIT, (UINT32 hwiIndex))                                            \
     /* Hook types supported by swtmr modules */                                                             \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_CREATE, (const SWTMR_CTRL_S *swtmr))                              \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_DELETE, (const SWTMR_CTRL_S *swtmr))                              \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_EXPIRED, (const SWTMR_CTRL_S *swtmr))                             \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_START, (const SWTMR_CTRL_S *swtmr))                               \
-    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_STOP, (const SWTMR_CTRL_S *swtmr))
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_CREATE, (const LosSwtmrCB *swtmr))                              \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_DELETE, (const LosSwtmrCB *swtmr))                              \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_EXPIRED, (const LosSwtmrCB *swtmr))                             \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_START, (const LosSwtmrCB *swtmr))                               \
+    LOS_HOOK_TYPE_DEF(LOS_HOOK_TYPE_SWTMR_STOP, (const LosSwtmrCB *swtmr))
 
 /**
  * Defines the types of all hooks.

@@ -39,7 +39,7 @@ static UINT32 Testcase(VOID)
     UINT32 ret;
     UINT32 swTmrID;
     CHAR buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
-    QUEUE_INFO_S queueInfo;
+    QueueInfo queueInfo;
 
     ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &swTmrID, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
@@ -50,7 +50,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_QueueInfoGet(swTmrID, &queueInfo);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     ICUNIT_GOTO_EQUAL(queueInfo.queueLen, 3, queueInfo.queueLen, EXIT); // Compare wiht the expected value 3.
-    ICUNIT_GOTO_EQUAL(queueInfo.queueID, swTmrID, queueInfo.queueID, EXIT);
+    ICUNIT_GOTO_EQUAL(queueInfo.queueId, swTmrID, queueInfo.queueId, EXIT);
 
     ret = LOS_QueueDelete(swTmrID);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);

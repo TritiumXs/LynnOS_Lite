@@ -52,14 +52,14 @@ static UINT32 Testcase(VOID)
     h = LOS_SignalSet(SIGUSR1, SIG_DFL);
     ICUNIT_ASSERT_NOT_EQUAL(h, SIG_ERR, h);
 
-    ret = LOS_SignalSend(LOS_CurTaskIDGet(), SIGUSR1);
+    ret = LOS_SignalSend(LOS_CurTaskIdGet(), SIGUSR1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_ASSERT_EQUAL(g_sigValue, -1, g_sigValue);
 
     h = LOS_SignalSet(SIGUSR1, SigHandler);
     ICUNIT_ASSERT_NOT_EQUAL(h, SIG_ERR, h);
 
-    ret = LOS_SignalSend(LOS_CurTaskIDGet(), SIGUSR1);
+    ret = LOS_SignalSend(LOS_CurTaskIdGet(), SIGUSR1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_ASSERT_EQUAL(g_sigValue, SIGUSR1, g_sigValue);
     g_sigValue = -1;
@@ -67,7 +67,7 @@ static UINT32 Testcase(VOID)
     h = LOS_SignalSet(SIGUSR1, SIG_IGN);
     ICUNIT_ASSERT_NOT_EQUAL(h, SIG_ERR, h);
 
-    ret = LOS_SignalSend(LOS_CurTaskIDGet(), SIGUSR1);
+    ret = LOS_SignalSend(LOS_CurTaskIdGet(), SIGUSR1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_SIGNAL_NO_SET, ret);
     ICUNIT_ASSERT_EQUAL(g_sigValue, -1, g_sigValue);
 

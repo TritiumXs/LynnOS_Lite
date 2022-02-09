@@ -44,7 +44,7 @@ static VOID TaskF01(VOID)
     ICUNIT_GOTO_EQUAL(g_testCount, 0, g_testCount, EXIT);
     g_testCount++;
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff1, QUEUE_BUF_SIZE, 0xff);
+    ret = LOS_QueueRead(g_testQueueId01, &buff1, QUEUE_BUF_SIZE, 0xff);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_ISEMPTY, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 0, g_testCount, EXIT);
@@ -57,29 +57,29 @@ EXIT:
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
+    TskInitParam task1 = { 0 };
 
-    ret = LOS_QueueCreate("Q1", QUEUE_SIZE, &g_testQueueID01, 0, QUEUE_BUF_SIZE);
+    ret = LOS_QueueCreate("Q1", QUEUE_SIZE, &g_testQueueId01, 0, QUEUE_BUF_SIZE);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk093A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
 
     g_testCount = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     g_testCount++;
 
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     LOS_TaskDelay(3); // 3, set delay time
     ICUNIT_ASSERT_EQUAL(g_testCount, 2, g_testCount); // 2, Here, assert that g_testCount is equal to 2.
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 }

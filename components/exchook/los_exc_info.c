@@ -194,7 +194,7 @@ STATIC UINT32 OsExcHookFunc(UINT32 type, UINT32 index, UINT32 loop, UINT32 len, 
 #if (LOSCFG_BASE_IPC_QUEUE == 1)
 STATIC UINT32 OsExcQueueMsgGet(UINT32 type, VOID *arg)
 {
-    UINT32 len = sizeof(QUEUE_INFO_S);
+    UINT32 len = sizeof(QueueInfo);
     UINT32 loop = *(UINT32 *)arg;
 
     return OsExcHookFunc(type, 1, loop, len, (EXC_INFO_SAVE_CALLBACK)LOS_QueueInfoGet);
@@ -203,7 +203,7 @@ STATIC UINT32 OsExcQueueMsgGet(UINT32 type, VOID *arg)
 
 STATIC UINT32 OsExcTaskMsgGet(UINT32 type, VOID *arg)
 {
-    UINT32 len = sizeof(TSK_INFO_S);
+    UINT32 len = sizeof(TskInfo);
     UINT32 loop = *(UINT32 *)arg;
 
     return OsExcHookFunc(type, 0, loop, len, (EXC_INFO_SAVE_CALLBACK)LOS_TaskInfoGet);

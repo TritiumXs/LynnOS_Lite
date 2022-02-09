@@ -56,17 +56,17 @@ static VOID TaskF01(void)
 VOID TaskF02(void)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1;
+    TskInitParam task1;
 
     g_testCount++;
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "LosMB2_2";
-    task1.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    task1.usTaskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority, it is higher than the current task.
-    task1.uwResved = 0;
+    task1.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    task1.taskPrio = TASK_PRIO_TEST - 3; // 3, set new task priority, it is higher than the current task.
+    task1.resved = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task1);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     LOS_TaskDelay(1); // 1, set delay time.
@@ -83,20 +83,20 @@ VOID TaskF02(void)
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task;
+    TskInitParam task;
 
     g_testCount = 0;
 
     ret = LOS_MuxCreate(&g_mutexTest);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
-    task.usTaskPrio = (TASK_PRIO_TEST - 1); // 1, set new task priority, it is higher than the current task.
+    task.pfnTaskEntry = (TskEntryFunc)TaskF02;
+    task.taskPrio = (TASK_PRIO_TEST - 1); // 1, set new task priority, it is higher than the current task.
     task.pcName = "LosMB2_1";
-    task.uwStackSize = TASK_STACK_SIZE_TEST * 2; // 2, Used to represent larger stack space  
-    task.uwResved = 0;
+    task.stackSize = TASK_STACK_SIZE_TEST * 2; // 2, Used to represent larger stack space
+    task.resved = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
 
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
@@ -106,9 +106,9 @@ static UINT32 Testcase(VOID)
     ret = LOS_MuxDelete(g_mutexTest);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskDelete(g_testTaskID02);
+    ret = LOS_TaskDelete(g_testTaskId02);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_NOT_CREATED, ret);
     return LOS_OK;
 }

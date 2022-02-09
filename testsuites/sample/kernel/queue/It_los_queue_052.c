@@ -39,25 +39,25 @@ static UINT32 Testcase(VOID)
 
     g_testCount = 0;
 
-    ret = LOS_QueueCreate("Q1", 1, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", 1, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
+    ret = LOS_QueueRead(g_testQueueId01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_TIMEOUT, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
+    ret = LOS_QueueWrite(g_testQueueId01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
+    ret = LOS_QueueWrite(g_testQueueId01, buff1, QUEUE_BASE_MSGSIZE, 0xf);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_TIMEOUT, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     return LOS_OK;
 
 EXIT:
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 }
 

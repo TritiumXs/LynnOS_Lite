@@ -36,71 +36,71 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret, i, j;
     UINT32 index;
-    UINT32 queueID[LOSCFG_BASE_IPC_QUEUE_LIMIT + 1];
+    UINT32 queueId[LOSCFG_BASE_IPC_QUEUE_LIMIT + 1];
     CHAR filebuf[260] = "abcdeabcde0123456789abcedfghij9876550210abcdeabcde0123456789abcedfghij9876550210abcdeabcde0123"
                         "456789abcedfghij9876550210abcdeabcde0123456789abcedfghij9876550210abcdeabcde0123456789abcedfgh"
                         "ij9876550210abcdeabcde0123456789abcedfghij9876550210lalalalalalalala";
     CHAR readbuf[260] = ""; // 260, buffersize
-    QUEUE_INFO_S queueInfo;
+    QueueInfo queueInfo;
 
     const UINT32 len = 1;
     const UINT32 count = 256; // 256, set maxMsgSize
 
     UINT32 limit = LOSCFG_BASE_IPC_QUEUE_LIMIT - QUEUE_EXISTED_NUM;
     for (index = 0; index < limit; index++) {
-        ret = LOS_QueueCreate(NULL, len, &queueID[index], 0, count);
+        ret = LOS_QueueCreate(NULL, len, &queueId[index], 0, count);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-        ret = LOS_QueueInfoGet(queueID[index], &queueInfo);
+        ret = LOS_QueueInfoGet(queueId[index], &queueInfo);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
         ICUNIT_GOTO_EQUAL(queueInfo.queueLen, len, queueInfo.queueLen, EXIT);
-        ICUNIT_GOTO_EQUAL(queueInfo.queueID, queueID[index], queueInfo.queueID, EXIT);
+        ICUNIT_GOTO_EQUAL(queueInfo.queueId, queueId[index], queueInfo.queueId, EXIT);
     }
 
-    ret = LOS_QueueCreate("Q1", len, &queueID[LOSCFG_BASE_IPC_QUEUE_LIMIT + 1], 0, count);
+    ret = LOS_QueueCreate("Q1", len, &queueId[LOSCFG_BASE_IPC_QUEUE_LIMIT + 1], 0, count);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_CB_UNAVAILABLE, ret, EXIT);
 
     for (j = 0; j < 100; j++) { // 100, test times
         for (index = 0; index < limit; index++) {
             for (i = 0; i < len; i++) {
-                ret = LOS_QueueWrite(queueID[index], filebuf, count, 0);
+                ret = LOS_QueueWrite(queueId[index], filebuf, count, 0);
                 ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
             }
-            ret = LOS_QueueWrite(queueID[index], filebuf, count, 0);
+            ret = LOS_QueueWrite(queueId[index], filebuf, count, 0);
             ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_ISFULL, ret, EXIT);
 
             for (i = 0; i < len; i++) {
                 (void)memset_s(readbuf, sizeof(readbuf), 0, 260); // 260, buffersize
-                ret = LOS_QueueRead(queueID[index], readbuf, count, 0);
+                ret = LOS_QueueRead(queueId[index], readbuf, count, 0);
                 ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
             }
-            ret = LOS_QueueRead(queueID[index], readbuf, count, 0);
+            ret = LOS_QueueRead(queueId[index], readbuf, count, 0);
             ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_ISEMPTY, ret, EXIT);
         }
     }
-    ret = LOS_QueueWrite(queueID[limit - 1], filebuf, count, 0);
+    ret = LOS_QueueWrite(queueId[limit - 1], filebuf, count, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(queueID[limit - 1], readbuf, count, 0);
+    ret = LOS_QueueRead(queueId[limit - 1], readbuf, count, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueInfoGet(queueID[limit - 1], &queueInfo);
+    ret = LOS_QueueInfoGet(queueId[limit - 1], &queueInfo);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     ICUNIT_GOTO_EQUAL(queueInfo.queueLen, len, queueInfo.queueLen, EXIT);
-    ICUNIT_GOTO_EQUAL(queueInfo.queueID, queueID[limit - 1], queueInfo.queueID, EXIT);
+    ICUNIT_GOTO_EQUAL(queueInfo.queueId, queueId[limit - 1], queueInfo.queueId, EXIT);
 
-    ret = LOS_QueueRead(queueID[limit - 1], readbuf, count, 0);
+    ret = LOS_QueueRead(queueId[limit - 1], readbuf, count, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_ISEMPTY, ret, EXIT);
 
     for (index = 0; index < limit; index++) {
-        ret = LOS_QueueDelete(queueID[index]);
+        ret = LOS_QueueDelete(queueId[index]);
         ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     }
     return LOS_OK;
 
 EXIT:
     for (index = 0; index < limit; index++) {
-        LOS_QueueDelete(queueID[index]);
+        LOS_QueueDelete(queueId[index]);
     }
     return LOS_OK;
 }

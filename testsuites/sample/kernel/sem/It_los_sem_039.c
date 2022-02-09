@@ -44,13 +44,13 @@ static VOID TaskF02(void)
 
     for (index = 0; index < g_actMuxUsedcnt; index++) {
         for (i = 0; i < IT_SEMLOOP; i++) {
-            ret = LOS_SemPost(g_usSemID3[index]);
+            ret = LOS_SemPost(g_testSemId3[index]);
             ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
         }
     }
 
     g_testCount++;
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 }
 
 static VOID TaskF01(void)
@@ -61,13 +61,13 @@ static VOID TaskF01(void)
 
     for (index = 0; index < g_actMuxUsedcnt; index++) {
         for (i = 0; i < IT_SEMLOOP; i++) {
-            ret = LOS_SemPost(g_usSemID3[index]);
+            ret = LOS_SemPost(g_testSemId3[index]);
             ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
         }
     }
 
     g_testCount++;
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static UINT32 Testcase(VOID)
@@ -75,7 +75,7 @@ static UINT32 Testcase(VOID)
     UINT32 ret;
     UINT32 loop;
     UINT32 index;
-    TSK_INIT_PARAM_S task = { 0 };
+    TskInitParam task = { 0 };
 
     LosSemCB *semNode = NULL;
 
@@ -91,35 +91,35 @@ static UINT32 Testcase(VOID)
     g_actMuxUsedcnt = LOSCFG_BASE_IPC_SEM_LIMIT - osMuxUsedcnt;
 
     for (loop = 0; loop < IT_SEMLOOP; loop++) {
-        task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+        task.pfnTaskEntry = (TskEntryFunc)TaskF01;
         task.pcName = "SemTsk5";
-        task.uwStackSize = TASK_STACK_SIZE_TEST;
-        task.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+        task.stackSize = TASK_STACK_SIZE_TEST;
+        task.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
 
         g_testCount = 0;
 
         for (index = 0; index < g_actMuxUsedcnt; index++) {
-            ret = LOS_SemCreate(0, &g_usSemID3[index]);
+            ret = LOS_SemCreate(0, &g_testSemId3[index]);
             ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
         }
 
-        ret = LOS_TaskCreate(&g_testTaskID01, &task);
+        ret = LOS_TaskCreate(&g_testTaskId01, &task);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
         ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
         g_testCount++;
 
-        task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+        task.pfnTaskEntry = (TskEntryFunc)TaskF02;
         task.pcName = "SemTsk5_1";
-        task.usTaskPrio = TASK_PRIO_TEST - 1;
-        ret = LOS_TaskCreate(&g_testTaskID02, &task);
+        task.taskPrio = TASK_PRIO_TEST - 1;
+        ret = LOS_TaskCreate(&g_testTaskId02, &task);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
         ICUNIT_GOTO_EQUAL(g_testCount, 3, g_testCount, EXIT); // 3, Here, assert that g_testCount is equal to 3.
 
     EXIT:
         for (index = 0; index < g_actMuxUsedcnt; index++) {
-            ret = LOS_SemDelete(g_usSemID3[index]);
+            ret = LOS_SemDelete(g_testSemId3[index]);
             ICUNIT_TRACK_EQUAL(ret, LOS_OK, ret);
         }
     }

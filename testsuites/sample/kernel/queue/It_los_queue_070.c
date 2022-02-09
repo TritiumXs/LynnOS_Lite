@@ -38,24 +38,24 @@ static UINT32 Testcase(VOID)
     CHAR buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
     CHAR buff2[10];
 
-    g_testQueueID01 = 0xFF;
-
-    ret = LOS_QueueCreate("Q1", 30, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);  // 30, Create a queue with 3 nodes for test
+    g_testQueueId01 = 0xFF;
+    // 30, Create a queue with 3 nodes for test.
+    ret = LOS_QueueCreate("Q1", 30, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ret = LOS_QueueRead((LOSCFG_BASE_IPC_QUEUE_LIMIT + 1), &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_NOT_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 }

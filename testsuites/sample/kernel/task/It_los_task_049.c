@@ -33,7 +33,7 @@
 #include "It_los_task.h"
 
 
-static TSK_INFO_S g_taskInfo;
+static TskInfo g_taskInfo;
 static VOID TaskF01(VOID)
 {
     UINT32 ret;
@@ -48,23 +48,23 @@ static VOID TaskF01(VOID)
     ret = LOS_TaskInfoGet(LOSCFG_BASE_CORE_TSK_LIMIT - 1, &g_taskInfo);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_TSK_NOT_CREATED, ret, EXIT1);
 
-    ret = LOS_TaskInfoGet(g_testTaskID01, NULL);
+    ret = LOS_TaskInfoGet(g_testTaskId01, NULL);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_TSK_PTR_NULL, ret, EXIT1);
 
-    ret = LOS_TaskInfoGet(g_testTaskID01, &g_taskInfo);
+    ret = LOS_TaskInfoGet(g_testTaskId01, &g_taskInfo);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
     ICUNIT_GOTO_STRING_EQUAL(g_taskInfo.acName, "Tsk049A", g_taskInfo.acName, EXIT1);
-    ICUNIT_GOTO_EQUAL(g_taskInfo.uwTaskID, g_testTaskID01, g_taskInfo.uwTaskID, EXIT1);
+    ICUNIT_GOTO_EQUAL(g_taskInfo.taskId, g_testTaskId01, g_taskInfo.taskId, EXIT1);
 
     // 2, Assert that current task`s priority is equal to the priority was setted.
-    ICUNIT_GOTO_EQUAL(g_taskInfo.usTaskPrio, TASK_PRIO_TEST - 2, g_taskInfo.usTaskPrio, EXIT1);
-    ICUNIT_GOTO_EQUAL(OS_TASK_STATUS_RUNNING & g_taskInfo.usTaskStatus, OS_TASK_STATUS_RUNNING,
-        OS_TASK_STATUS_RUNNING & g_taskInfo.usTaskStatus, EXIT1);
+    ICUNIT_GOTO_EQUAL(g_taskInfo.taskPrio, TASK_PRIO_TEST - 2, g_taskInfo.taskPrio, EXIT1);
+    ICUNIT_GOTO_EQUAL(OS_TASK_STATUS_RUNNING & g_taskInfo.taskStatus, OS_TASK_STATUS_RUNNING,
+        OS_TASK_STATUS_RUNNING & g_taskInfo.taskStatus, EXIT1);
 
     return;
 
 EXIT1:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return;
 }
@@ -72,21 +72,21 @@ EXIT1:
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
+    TskInitParam task1 = { 0 };
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk049A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
 
     g_testCount = 0;
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 }
 
