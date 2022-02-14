@@ -38,7 +38,7 @@
 #include "riscv_hal.h"
 #include "los_debug.h"
 
-STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler);
+STATIC UINT32 SysTickStart(HwiProcFunc handler);
 STATIC UINT64 SysTickReload(UINT64 nextResponseTime);
 STATIC UINT64 SysTickCycleGet(UINT32 *period);
 STATIC VOID SysTickLock(VOID);
@@ -56,12 +56,13 @@ STATIC ArchTickTimer g_archTickTimer = {
     .tickHandler = NULL,
 };
 
-STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
+STATIC UINT32 SysTickStart(HwiProcFunc handler)
 {
     ArchTickTimer *tick = &g_archTickTimer;
+    HwiIrqParam irqParam;
+    irqParam.arg = (UINT32)LOSCFG_BASE_CORE_TICK_RESPONSE_MAX;
 
-    UINT32 period = (UINT32)LOSCFG_BASE_CORE_TICK_RESPONSE_MAX;
-    UINT32 ret = LOS_HwiCreate(RISCV_MACH_TIMER_IRQ, 0x1, 0, handler, period);
+    UINT32 ret = LOS_HwiCreate(RISCV_MACH_TIMER_IRQ, 0x1, 0, handler, &irqParam);
     if (ret != LOS_OK) {
         return ret;
     }
@@ -69,7 +70,7 @@ STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
     tick->freq = OS_SYS_CLOCK;
 
     WRITE_UINT32(0xffffffff, MTIMERCMP + 4); /* The high 4 bits of mtimer */
-    WRITE_UINT32(period, MTIMERCMP);
+    WRITE_UINT32((UINT32)LOSCFG_BASE_CORE_TICK_RESPONSE_MAX, MTIMERCMP);
     WRITE_UINT32(0x0, MTIMERCMP + 4); /* The high 4 bits of mtimer */
 
     HalIrqEnable(RISCV_MACH_TIMER_IRQ);

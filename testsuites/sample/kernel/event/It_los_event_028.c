@@ -36,8 +36,8 @@
 #define QUEUE_MAX_LEN 10
 #define QUEUE_MAX_NODE_SIZE 10
 
-extern UINT32 g_usSemID;
-extern UINT32 g_testQueueID01;
+extern UINT32 g_testSemId;
+extern UINT32 g_testQueueId01;
 
 static VOID SwtmrF01(VOID)
 {
@@ -61,31 +61,31 @@ static VOID TaskF01(VOID)
     ret = LOS_EventRead(&g_pevent, 0x1, LOS_WAITMODE_AND, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, 0x1, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, str, QUEUE_MAX_NODE_SIZE, LOS_WAIT_FOREVER);
+    ret = LOS_QueueWrite(g_testQueueId01, str, QUEUE_MAX_NODE_SIZE, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-    ret = LOS_QueueRead(g_testQueueID01, str, QUEUE_MAX_NODE_SIZE, LOS_WAIT_FOREVER);
+    ret = LOS_QueueRead(g_testQueueId01, str, QUEUE_MAX_NODE_SIZE, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
     ret = LOS_EventRead(&g_pevent, 0x2, LOS_WAITMODE_AND, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, 0x2, ret, EXIT1);
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
 EXIT2:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
 EXIT1:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     ret = LOS_EventClear(&g_pevent, 0);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
@@ -100,50 +100,51 @@ static UINT32 Testcase(VOID)
 
     UINT32 swTmrID;
 
-    TSK_INIT_PARAM_S task1;
-    (void)memset_s(&task1, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    TskInitParam task1;
+    (void)memset_s(&task1, sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "EventTsk28";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the test task.
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the test task.
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
 
-    ret = LOS_SemCreate(1, &g_usSemID);
+    ret = LOS_SemCreate(1, &g_testSemId);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueCreate("EventTsk28_Queue", QUEUE_MAX_LEN, &g_testQueueID01, 0, QUEUE_MAX_NODE_SIZE);
+    ret = LOS_QueueCreate("EventTsk28_Queue", QUEUE_MAX_LEN, &g_testQueueId01, 0, QUEUE_MAX_NODE_SIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     /* 4, Timeout interval of a periodic software timer. */
-    ret = LOS_SwtmrCreate(4, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID, 0xffff,
+    ret = LOS_SwtmrCreate(4, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID, 0xffff,
         OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE);
 #else
-    ret = LOS_SwtmrCreate(4, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID, 0xffff); // 4, Timeout interval of a periodic software timer.
+    /* 4, Timeout interval of a periodic software timer. */
+    ret = LOS_SwtmrCreate(4, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID, 0xffff);
 #endif
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
     LOS_SwtmrStart(swTmrID);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT3);
 
     LOS_TaskDelay(10); // 10, set delay time.
 
 EXIT3:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
 EXIT2:
     ret = LOS_SwtmrDelete(swTmrID);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
 EXIT1:
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
 
 EXIT:
-    LOS_SemDelete(g_usSemID);
+    LOS_SemDelete(g_testSemId);
     return LOS_OK;
 }
 

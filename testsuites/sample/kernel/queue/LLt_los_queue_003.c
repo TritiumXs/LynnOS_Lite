@@ -75,23 +75,25 @@ EXIT:
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1221 = {0};
-    TSK_INIT_PARAM_S task1222 = {0};
-    UINT32 taskID1221, taskID1222;
-    QUEUE_INFO_S queueInfo;
+    TskInitParam task1221 = {0};
+    TskInitParam task1222 = {0};
+    UINT32 taskId1221, taskId1222;
+    QueueInfo queueInfo;
     VOID *memBox = NULL;
 
-    task1221.pfnTaskEntry = (TSK_ENTRY_FUNC)StTaskAllocWait;
+    task1221.pfnTaskEntry = (TskEntryFunc)StTaskAllocWait;
     task1221.pcName       = "TskName122_1";
-    task1221.uwStackSize  = TASK_STACK_SIZE_TEST;
-    task1221.usTaskPrio   = 23; // 23, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task1221.uwResved     = LOS_TASK_STATUS_DETACHED;
+    task1221.stackSize    = TASK_STACK_SIZE_TEST;
+    // 23, Set the priority according to the task purpose, a smaller number means a higher priority.
+    task1221.taskPrio     = 23;
+    task1221.resved       = LOS_TASK_STATUS_DETACHED;
 
-    task1222.pfnTaskEntry = (TSK_ENTRY_FUNC)StTaskAllocNoWait;
+    task1222.pfnTaskEntry = (TskEntryFunc)StTaskAllocNoWait;
     task1222.pcName       = "TskName122_2";
-    task1222.uwStackSize  = TASK_STACK_SIZE_TEST;
-    task1222.usTaskPrio   = 23; // 23, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task1222.uwResved     = LOS_TASK_STATUS_DETACHED;
+    task1222.stackSize    = TASK_STACK_SIZE_TEST;
+    // 23, Set the priority according to the task purpose, a smaller number means a higher priority.
+    task1222.taskPrio     = 23;
+    task1222.resved       = LOS_TASK_STATUS_DETACHED;
 
     ret = LOS_QueueCreate("Q122", 1, &g_uwQueueID122, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
@@ -102,10 +104,10 @@ static UINT32 Testcase(VOID)
     memBox = OsQueueMailAlloc(g_uwQueueID122, (VOID *)g_aucMailBoxPool, LOS_NO_WAIT);
     ICUNIT_GOTO_NOT_EQUAL(memBox, NULL, memBox, EXIT);
 
-    ret = LOS_TaskCreate(&taskID1221, &task1221);
+    ret = LOS_TaskCreate(&taskId1221, &task1221);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_TaskCreate(&taskID1222, &task1222);
+    ret = LOS_TaskCreate(&taskId1222, &task1222);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     /* make sure the first OsQueueMailAlloc is failed of task1 and task2. */

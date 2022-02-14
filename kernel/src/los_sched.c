@@ -79,7 +79,7 @@ STATIC INLINE VOID OsTimeSliceUpdate(LosTaskCB *taskCB, UINT64 currTime)
     LOS_ASSERT(currTime >= taskCB->startTime);
 
     INT32 incTime = currTime - taskCB->startTime;
-    if (taskCB->taskID != g_idleTaskID) {
+    if (taskCB->taskId != g_idleTaskId) {
         taskCB->timeSlice -= incTime;
     }
     taskCB->startTime = currTime;
@@ -130,13 +130,17 @@ VOID OsSchedUpdateExpireTime(VOID)
 #if (LOSCFG_KERNEL_PM == 1)
     isPmMode = OsIsPmMode();
 #endif
-    if ((runTask->taskID != g_idleTaskID) && !isPmMode) {
+    if ((runTask->taskId != g_idleTaskId) && !isPmMode) {
         INT32 timeSlice = (runTask->timeSlice <= OS_TIME_SLICE_MIN) ? OS_SCHED_TIME_SLICES : runTask->timeSlice;
         endTime = runTask->startTime + timeSlice;
     } else {
         endTime = OS_SCHED_MAX_RESPONSE_TIME - OS_TICK_RESPONSE_PRECISION;
     }
+<<<<<<< HEAD
     OsSchedSetNextExpireTime(runTask->taskID, endTime);
+=======
+    OsSchedSetNextExpireTime(runTask->taskId, endTime);
+>>>>>>> 574fc44... fix(liteos_m): kernel接口融合，添加/修改kernel函数
 }
 
 STATIC INLINE VOID OsSchedPriQueueEnHead(LOS_DL_LIST *priqueueItem, UINT32 priority)
@@ -226,7 +230,7 @@ VOID OsSchedTaskEnQueue(LosTaskCB *taskCB)
 {
     LOS_ASSERT(!(taskCB->taskStatus & OS_TASK_STATUS_READY));
 
-    if (taskCB->taskID != g_idleTaskID) {
+    if (taskCB->taskId != g_idleTaskId) {
         if (taskCB->timeSlice > OS_TIME_SLICE_MIN) {
             OsSchedPriQueueEnHead(&taskCB->pendList, taskCB->priority);
         } else {
@@ -245,7 +249,7 @@ VOID OsSchedTaskEnQueue(LosTaskCB *taskCB)
 VOID OsSchedTaskDeQueue(LosTaskCB *taskCB)
 {
     if (taskCB->taskStatus & OS_TASK_STATUS_READY) {
-        if (taskCB->taskID != g_idleTaskID) {
+        if (taskCB->taskId != g_idleTaskId) {
             OsSchedPriQueueDelete(&taskCB->pendList, taskCB->priority);
         }
 
@@ -447,7 +451,7 @@ LosTaskCB *OsGetTopTask(VOID)
         priority = CLZ(g_queueBitmap);
         newTask = LOS_DL_LIST_ENTRY(((LOS_DL_LIST *)&g_priQueueList[priority])->pstNext, LosTaskCB, pendList);
     } else {
-        newTask = OS_TCB_FROM_TID(g_idleTaskID);
+        newTask = OS_TCB_FROM_TID(g_idleTaskId);
     }
 
     return newTask;
@@ -476,7 +480,11 @@ VOID OsSchedStart(VOID)
 
     g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
     g_schedResponseID = OS_INVALID;
+<<<<<<< HEAD
     OsSchedSetNextExpireTime(newTask->taskID, newTask->startTime + newTask->timeSlice);
+=======
+    OsSchedSetNextExpireTime(newTask->taskId, newTask->startTime + newTask->timeSlice);
+>>>>>>> 574fc44... fix(liteos_m): kernel接口融合，添加/修改kernel函数
 }
 
 BOOL OsSchedTaskSwitch(VOID)
@@ -509,16 +517,20 @@ BOOL OsSchedTaskSwitch(VOID)
 
     OsSchedTaskDeQueue(newTask);
 
-    if (newTask->taskID != g_idleTaskID) {
+    if (newTask->taskId != g_idleTaskId) {
         endTime = newTask->startTime + newTask->timeSlice;
     } else {
         endTime = OS_SCHED_MAX_RESPONSE_TIME - OS_TICK_RESPONSE_PRECISION;
     }
 
-    if (g_schedResponseID == runTask->taskID) {
+    if (g_schedResponseID == runTask->taskId) {
         g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
     }
+<<<<<<< HEAD
     OsSchedSetNextExpireTime(newTask->taskID, endTime);
+=======
+    OsSchedSetNextExpireTime(newTask->taskId, endTime);
+>>>>>>> 574fc44... fix(liteos_m): kernel接口融合，添加/修改kernel函数
 
     return isTaskSwitch;
 }

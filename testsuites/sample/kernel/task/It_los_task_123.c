@@ -40,26 +40,26 @@ static VOID *TaskDeatchf01(void *argument)
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    UINT32 taskID;
-    TSK_INIT_PARAM_S osTaskInitParam = { 0 };
+    UINT32 taskId;
+    TskInitParam osTaskInitParam = { 0 };
 
     g_testCount = 0;
 
-    osTaskInitParam.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskDeatchf01;
-    osTaskInitParam.uwStackSize = OS_TSK_TEST_STACK_SIZE;
+    osTaskInitParam.pfnTaskEntry = (TskEntryFunc)TaskDeatchf01;
+    osTaskInitParam.stackSize = OS_TSK_TEST_STACK_SIZE;
     osTaskInitParam.pcName = "deatch";
-    osTaskInitParam.usTaskPrio = TASK_PRIO_TEST - 5; /* 5: Relatively high priority */
-    osTaskInitParam.uwResved = LOS_TASK_ATTR_JOINABLE;
+    osTaskInitParam.taskPrio = TASK_PRIO_TEST - 5; /* 5: Relatively high priority */
+    osTaskInitParam.resved = LOS_TASK_ATTR_JOINABLE;
 
-    ret = LOS_TaskCreate(&taskID, &osTaskInitParam);
+    ret = LOS_TaskCreate(&taskId, &osTaskInitParam);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 1, g_testCount);
 
-    ret = LOS_TaskDetach(taskID);
+    ret = LOS_TaskDetach(taskId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskDelete(taskID);
+    ret = LOS_TaskDelete(taskId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_NOT_CREATED, ret);
     return LOS_OK;
 }

@@ -56,7 +56,7 @@ extern "C" {
  * @attention:
  * <ul><li>None.</li></ul>
  *
- * @param  taskID     [IN] Type#UINT32: TaskID.
+ * @param  taskId     [IN] Type#UINT32: TaskID.
  * @param  stackSize  [IN] Type#UINT32: Total size of the stack.
  * @param  topStack   [IN] Type#VOID *: Top of task's stack.
  *
@@ -65,7 +65,7 @@ extern "C" {
  * <ul><li>los_context.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack);
+VOID *ArchTskStackInit(UINT32 taskId, UINT32 stackSize, VOID *topStack);
 
 /**
  * @ingroup  los_context

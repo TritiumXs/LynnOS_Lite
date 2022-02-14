@@ -94,15 +94,15 @@ STATIC INLINE INT32 MqNameCheck(const CHAR *mqName)
     return 0;
 }
 
-STATIC INLINE UINT32 GetMqueueCBByID(UINT32 queueID, LosQueueCB **queueCB)
+STATIC INLINE UINT32 GetMqueueCBByID(UINT32 queueId, LosQueueCB **queueCB)
 {
     LosQueueCB *tmpQueueCB = NULL;
     if (queueCB == NULL) {
         errno = EINVAL;
         return LOS_ERRNO_QUEUE_READ_PTR_NULL;
     }
-    tmpQueueCB = GET_QUEUE_HANDLE(queueID);
-    if ((GET_QUEUE_INDEX(queueID) >= LOSCFG_BASE_IPC_QUEUE_LIMIT) || (tmpQueueCB->queueID != queueID)) {
+    tmpQueueCB = GET_QUEUE_HANDLE(queueId);
+    if ((GET_QUEUE_INDEX(queueId) >= LOSCFG_BASE_IPC_QUEUE_LIMIT) || (tmpQueueCB->queueId != queueId)) {
         return LOS_ERRNO_QUEUE_INVALID;
     }
     *queueCB = tmpQueueCB;
@@ -179,16 +179,16 @@ STATIC int SaveMqueueName(const CHAR *mqName, struct mqarray *mqueueCB)
 STATIC struct mqpersonal *DoMqueueCreate(const struct mq_attr *attr, const CHAR *mqName, INT32 openFlag)
 {
     struct mqarray *mqueueCB = NULL;
-    UINT32 mqueueID;
+    UINT32 mqueueId;
 
-    UINT32 err = LOS_QueueCreate(NULL, attr->mq_maxmsg, &mqueueID, 0, attr->mq_msgsize);
+    UINT32 err = LOS_QueueCreate(NULL, attr->mq_maxmsg, &mqueueId, 0, attr->mq_msgsize);
     if (MapMqErrno(err) != ENOERR) {
         goto ERROUT;
     }
 
-    if (g_queueTable[GET_QUEUE_INDEX(mqueueID)].mqcb == NULL) {
-        mqueueCB = &(g_queueTable[GET_QUEUE_INDEX(mqueueID)]);
-        mqueueCB->mq_id = mqueueID;
+    if (g_queueTable[GET_QUEUE_INDEX(mqueueId)].mqcb == NULL) {
+        mqueueCB = &(g_queueTable[GET_QUEUE_INDEX(mqueueId)]);
+        mqueueCB->mq_id = mqueueId;
     }
 
     if (mqueueCB == NULL) {
@@ -534,7 +534,7 @@ STATIC INLINE BOOL MqParamCheck(mqd_t personal, const char *msg, size_t msgLen)
 int mq_timedsend(mqd_t personal, const char *msg, size_t msgLen, unsigned int msgPrio,
                  const struct timespec *absTimeout)
 {
-    UINT32 mqueueID, err;
+    UINT32 mqueueId, err;
     UINT64 absTicks;
     struct mqarray *mqueueCB = NULL;
     struct mqpersonal *privateMqPersonal = NULL;
@@ -555,10 +555,10 @@ int mq_timedsend(mqd_t personal, const char *msg, size_t msgLen, unsigned int ms
                                 EBADF);
 
     OS_MQ_GOTO_ERROUT_UNLOCK_IF(ConvertTimeout(privateMqPersonal->mq_flags, absTimeout, &absTicks) == -1, errno);
-    mqueueID = mqueueCB->mq_id;
+    mqueueId = mqueueCB->mq_id;
     (VOID)pthread_mutex_unlock(&g_mqueueMutex);
 
-    err = LOS_QueueWriteCopy(mqueueID, (VOID *)msg, (UINT32)msgLen, (UINT32)absTicks);
+    err = LOS_QueueWriteCopy(mqueueId, (VOID *)msg, (UINT32)msgLen, (UINT32)absTicks);
     if (MapMqErrno(err) != ENOERR) {
         goto ERROUT;
     }
@@ -572,7 +572,7 @@ ERROUT:
 ssize_t mq_timedreceive(mqd_t personal, char *msg, size_t msgLen, unsigned int *msgPrio,
                         const struct timespec *absTimeout)
 {
-    UINT32 mqueueID, err;
+    UINT32 mqueueId, err;
     UINT32 receiveLen;
     UINT64 absTicks;
     struct mqarray *mqueueCB = NULL;
@@ -609,10 +609,10 @@ ssize_t mq_timedreceive(mqd_t personal, char *msg, size_t msgLen, unsigned int *
     }
 
     receiveLen = msgLen;
-    mqueueID = mqueueCB->mq_id;
+    mqueueId = mqueueCB->mq_id;
     (VOID)pthread_mutex_unlock(&g_mqueueMutex);
 
-    err = LOS_QueueReadCopy(mqueueID, (VOID *)msg, &receiveLen, (UINT32)absTicks);
+    err = LOS_QueueReadCopy(mqueueId, (VOID *)msg, &receiveLen, (UINT32)absTicks);
     if (MapMqErrno(err) == ENOERR) {
         return (ssize_t)receiveLen;
     } else {

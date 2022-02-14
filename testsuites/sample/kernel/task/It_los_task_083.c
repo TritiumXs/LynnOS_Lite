@@ -50,9 +50,9 @@ static UINT32 TestCase(VOID)
     UINT8 delIndex;
     UINT16 pro;
     CHAR acName[TASK_NAME_NUM];
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE + 0x100;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE + 0x100;
 
     if (LOSCFG_BASE_CORE_SWTMR == 1) {
         pro = 1;
@@ -67,7 +67,7 @@ static UINT32 TestCase(VOID)
 
     for (g_index = startIndex; g_index < LOSCFG_BASE_CORE_TSK_LIMIT; pro++, g_testCount++, g_index++) {
         pro %= OS_TASK_PRIORITY_LOWEST;
-        task1.usTaskPrio = pro;
+        task1.taskPrio = pro;
         (void)sprintf_s(acName, TASK_NAME_NUM, "Tsk083_%d", g_index);
         task1.pcName = acName;
         ret = LOS_TaskCreate(&g_testTaskIdArray[g_index], &task1);

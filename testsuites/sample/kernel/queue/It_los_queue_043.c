@@ -38,13 +38,13 @@ static VOID TaskF01(VOID)
     CHAR buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
     g_testCount++;
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 100); // 100, Set the timeout time
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 100); // 100, Set the timeout time
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     g_testCount++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static VOID TaskF02(VOID)
@@ -54,59 +54,61 @@ static VOID TaskF02(VOID)
 
     g_testCount++;
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     g_testCount++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 }
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     CHAR buff1[8] = "UniDSP";
 
-    TSK_INIT_PARAM_S task1 = { 0 };
-    TSK_INIT_PARAM_S task2 = { 0 };
+    TskInitParam task1 = { 0 };
+    TskInitParam task2 = { 0 };
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "TskName1";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
-    task1.usTaskPrio = 22; // 22, Set the priority according to the task purpose,a smaller number means a higher priority.
+    task1.stackSize = TASK_STACK_SIZE_TEST;
+    // 22, Set the priority according to the task purpose, a smaller number means a higher priority.
+    task1.taskPrio = 22;
 
-    task2.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+    task2.pfnTaskEntry = (TskEntryFunc)TaskF02;
     task2.pcName = "TskName2";
-    task2.uwStackSize = TASK_STACK_SIZE_TEST;
-    task2.usTaskPrio = 21; // 21, Set the priority according to the task purpose,a smaller number means a higher priority.
+    task2.stackSize = TASK_STACK_SIZE_TEST;
+    // 21, Set the priority according to the task purpose, a smaller number means a higher priority.
+    task2.taskPrio = 21;
 
     g_testCount = 0;
-    ret = LOS_QueueCreate("Q1", 1, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", 1, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 100); // 100, Set the timeout time
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 100); // 100, Set the timeout time
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
     g_testCount++;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task2);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task2);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 5, g_testCount, EXIT); // Compare wiht the expected value 5.
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_QueueDelete(g_testQueueID02);
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_QueueDelete(g_testQueueId02);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 }
 
@@ -114,4 +116,3 @@ VOID ItLosQueue043(VOID)
 {
     TEST_ADD_CASE("ItLosQueue043", Testcase, TEST_LOS, TEST_QUE, TEST_LEVEL1, TEST_FUNCTION);
 }
-

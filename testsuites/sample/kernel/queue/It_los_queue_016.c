@@ -37,20 +37,20 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     UINT32 index;
-    UINT32 queueID[LOSCFG_BASE_IPC_QUEUE_LIMIT + 1];
+    UINT32 queueId[LOSCFG_BASE_IPC_QUEUE_LIMIT + 1];
 
     ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, NULL, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_QUEUE_CREAT_PTR_NULL, ret);
 
     UINT32 limit = LOSCFG_BASE_IPC_QUEUE_LIMIT - QUEUE_EXISTED_NUM;
     for (index = 0; index < limit; index++) {
-        ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &queueID[index], 0, QUEUE_BASE_MSGSIZE);
+        ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &queueId[index], 0, QUEUE_BASE_MSGSIZE);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     }
 
 EXIT:
     for (index = 0; index < limit; index++)
-        LOS_QueueDelete(queueID[index]);
+        LOS_QueueDelete(queueId[index]);
 
     return LOS_OK;
 }

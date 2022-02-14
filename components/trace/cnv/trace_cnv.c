@@ -70,125 +70,125 @@ STATIC VOID LOS_TraceMemAllocAlign(VOID *pool, VOID *ptr, UINT32 size, UINT32 bo
     LOS_TRACE(MEM_ALLOC_ALIGN, pool, (UINTPTR)ptr, size, boundary);
 }
 
-STATIC VOID LOS_TraceEventInit(PEVENT_CB_S eventCB)
+STATIC VOID LOS_TraceEventInit(LosPEventCB eventCB)
 {
     LOS_TRACE(EVENT_CREATE, (UINTPTR)eventCB);
 }
 
-STATIC VOID LOS_TraceEventRead(PEVENT_CB_S eventCB, UINT32 eventMask, UINT32 mode, UINT32 timeout)
+STATIC VOID LOS_TraceEventRead(LosPEventCB eventCB, UINT32 eventMask, UINT32 mode, UINT32 timeout)
 {
-    LOS_TRACE(EVENT_READ, (UINTPTR)eventCB, eventCB->uwEventID, eventMask, mode, timeout);
+    LOS_TRACE(EVENT_READ, (UINTPTR)eventCB, eventCB->eventId, eventMask, mode, timeout);
 }
 
-STATIC VOID LOS_TraceEventWrite(PEVENT_CB_S eventCB, UINT32 events)
+STATIC VOID LOS_TraceEventWrite(LosPEventCB eventCB, UINT32 events)
 {
-    LOS_TRACE(EVENT_WRITE, (UINTPTR)eventCB, eventCB->uwEventID, events);
+    LOS_TRACE(EVENT_WRITE, (UINTPTR)eventCB, eventCB->eventId, events);
 }
 
-STATIC VOID LOS_TraceEventClear(PEVENT_CB_S eventCB, UINT32 events)
+STATIC VOID LOS_TraceEventClear(LosPEventCB eventCB, UINT32 events)
 {
-    LOS_TRACE(EVENT_CLEAR, (UINTPTR)eventCB, eventCB->uwEventID, events);
+    LOS_TRACE(EVENT_CLEAR, (UINTPTR)eventCB, eventCB->eventId, events);
 }
 
-STATIC VOID LOS_TraceEventDestroy(PEVENT_CB_S eventCB)
+STATIC VOID LOS_TraceEventDestroy(LosPEventCB eventCB)
 {
     LOS_TRACE(EVENT_DELETE, (UINTPTR)eventCB, LOS_OK);
 }
 
 STATIC VOID LOS_TraceQueueCreate(const LosQueueCB *queueCB)
 {
-    LOS_TRACE(QUEUE_CREATE, queueCB->queueID, queueCB->queueLen, queueCB->queueSize - sizeof(UINT32),
+    LOS_TRACE(QUEUE_CREATE, queueCB->queueId, queueCB->queueLen, queueCB->queueSize - sizeof(UINT32),
                 (UINTPTR)queueCB, 0);
 }
 
 STATIC VOID LOS_TraceQueueRW(const LosQueueCB *queueCB, UINT32 operateType,
                     UINT32 bufferSize, UINT32 timeout)
 {
-    LOS_TRACE(QUEUE_RW, queueCB->queueID, queueCB->queueSize, bufferSize, operateType,
+    LOS_TRACE(QUEUE_RW, queueCB->queueId, queueCB->queueSize, bufferSize, operateType,
                 queueCB->readWriteableCnt[OS_QUEUE_READ], queueCB->readWriteableCnt[OS_QUEUE_WRITE], timeout);
 }
 
 STATIC VOID LOS_TraceQueueDelete(const LosQueueCB *queueCB)
 {
-    LOS_TRACE(QUEUE_DELETE, queueCB->queueID, queueCB->queueState, queueCB->readWriteableCnt[OS_QUEUE_READ]);
+    LOS_TRACE(QUEUE_DELETE, queueCB->queueId, queueCB->queueState, queueCB->readWriteableCnt[OS_QUEUE_READ]);
 }
 
 STATIC VOID LOS_TraceSemCreate(const LosSemCB *semCB)
 {
-    LOS_TRACE(SEM_CREATE, semCB->semID, 0, semCB->semCount);
+    LOS_TRACE(SEM_CREATE, semCB->semId, 0, semCB->semCount);
 }
 
 STATIC VOID LOS_TraceSemPost(const LosSemCB *semCB, const LosTaskCB *resumedTask)
 {
     (VOID)resumedTask;
-    LOS_TRACE(SEM_POST, semCB->semID, 0, semCB->semCount);
+    LOS_TRACE(SEM_POST, semCB->semId, 0, semCB->semCount);
 }
 
 STATIC VOID LOS_TraceSemPend(const LosSemCB *semCB, const LosTaskCB *runningTask, UINT32 timeout)
 {
     (VOID)runningTask;
-    LOS_TRACE(SEM_PEND, semCB->semID, semCB->semCount, timeout);
+    LOS_TRACE(SEM_PEND, semCB->semId, semCB->semCount, timeout);
 }
 
 STATIC VOID LOS_TraceSemDelete(const LosSemCB *semCB)
 {
-    LOS_TRACE(SEM_DELETE, semCB->semID, LOS_OK);
+    LOS_TRACE(SEM_DELETE, semCB->semId, LOS_OK);
 }
 
 STATIC VOID LOS_TraceMuxCreate(const LosMuxCB *muxCB)
 {
-    LOS_TRACE(MUX_CREATE, muxCB->muxID);
+    LOS_TRACE(MUX_CREATE, muxCB->muxId);
 }
 
 STATIC VOID LOS_TraceMuxPost(const LosMuxCB *muxCB)
 {
-    LOS_TRACE(MUX_POST, muxCB->muxID, muxCB->muxCount,
-                (muxCB->owner == NULL) ? 0xffffffff : muxCB->owner->taskID);
+    LOS_TRACE(MUX_POST, muxCB->muxId, muxCB->muxCount,
+                (muxCB->owner == NULL) ? 0xffffffff : muxCB->owner->taskId);
 }
 
 STATIC VOID LOS_TraceMuxPend(const LosMuxCB *muxCB, UINT32 timeout)
 {
-    LOS_TRACE(MUX_PEND, muxCB->muxID, muxCB->muxCount,
-                (muxCB->owner == NULL) ? 0xffffffff : muxCB->owner->taskID, timeout);
+    LOS_TRACE(MUX_PEND, muxCB->muxId, muxCB->muxCount,
+                (muxCB->owner == NULL) ? 0xffffffff : muxCB->owner->taskId, timeout);
 }
 
 STATIC VOID LOS_TraceMuxDelete(const LosMuxCB *muxCB)
 {
-    LOS_TRACE(MUX_DELETE, muxCB->muxID, muxCB->muxStat, muxCB->muxCount,
-                (muxCB->owner == NULL) ? 0xffffffff : muxCB->owner->taskID);
+    LOS_TRACE(MUX_DELETE, muxCB->muxId, muxCB->muxStat, muxCB->muxCount,
+                (muxCB->owner == NULL) ? 0xffffffff : muxCB->owner->taskId);
 }
 
 STATIC VOID LOS_TraceTaskCreate(const LosTaskCB *taskCB)
 {
-    LOS_TRACE(TASK_CREATE, taskCB->taskID, taskCB->taskStatus, taskCB->priority);
+    LOS_TRACE(TASK_CREATE, taskCB->taskId, taskCB->taskStatus, taskCB->priority);
 }
 
 STATIC VOID LOS_TraceTaskPriModify(const LosTaskCB *taskCB, UINT32 prio)
 {
-    LOS_TRACE(TASK_PRIOSET, taskCB->taskID, taskCB->taskStatus, taskCB->priority, prio);
+    LOS_TRACE(TASK_PRIOSET, taskCB->taskId, taskCB->taskStatus, taskCB->priority, prio);
 }
 
 STATIC VOID LOS_TraceTaskDelete(const LosTaskCB *taskCB)
 {
-    LOS_TRACE(TASK_DELETE, taskCB->taskID, taskCB->taskStatus, (UINTPTR)taskCB->stackPointer);
+    LOS_TRACE(TASK_DELETE, taskCB->taskId, taskCB->taskStatus, (UINTPTR)taskCB->stackPointer);
 }
 
 STATIC VOID LOS_TraceTaskSwitchedIn(VOID)
 {
     LosTaskCB *newTask = g_losTask.newTask;
     LosTaskCB *runTask = g_losTask.runTask;
-    LOS_TRACE(TASK_SWITCH, newTask->taskID, runTask->priority, runTask->taskStatus,
+    LOS_TRACE(TASK_SWITCH, newTask->taskId, runTask->priority, runTask->taskStatus,
         newTask->priority, newTask->taskStatus);
 }
 
 STATIC VOID LOS_TraceTaskResume(const LosTaskCB *taskCB)
 {
-    LOS_TRACE(TASK_RESUME, taskCB->taskID, taskCB->taskStatus, taskCB->priority);
+    LOS_TRACE(TASK_RESUME, taskCB->taskId, taskCB->taskStatus, taskCB->priority);
 }
 
 STATIC VOID LOS_TraceTaskSuspend(const LosTaskCB *taskCB)
 {
-    LOS_TRACE(TASK_SUSPEND, taskCB->taskID, taskCB->taskStatus, g_losTask.runTask->taskID);
+    LOS_TRACE(TASK_SUSPEND, taskCB->taskId, taskCB->taskStatus, g_losTask.runTask->taskId);
 }
 
 STATIC VOID LOS_TraceIsrEnter(UINT32 hwiNum)
@@ -201,29 +201,29 @@ STATIC VOID LOS_TraceIsrExit(UINT32 hwiNum)
     LOS_TRACE(HWI_RESPONSE_OUT, hwiNum);
 }
 
-STATIC VOID LOS_TraceSwtmrCreate(const SWTMR_CTRL_S *swtmr)
+STATIC VOID LOS_TraceSwtmrCreate(const LosSwtmrCB *swtmr)
 {
-    LOS_TRACE(SWTMR_CREATE, swtmr->usTimerID);
+    LOS_TRACE(SWTMR_CREATE, swtmr->swtmrId);
 }
 
-STATIC VOID LOS_TraceSwtmrDelete(const SWTMR_CTRL_S *swtmr)
+STATIC VOID LOS_TraceSwtmrDelete(const LosSwtmrCB *swtmr)
 {
-    LOS_TRACE(SWTMR_DELETE, swtmr->usTimerID);
+    LOS_TRACE(SWTMR_DELETE, swtmr->swtmrId);
 }
 
-STATIC VOID LOS_TraceSwtmrExpired(const SWTMR_CTRL_S *swtmr)
+STATIC VOID LOS_TraceSwtmrExpired(const LosSwtmrCB *swtmr)
 {
-    LOS_TRACE(SWTMR_EXPIRED, swtmr->usTimerID);
+    LOS_TRACE(SWTMR_EXPIRED, swtmr->swtmrId);
 }
 
-STATIC VOID LOS_TraceSwtmrStart(const SWTMR_CTRL_S *swtmr)
+STATIC VOID LOS_TraceSwtmrStart(const LosSwtmrCB *swtmr)
 {
-    LOS_TRACE(SWTMR_START, swtmr->usTimerID, swtmr->ucMode, swtmr->uwInterval);
+    LOS_TRACE(SWTMR_START, swtmr->swtmrId, swtmr->mode, swtmr->interval);
 }
 
-STATIC VOID LOS_TraceSwtmrStop(const SWTMR_CTRL_S *swtmr)
+STATIC VOID LOS_TraceSwtmrStop(const LosSwtmrCB *swtmr)
 {
-    LOS_TRACE(SWTMR_STOP, swtmr->usTimerID);
+    LOS_TRACE(SWTMR_STOP, swtmr->swtmrId);
 }
 
 VOID OsTraceCnvInit(VOID)

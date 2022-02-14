@@ -39,11 +39,11 @@
 static VOID SwtmrF01(void)
 {
     UINT32 ret;
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     if (g_testCount >= 0xf) {
-        LOS_TaskDelete(g_testTaskID01);
+        LOS_TaskDelete(g_testTaskId01);
         g_testCount++;
     }
 }
@@ -54,7 +54,7 @@ static VOID TaskF01(void)
 
     while (1) {
         g_testCount++;
-        ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+        ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     }
 }
@@ -65,20 +65,20 @@ static UINT32 Testcase(VOID)
     UINT32 swTmrID;
     int value;
 
-    TSK_INIT_PARAM_S task1 = { 0 };
+    TskInitParam task1 = { 0 };
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "SemTsk31";
 
-    task1.usTaskPrio = 20; // 20, Set the priority of test task to 20.
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    task1.taskPrio = 20; // 20, Set the priority of test task to 20.
+    task1.stackSize = TASK_STACK_SIZE_TEST;
 
     g_testCount = 0;
 
-    ret = LOS_SemCreate(1, &g_usSemID);
+    ret = LOS_SemCreate(1, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID, 0
+    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID, 0
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         ,
         OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
@@ -86,11 +86,11 @@ static UINT32 Testcase(VOID)
     );
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    LOS_SemPend(g_usSemID, LOS_NO_WAIT);
+    LOS_SemPend(g_testSemId, LOS_NO_WAIT);
     ret = LOS_SwtmrStart(swTmrID);
 
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     while (SEM_READ_UINT32(&g_testCount, value) < 0x10) {
@@ -103,7 +103,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_SwtmrDelete(swTmrID);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     return LOS_OK;
 }

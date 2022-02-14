@@ -320,7 +320,7 @@ static void *pthread_cond_func001(void *arg)
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
 
     clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec += 60; /* 60: wait 1 minute */
+    ts.tv_sec += 60; /* 60: wait 1 second */
 
     ret = pthread_cond_timedwait(&g_pthread_cond, &g_pthread_mutex, &ts);
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
@@ -438,7 +438,7 @@ static void *pthread_cond_func002(void *arg)
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
 
     clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec += 60; /* 60: wait 1 minute */
+    ts.tv_sec += 60; /* 60: wait 1 second */
 
     ret = pthread_cond_timedwait(&g_pthread_cond, &g_pthread_mutex, &ts);
     ICUNIT_GOTO_EQUAL(ret, ETIMEDOUT, ret, EXIT);

@@ -37,20 +37,20 @@ static VOID TaskF01(VOID)
     CHAR   buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
     CHAR   buff2[QUEUE_SHORT_BUFFER_LENGTH] = " ";
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, LOS_WAIT_FOREVER);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, LOS_WAIT_FOREVER);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     return;
@@ -59,41 +59,44 @@ EXIT:
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    QUEUE_INFO_S queueInfo;
+    QueueInfo queueInfo;
     CHAR   buff1[QUEUE_SHORT_BUFFER_LENGTH] = "UniDSP";
 
-    TSK_INIT_PARAM_S task1 = {0};
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize  = TASK_STACK_SIZE_TEST;
+    TskInitParam task1 = {0};
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize    = TASK_STACK_SIZE_TEST;
     task1.pcName       = "TskTstA";
-    task1.usTaskPrio   = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task1.uwResved   = LOS_TASK_STATUS_DETACHED;
+    // TASK_PRIO_TEST - 2, Set the priority according to the task purpose, a smaller number means a higher priority.
+    task1.taskPrio     = TASK_PRIO_TEST - 2;
+    task1.resved       = LOS_TASK_STATUS_DETACHED;
 
     ret = LOS_QueueInfoGet(0, NULL);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_QUEUE_PTR_NULL, ret);
 
-    ret = LOS_QueueCreate("Q1", 1, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", 1, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-    ret = LOS_QueueInfoGet(g_testQueueID01, &queueInfo);
+    ret = LOS_QueueInfoGet(g_testQueueId01, &queueInfo);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
-    ICUNIT_GOTO_EQUAL(queueInfo.waitReadTask[OS_WAIT_TASK_ID_TO_ARRAY_IDX(g_testTaskID01)], 1 << (g_testTaskID01 & OS_WAIT_TASK_ARRAY_ELEMENT_MASK), queueInfo.waitReadTask, EXIT2);
+    ICUNIT_GOTO_EQUAL(queueInfo.waitReadTask[OS_WAIT_TASK_ID_TO_ARRAY_IDX(g_testTaskId01)],
+                      1 << (g_testTaskId01 & OS_WAIT_TASK_ARRAY_ELEMENT_MASK), queueInfo.waitReadTask, EXIT2);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
-    ret = LOS_QueueInfoGet(g_testQueueID01, &queueInfo);
+    ret = LOS_QueueInfoGet(g_testQueueId01, &queueInfo);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
-    ICUNIT_GOTO_EQUAL(queueInfo.waitWriteTask[OS_WAIT_TASK_ID_TO_ARRAY_IDX(g_testTaskID01)], 1 << (g_testTaskID01 & OS_WAIT_TASK_ARRAY_ELEMENT_MASK), queueInfo.waitWriteTask, EXIT2);
+    ICUNIT_GOTO_EQUAL(queueInfo.waitWriteTask[OS_WAIT_TASK_ID_TO_ARRAY_IDX(g_testTaskId01)],
+                      1 << (g_testTaskId01 & OS_WAIT_TASK_ARRAY_ELEMENT_MASK), queueInfo.waitWriteTask, EXIT2);
 
 EXIT2:
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 EXIT1:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 EXIT:
     return LOS_OK;

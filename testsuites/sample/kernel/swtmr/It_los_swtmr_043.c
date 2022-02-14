@@ -65,7 +65,7 @@ static VOID Case2()
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    HWI_HANDLE_T hwiNum = HWI_NUM_INT12;
+    HwiHandle hwiNum = HWI_NUM_INT12;
     g_testCount1 = 0;
 
     // 2, Timeout interval of a periodic software timer.

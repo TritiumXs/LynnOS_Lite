@@ -56,12 +56,14 @@ static VOID SwtmrF01(UINT32 arg)
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    HWI_PRIOR_T hwiPrio = 1;
-    HWI_MODE_T hwiMode;
-    HWI_ARG_T arg = 0;
+    HwiPrio hwiPrio = 1;
+    HwiMode hwiMode;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = (UINT32)LOSCFG_BASE_CORE_TICK_RESPONSE_MAX;
 
     g_testCount = 0;
-    ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION1, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &g_swtmrId1,
+    ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION1, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &g_swtmrId1,
         TIMER_LOS_HANDLER_PARAMETER
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
@@ -70,7 +72,7 @@ static UINT32 Testcase(VOID)
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     hwiMode = 0;
-    ret = TEST_HwiCreate(HWI_NUM_TEST, hwiPrio, hwiMode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = TEST_HwiCreate(HWI_NUM_TEST, hwiPrio, hwiMode, (HwiProcFunc)HwiF01, &irqParam);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
     ret = LOS_SwtmrStart(g_swtmrId1);

@@ -58,9 +58,9 @@ static int lwprot_count = 0;
  */
 sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, int stackSize, int prio)
 {
-    UINT32 taskID = LOS_ERRNO_TSK_ID_INVALID;
+    UINT32 taskId = LOS_ERRNO_TSK_ID_INVALID;
     UINT32 ret;
-    TSK_INIT_PARAM_S task = {0};
+    TskInitParam task = {0};
 
     if (name == NULL || (strlen(name) == 0)) {
         LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: name is null"));
@@ -68,19 +68,19 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
     }
 
     /* Create host Task */
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)thread;
-    task.uwStackSize = stackSize;
+    task.pfnTaskEntry = (TskEntryFunc)thread;
+    task.stackSize = stackSize;
     task.pcName = (char *)name;
-    task.usTaskPrio = prio;
-    task.uwArg = (UINTPTR)arg;
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
-    ret = LOS_TaskCreate(&taskID, &task);
+    task.taskPrio = prio;
+    task.arg = (UINTPTR)arg;
+    task.resved = LOS_TASK_STATUS_DETACHED;
+    ret = LOS_TaskCreate(&taskId, &task);
     if (ret != LOS_OK) {
         LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: LOS_TaskCreate error %u\n", ret));
         return -1;
     }
 
-    return taskID;
+    return taskId;
 }
 
 void sys_init(void)
@@ -108,11 +108,11 @@ sys_prot_t sys_arch_protect(void)
      * 2. this function is called only in task context, not in interrupt handler.
      *    so it's not needed to disable interrupt.
      */
-    if (lwprot_thread != LOS_CurTaskIDGet()) {
+    if (lwprot_thread != LOS_CurTaskIdGet()) {
         /* We are locking the spinlock where it has not been locked before
          * or is being locked by another thread */
         LOS_SpinLock(&arch_protect_spin);
-        lwprot_thread = LOS_CurTaskIDGet();
+        lwprot_thread = LOS_CurTaskIdGet();
         lwprot_count = 1;
     } else {
         /* It is already locked by THIS thread */
@@ -128,7 +128,7 @@ void sys_arch_unprotect(sys_prot_t pval)
 {
     LWIP_UNUSED_ARG(pval);
 #if (LOSCFG_KERNEL_SMP)
-    if (lwprot_thread == LOS_CurTaskIDGet()) {
+    if (lwprot_thread == LOS_CurTaskIdGet()) {
         lwprot_count--;
         if (lwprot_count == 0) {
             lwprot_thread = LOS_ERRNO_TSK_ID_INVALID;
@@ -268,7 +268,7 @@ int sys_mbox_valid(sys_mbox_t *mbox)
         return ERR_ARG;
     }
 
-    QUEUE_INFO_S queueInfo;
+    QueueInfo queueInfo;
     return LOS_OK == LOS_QueueInfoGet(*mbox, &queueInfo);
 }
 

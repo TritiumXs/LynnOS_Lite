@@ -64,21 +64,21 @@ static UINT32 Testcase(VOID)
 
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION1, LOS_SWTMR_MODE_ONCE,
-                          (SWTMR_PROC_FUNC)SwtmrF01, &g_swTmrID1, TIMER_LOS_HANDLER_PARAMETER,
+                          (SwtmrProcFunc)SwtmrF01, &g_swTmrID1, TIMER_LOS_HANDLER_PARAMETER,
                           OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE);
 #else
     ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION1, LOS_SWTMR_MODE_ONCE,
-                          (SWTMR_PROC_FUNC)SwtmrF01, &g_swTmrID1, TIMER_LOS_HANDLER_PARAMETER);
+                          (SwtmrProcFunc)SwtmrF01, &g_swTmrID1, TIMER_LOS_HANDLER_PARAMETER);
 #endif
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION1, LOS_SWTMR_MODE_ONCE,
-                          (SWTMR_PROC_FUNC)SwtmrF02, &g_swTmrID2, TIMER_LOS_HANDLER_PARAMETER,
+                          (SwtmrProcFunc)SwtmrF02, &g_swTmrID2, TIMER_LOS_HANDLER_PARAMETER,
                           OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE);
 #else
     ret = LOS_SwtmrCreate(TIMER_LOS_EXPIRATION1, LOS_SWTMR_MODE_ONCE,
-                          (SWTMR_PROC_FUNC)SwtmrF02, &g_swTmrID2, TIMER_LOS_HANDLER_PARAMETER);
+                          (SwtmrProcFunc)SwtmrF02, &g_swTmrID2, TIMER_LOS_HANDLER_PARAMETER);
 #endif
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 

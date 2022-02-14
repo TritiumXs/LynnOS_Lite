@@ -45,34 +45,34 @@ static UINT32 TestCase(VOID)
     UINT32 ret;
     UINT8 index;
     CHAR acName[TASK_NAME_NUM] = "Tsk";
-    TSK_INIT_PARAM_S task1 = { 0 };
-    UINT32 testTaskID[LOSCFG_BASE_CORE_TSK_LIMIT];
+    TskInitParam task1 = { 0 };
+    UINT32 testTaskId[LOSCFG_BASE_CORE_TSK_LIMIT];
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE;
-    task1.usTaskPrio = TASK_PRIO_TEST + 1;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE;
+    task1.taskPrio = TASK_PRIO_TEST + 1;
     g_testCount = 0;
 
     LOS_TaskLock();
 
     UINT32 limit = LOSCFG_BASE_CORE_TSK_LIMIT - TaskUsedCountGet();
     for (index = 0; index < limit + 1; index++) {
-        task1.usTaskPrio = index % OS_TASK_PRIORITY_LOWEST;
+        task1.taskPrio = index % OS_TASK_PRIORITY_LOWEST;
         task1.pcName = acName;
-        task1.uwResved = LOS_TASK_STATUS_DETACHED;
-        ret = LOS_TaskCreate(&testTaskID[index], &task1);
+        task1.resved = LOS_TASK_STATUS_DETACHED;
+        ret = LOS_TaskCreate(&testTaskId[index], &task1);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     }
 
-    task1.usTaskPrio = index % OS_TASK_PRIORITY_LOWEST;
+    task1.taskPrio = index % OS_TASK_PRIORITY_LOWEST;
     task1.pcName = "TskA";
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
-    ret = LOS_TaskCreate(&testTaskID[index], &task1);
+    task1.resved = LOS_TASK_STATUS_DETACHED;
+    ret = LOS_TaskCreate(&testTaskId[index], &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_TSK_TCB_UNAVAILABLE, ret, EXIT);
 EXIT:
 
     for (index = 0; index < limit + 1; index++) {
-        ret = LOS_TaskDelete(testTaskID[index]);
+        ret = LOS_TaskDelete(testTaskId[index]);
         ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     }
 

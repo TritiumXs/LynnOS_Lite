@@ -46,15 +46,15 @@ static VOID Func01(void)
 
         TestHwiDelete(HWI_NUM_TEST);
     } else if (g_testCount == 3) { // 3, Here, The current possible value of the variable.
-        ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_ERRNO_MUX_PEND_INTERR, ret);
+        ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_ERRNO_MUX_IN_INTERR, ret);
     }
 
     ret = LOS_MuxPost(g_mutexTest);
 
     if (g_testCount == 3) { // 3, Here, The current possible value of the variable.
-        ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
+        ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_ERRNO_MUX_IN_INTERR, ret);
     } else if (g_testCount == 4) { // 4, Here, The current possible value of the variable.
-        ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_ERRNO_MUX_INVALID, ret);
+        ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     }
 
     g_testCount++;
@@ -80,7 +80,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_MuxCreate(&g_mutexTest);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, 1, 0, (HWI_PROC_FUNC)HwiF01, 0);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, 1, 0, (HwiProcFunc)HwiF01, 0);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     Func01();

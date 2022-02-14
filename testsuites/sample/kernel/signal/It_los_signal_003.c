@@ -70,33 +70,33 @@ STATIC VOID TaskF02(VOID)
 
 STATIC UINT32 Testcase(VOID)
 {
-    TSK_INIT_PARAM_S task = {0};
-    UINT32 taskID1, taskID2;
+    TskInitParam task = {0};
+    UINT32 taskId1, taskId2;
     UINT32 ret;
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "Signal1";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
 
-    ret = LOS_TaskCreate(&taskID1, &task);
+    ret = LOS_TaskCreate(&taskId1, &task);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF02;
     task.pcName = "Signal2";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
 
-    ret = LOS_TaskCreate(&taskID2, &task);
+    ret = LOS_TaskCreate(&taskId2, &task);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SignalSend(taskID1, SIGUSR1);
+    ret = LOS_SignalSend(taskId1, SIGUSR1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     LOS_TaskDelay(10);
     ICUNIT_ASSERT_EQUAL(g_sigValue1, SIGUSR1, g_sigValue1);
     ICUNIT_ASSERT_EQUAL(g_task1End, 1, g_task1End);
 
-    ret = LOS_SignalSend(taskID2, SIGUSR2);
+    ret = LOS_SignalSend(taskId2, SIGUSR2);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     LOS_TaskDelay(10);
     ICUNIT_ASSERT_EQUAL(g_sigValue2, SIGUSR2, g_sigValue2);

@@ -43,10 +43,10 @@ static VOID HwiF01(VOID)
 
     g_testCount++;
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     g_testCount++;
@@ -61,13 +61,13 @@ static VOID HwiF02(VOID)
 
     g_testCount++;
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueRead(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     g_testCount++;
 
 EXIT:
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
 }
 
 static UINT32 Testcase(VOID)
@@ -92,12 +92,12 @@ static UINT32 Testcase(VOID)
 
     TestHwiDelete(HWI_NUM_TEST3);
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
 
     return LOS_OK;
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     return LOS_OK;
 }
 
@@ -106,4 +106,3 @@ VOID ItLosQueue046(VOID)
     TEST_ADD_CASE("ItLosQueue046", Testcase, TEST_LOS, TEST_QUE, TEST_LEVEL1, TEST_FUNCTION);
 }
 #endif
-

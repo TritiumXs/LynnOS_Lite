@@ -39,20 +39,20 @@ static UINT32 Testcase(VOID)
     CHAR buff2[QUEUE_BASE_MSGSIZE] = "B";
     CHAR buff3[QUEUE_BASE_MSGSIZE] = "C";
 
-    ret = LOS_QueueCreate("Q1", 2, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE); // Create a queue with 2 nodes for test
+    ret = LOS_QueueCreate("Q1", 2, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE); // Create a queue with 2 nodes for test
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff2, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff2, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWriteHead(g_testQueueID01, &buff3, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWriteHead(g_testQueueId01, &buff3, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_ISFULL, ret, EXIT);
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

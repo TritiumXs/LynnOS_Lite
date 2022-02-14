@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #include "osTest.h"
 #include "it_los_hwi.h"
 
@@ -38,39 +38,39 @@ static VOID TaskF02(VOID)
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // Compare wiht the expected value 2.
     g_testCount++;
 
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId02);
 
     return;
 
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_TaskDelete(g_testTaskID02);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_TaskDelete(g_testTaskId02);
     return;
 }
 
 static VOID HwiF01(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task;
+    TskInitParam task;
 
     TestHwiClear(HWI_NUM_TEST);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF02;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF02;
     task.pcName = "HwiTsk020B";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the current task.
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount++;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     return;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return;
 }
@@ -86,7 +86,7 @@ static VOID TaskF01(VOID)
 
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return;
 }
@@ -94,23 +94,25 @@ EXIT:
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    HWI_PRIOR_T hwiPrio = OS_HWI_PRIO_LOWEST;
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
-    TSK_INIT_PARAM_S task;
+    HwiPrio hwiPrio = OS_HWI_PRIO_LOWEST;
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = 0;
+    TskInitParam task;
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "HwiTsk020A";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF01, &irqParam);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 4, g_testCount); // Compare wiht the expected value 4.

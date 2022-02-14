@@ -38,22 +38,22 @@
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    UINT32 semID = 0;
+    UINT32 semId = 0;
     LosSemCB *semPended = NULL;
 
-    ret = LOS_SemCreate(1, &g_usSemID);
+    ret = LOS_SemCreate(1, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     while (1) {
-        semPended = GET_SEM(semID);
+        semPended = GET_SEM(semId);
 
         if (OS_SEM_UNUSED == (semPended->semStat)) {
-            ret = LOS_SemPend(semID, 0);
+            ret = LOS_SemPend(semId, 0);
             ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_SEM_INVALID, ret, EXIT);
             break;
         }
 
-        semID++;
+        semId++;
     }
 
     ret = LOS_SemPend(LOSCFG_BASE_IPC_SEM_LIMIT, 0);
@@ -62,15 +62,15 @@ static UINT32 Testcase(VOID)
     ret = LOS_SemPend(LOSCFG_BASE_IPC_SEM_LIMIT + 1, 0);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_SEM_INVALID, ret, EXIT);
 
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_SEM_INVALID, ret);
 
     return LOS_OK;
 EXIT:
-    LOS_SemDelete(g_usSemID);
+    LOS_SemDelete(g_testSemId);
     return LOS_OK;
 }
 

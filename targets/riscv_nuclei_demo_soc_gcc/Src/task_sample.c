@@ -51,7 +51,7 @@ VOID TaskSampleEntry2(VOID)
 {
     while (1) {
         printf("TaskSampleEntry2 running...\n");
-        LOS_TaskDelay(10000); /* 10 Seconds */
+        LOS_TaskDelay(10000); // 10000 Ticks, Task delay 10 seconds.
     }
 }
 
@@ -59,40 +59,39 @@ VOID TaskSampleEntry1(VOID)
 {
     while (1) {
         printf("TaskSampleEntry1 running...\n");
-        LOS_TaskDelay(2000); /* 2 Seconds */
+        LOS_TaskDelay(2000); // 2000 Ticks, Task delay 2 seconds.
     }
 }
 
 VOID TaskSample(VOID)
 {
-    UINT32 uwRet;
-    UINT32 taskID1;
-    UINT32 taskID2;
-    TSK_INIT_PARAM_S stTask = {0};
+    UINT32 ret;
+    UINT32 taskId1;
+    UINT32 taskId2;
+    TskInitParam stTask = {0};
 
-    stTask.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskSampleEntry1;
-    stTask.uwStackSize = 0x1000;
+    stTask.pfnTaskEntry = (TskEntryFunc)TaskSampleEntry1;
+    stTask.stackSize = 0x1000;
     stTask.pcName = "TaskSampleEntry1";
-    stTask.usTaskPrio = 6; /* Os task priority is 6 */
-    uwRet = LOS_TaskCreate(&taskID1, &stTask);
-    if (uwRet != LOS_OK) {
+    stTask.taskPrio = 6; /* Os task priority is 6 */
+    ret = LOS_TaskCreate(&taskId1, &stTask);
+    if (ret != LOS_OK) {
         printf("Task1 create failed\n");
     }
 
-    stTask.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskSampleEntry2;
-    stTask.uwStackSize = 0x1000;
+    stTask.pfnTaskEntry = (TskEntryFunc)TaskSampleEntry2;
+    stTask.stackSize = 0x1000;
     stTask.pcName = "TaskSampleEntry2";
-    stTask.usTaskPrio = 7; /* Os task priority is 7 */
-    uwRet = LOS_TaskCreate(&taskID2, &stTask);
-    if (uwRet != LOS_OK) {
+    stTask.taskPrio = 7; /* Os task priority is 7 */
+    ret = LOS_TaskCreate(&taskId2, &stTask);
+    if (ret != LOS_OK) {
         printf("Task2 create failed\n");
     }
 }
 
 VOID RunTaskSample(VOID)
 {
-    UINT32 ret;
-    ret = LOS_KernelInit();
+    UINT32 ret = LOS_KernelInit();
     if (ret == LOS_OK) {
         TaskSample();
         LOS_Start();

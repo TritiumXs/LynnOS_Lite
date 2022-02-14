@@ -36,15 +36,15 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     CHAR buff1[8] = "UniDSP";
-    g_testQueueID01 = 1025;  // 1025, to set a invalid values
+    g_testQueueId01 = 1025;  // 1025, to set a invalid values
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueID01, 0, 0);
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueId01, 0, 0);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_QUEUE_PARA_ISZERO, ret);
 
-    ret = LOS_QueueWrite(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWrite(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_QUEUE_INVALID, ret);
 
-    ret = LOS_QueueWriteHead(g_testQueueID01, &buff1, QUEUE_BASE_MSGSIZE, 0);
+    ret = LOS_QueueWriteHead(g_testQueueId01, &buff1, QUEUE_BASE_MSGSIZE, 0);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_QUEUE_INVALID, ret);
 
     return LOS_OK;

@@ -388,14 +388,14 @@ UINT32 LOS_SignalWait(const sigset_t *set, siginfo_t *info, UINT32 timeout)
     return sigNo;
 }
 
-UINT32 LOS_SignalSend(UINT32 taskID, INT32 sigNo)
+UINT32 LOS_SignalSend(UINT32 taskId, INT32 sigNo)
 {
     siginfo_t info;
     UINT32 intSave;
     OsSigCB *sigCB = NULL;
     LosTaskCB *task = NULL;
 
-    if (taskID > LOSCFG_BASE_CORE_TSK_LIMIT) {
+    if (taskId > LOSCFG_BASE_CORE_TSK_LIMIT) {
         return LOS_ERRNO_SIGNAL_INVALID;
     }
 
@@ -408,7 +408,7 @@ UINT32 LOS_SignalSend(UINT32 taskID, INT32 sigNo)
     info.si_value.sival_ptr = NULL;
 
     intSave = LOS_IntLock();
-    task = OS_TCB_FROM_TID(taskID);
+    task = OS_TCB_FROM_TID(taskId);
     sigCB = SignalCBInit(task);
     if (sigCB == NULL) {
         LOS_IntRestore(intSave);

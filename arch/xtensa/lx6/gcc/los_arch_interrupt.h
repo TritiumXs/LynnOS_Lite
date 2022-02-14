@@ -204,13 +204,13 @@ extern UINT32 g_intCount;
  * @ingroup los_arch_interrupt
  * Set interrupt vector table.
  */
-extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg);
+extern VOID OsSetVector(UINT32 num, HwiProcFunc vector, VOID *arg);
 #else
 /* *
  * @ingroup los_arch_interrupt
  * Set interrupt vector table.
  */
-extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector);
+extern VOID OsSetVector(UINT32 num, HwiProcFunc vector);
 #endif
 
 VOID HalInterrupt(VOID);

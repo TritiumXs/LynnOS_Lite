@@ -46,11 +46,11 @@ extern "C" {
  * @ingroup  los_arch_interrupt
  * Define the type of a hardware interrupt vector table function.
  */
-typedef struct tagHwiHandleForm {
-    HWI_PROC_FUNC pfnHook;
-    VOID *uwParam;
-    UINTPTR uwreserved;
-} HWI_HANDLE_FORM_S;
+typedef struct TagHwiHandleForm {
+    HwiProcFunc pfnHook;
+    VOID *param;
+    UINTPTR reserved;
+} HwiHandleForm;
 
 typedef struct {
     UINT32      mcause;
@@ -63,7 +63,7 @@ typedef struct {
 typedef struct {
     UINT16 nestCnt;
     UINT16 type;
-    UINT32 thrID;
+    UINT32 thrId;
     LosExcContext *context;
 } LosExcInfo;
 
@@ -135,12 +135,12 @@ typedef struct {
  */
 #define OS_USER_HWI_MIN        OS_HWI_MIN
 
-extern HWI_HANDLE_FORM_S g_hwiForm[OS_HWI_MAX_NUM];
+extern HwiHandleForm g_hwiForm[OS_HWI_MAX_NUM];
 
 extern VOID HalHwiInit(VOID);
-extern UINT32 HalGetHwiFormCnt(HWI_HANDLE_T hwiNum);
-extern HWI_HANDLE_FORM_S *HalGetHwiForm(VOID);
-extern VOID HalHwiInterruptDone(HWI_HANDLE_T hwiNum);
+extern UINT32 HalGetHwiFormCnt(HwiHandle hwiNum);
+extern HwiHandleForm *HalGetHwiForm(VOID);
+extern VOID HalHwiInterruptDone(HwiHandle hwiNum);
 extern VOID HalHwiDefaultHandler(VOID *arg);
 
 extern UINT32 g_intCount;

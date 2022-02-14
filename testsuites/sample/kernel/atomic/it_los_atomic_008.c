@@ -43,8 +43,8 @@ static VOID TaskF01(VOID)
     INT64 i;
     INT64 count;
     for (i = 0x7fffffffffff0000; i < 0x7fffffffffffffff; ++i) {
-        count = g_testAtomicID05;
-        LOS_AtomicCmpXchg64bits(&g_testAtomicID05, i, count);
+        count = g_testAtomicId05;
+        LOS_AtomicCmpXchg64bits(&g_testAtomicId05, i, count);
     }
 
     ++g_testCount;
@@ -54,22 +54,22 @@ static UINT32 TestCase(VOID)
 {
     UINT32 ret, i;
     UINT32 taskId[ATOMIC_MUTI_TASK_NUM];
-    TSK_INIT_PARAM_S task[ATOMIC_MUTI_TASK_NUM] = {0, };
+    TskInitParam task[ATOMIC_MUTI_TASK_NUM] = {0, };
     CHAR taskName[ATOMIC_MUTI_TASK_NUM][20] = {"", }; // max taskName size is 20.
     CHAR buf[10] = ""; // max buf size is 10.
 
     g_testCount = 0;
-    g_testAtomicID05 = 0;
+    g_testAtomicId05 = 0;
 
     for (i = 0; i < ATOMIC_MUTI_TASK_NUM; i++) {
         memset(buf, 0, 10); // max buf size is 10.
         memset(taskName[i], 0, 20); // max taskName size is 20.
 
-        task[i].pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+        task[i].pfnTaskEntry = (TskEntryFunc)TaskF01;
         task[i].pcName       = taskName[i];
-        task[i].uwStackSize  = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-        task[i].usTaskPrio   = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2 has higher priority than TASK_PRIO_TEST
-        task[i].uwResved     = LOS_TASK_STATUS_DETACHED;
+        task[i].stackSize    = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+        task[i].taskPrio     = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2 has higher priority than TASK_PRIO_TEST
+        task[i].resved       = LOS_TASK_STATUS_DETACHED;
     }
 
     for (i = 0; i < ATOMIC_MUTI_TASK_NUM; i++) {
@@ -80,7 +80,7 @@ static UINT32 TestCase(VOID)
     LOS_TaskDelay(80); // delay 80 ticks.
 
     ICUNIT_GOTO_EQUAL(g_testCount, ATOMIC_MUTI_TASK_NUM, g_testCount, EXIT);
-    ICUNIT_GOTO_EQUAL(g_testAtomicID05, (0x7fffffffffffffff - 1), g_testAtomicID05, EXIT);
+    ICUNIT_GOTO_EQUAL(g_testAtomicId05, (0x7fffffffffffffff - 1), g_testAtomicId05, EXIT);
 EXIT:
     for (i = 0; i < ATOMIC_MUTI_TASK_NUM; i++) {
         (VOID)LOS_TaskDelete(taskId[i]);

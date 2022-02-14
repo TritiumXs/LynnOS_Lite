@@ -94,7 +94,7 @@ struct TestMemNodeHead {
         struct TestMemNodeHead *next; /* The next is used for sentinel node points to the expand node */
     } ptr;
 #if (LOSCFG_MEM_FREE_BY_TASKID == 1)
-    UINT32 taskID : 6;
+    UINT32 taskId : 6;
     UINT32 sizeAndFlag : 26;
 #else
     UINT32 sizeAndFlag;

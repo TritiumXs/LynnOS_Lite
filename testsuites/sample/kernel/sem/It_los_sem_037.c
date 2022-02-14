@@ -40,54 +40,54 @@ static VOID TaskF01(void)
     UINT32 ret;
     UINT32 i;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     for (i = 0; i < IT_SEMLOOP - 1; i++) {
         g_testCount++;
-        ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+        ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     }
 
     g_testCount++;
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     UINT32 i;
-    TSK_INIT_PARAM_S task = { 0 };
+    TskInitParam task = { 0 };
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "SemTsk3";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
 
     g_testCount = 0;
 
-    ret = LOS_SemCreate(0, &g_usSemID);
+    ret = LOS_SemCreate(0, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     for (i = 0; i < IT_SEMLOOP; i++) {
-        ret = LOS_SemPost(g_usSemID);
+        ret = LOS_SemPost(g_testSemId);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
         ICUNIT_GOTO_EQUAL(g_testCount, i + 1, g_testCount, EXIT2);
     }
 
 EXIT:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT2:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

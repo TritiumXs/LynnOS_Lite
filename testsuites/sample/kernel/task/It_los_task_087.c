@@ -47,11 +47,11 @@ static UINT32 TestCase(VOID)
     UINT8 delIndex;
     UINT8 pro;
     CHAR acName[TASK_NAME_NUM];
-    UINT32 auwTestTaskID[LOSCFG_BASE_CORE_TSK_LIMIT];
+    UINT32 testTaskId[LOSCFG_BASE_CORE_TSK_LIMIT];
     UINT32 taskCnt = TaskUsedCountGet();
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE;
 
     g_leavingTaskNum = LOSCFG_BASE_CORE_TSK_LIMIT - taskCnt;
     LOS_TaskLock();
@@ -75,22 +75,22 @@ static UINT32 TestCase(VOID)
             pro = 0;
         }
 
-        task1.usTaskPrio = pro;
+        task1.taskPrio = pro;
         (void)sprintf_s(acName, TASK_NAME_NUM, "Tsk087_%d", index);
         task1.pcName = acName;
 
-        ret = LOS_TaskCreate(&auwTestTaskID[index], &task1);
+        ret = LOS_TaskCreate(&testTaskId[index], &task1);
         ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     }
 
     task1.pcName = "Tsk087Err";
-    task1.usTaskPrio++;
-    ret = LOS_TaskCreate(&auwTestTaskID[index], &task1);
+    task1.taskPrio++;
+    ret = LOS_TaskCreate(&testTaskId[index], &task1);
     ICUNIT_TRACK_EQUAL(ret, LOS_ERRNO_TSK_TCB_UNAVAILABLE, ret);
 
 EXIT:
     for (delIndex = 0; delIndex < index - 1 + startIndex; delIndex++) {
-        ret = LOS_TaskDelete(auwTestTaskID[delIndex]);
+        ret = LOS_TaskDelete(testTaskId[delIndex]);
         ICUNIT_TRACK_EQUAL(ret, LOS_OK, ret);
     }
 

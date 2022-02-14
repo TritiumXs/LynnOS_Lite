@@ -85,19 +85,19 @@
 
 #define QUEUE_SPLIT_BIT        16
 
-#define SET_QUEUE_ID(count, queueID)    (((count) << QUEUE_SPLIT_BIT) | (queueID))
+#define SET_QUEUE_ID(count, queueId)    (((count) << QUEUE_SPLIT_BIT) | (queueId))
 
 /**
  * @ingroup los_queue
  * get the queue index
  */
-#define GET_QUEUE_INDEX(queueID)        ((queueID) & ((1U << QUEUE_SPLIT_BIT) - 1))
+#define GET_QUEUE_INDEX(queueId)        ((queueId) & ((1U << QUEUE_SPLIT_BIT) - 1))
 
 /**
  * @ingroup los_queue
  * get the queue count
  */
-#define GET_QUEUE_COUNT(queueID)        ((queueID) >> QUEUE_SPLIT_BIT)
+#define GET_QUEUE_COUNT(queueId)        ((queueId) >> QUEUE_SPLIT_BIT)
 
 
 /**

@@ -49,7 +49,7 @@ static inline int MapError(UINT32 err)
     switch (err) {
         case LOS_OK:
             return 0;
-        case LOS_ERRNO_MUX_PEND_INTERR:
+        case LOS_ERRNO_MUX_IN_INTERR:
             return EPERM;
         case LOS_ERRNO_MUX_PEND_IN_LOCK:
             return EDEADLK;
@@ -325,7 +325,7 @@ int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *absTi
     struct timespec curTime = {0};
     LosMuxCB *muxPended = NULL;
     
-    ret = MuxPreCheck(mutex, OS_TCB_FROM_TID(LOS_CurTaskIDGet()));
+    ret = MuxPreCheck(mutex, OS_TCB_FROM_TID(LOS_CurTaskIdGet()));
     if (ret != 0) {
         return (INT32)ret;
     }
@@ -342,7 +342,7 @@ int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *absTi
         muxPended = GET_MUX(mutex->handle);
         if ((mutex->stAttr.type == PTHREAD_MUTEX_ERRORCHECK) &&
             (muxPended->muxCount != 0) &&
-            (muxPended->owner == OS_TCB_FROM_TID(LOS_CurTaskIDGet()))) {
+            (muxPended->owner == OS_TCB_FROM_TID(LOS_CurTaskIdGet()))) {
             return EDEADLK;
         }
     }
@@ -365,7 +365,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
     UINT32 ret;
     LosMuxCB *muxPended = NULL;
-    LosTaskCB *runTask = OS_TCB_FROM_TID(LOS_CurTaskIDGet());
+    LosTaskCB *runTask = OS_TCB_FROM_TID(LOS_CurTaskIdGet());
 
     ret = MuxPreCheck(mutex, runTask);
     if (ret != 0) {
@@ -395,7 +395,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
     UINT32 ret;
     LosMuxCB *muxPended = NULL;
 
-    ret = MuxPreCheck(mutex, OS_TCB_FROM_TID(LOS_CurTaskIDGet()));
+    ret = MuxPreCheck(mutex, OS_TCB_FROM_TID(LOS_CurTaskIdGet()));
     if (ret != 0) {
         return (INT32)ret;
     }
@@ -419,7 +419,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
 int pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
     UINT32 ret;
-    ret = MuxPreCheck(mutex, OS_TCB_FROM_TID(LOS_CurTaskIDGet()));
+    ret = MuxPreCheck(mutex, OS_TCB_FROM_TID(LOS_CurTaskIdGet()));
     if (ret != 0) {
         return (INT32)ret;
     }

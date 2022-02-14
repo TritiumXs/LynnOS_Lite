@@ -43,11 +43,13 @@ static VOID HwiF01(VOID)
 static VOID SwtmrF01(VOID)
 {
     UINT32 ret;
-    HWI_PRIOR_T hwiPrio = 3;
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
+    HwiPrio hwiPrio = 3;
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = 0;
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF01, &irqParam);
 
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     TestHwiTrigger(HWI_NUM_TEST);
@@ -63,7 +65,7 @@ static UINT32 Testcase(VOID)
 
     g_testCount = 0;
 
-    ret = LOS_SwtmrCreate(interval, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)SwtmrF01, &swTmrID, 0x0
+    ret = LOS_SwtmrCreate(interval, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)SwtmrF01, &swTmrID, 0x0
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif

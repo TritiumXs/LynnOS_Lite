@@ -52,13 +52,13 @@ STATIC UINT32 Testcase(VOID)
     ret = LOS_SignalMask(SIG_BLOCK, &newSet, &oldSet);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SignalSend(LOS_CurTaskIDGet(), SIGUSR1);
+    ret = LOS_SignalSend(LOS_CurTaskIdGet(), SIGUSR1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_SIGNAL_NO_SET, ret);
 
     ret = LOS_SignalMask(SIG_SETMASK, &oldSet, NULL);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SignalSend(LOS_CurTaskIDGet(), SIGUSR1);
+    ret = LOS_SignalSend(LOS_CurTaskIdGet(), SIGUSR1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_ASSERT_EQUAL(g_sigValue, SIGUSR1, g_sigValue);
 

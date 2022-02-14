@@ -68,7 +68,7 @@ typedef enum  {
 } osTimerAlign_t;
 
 osTimerId_t osTimerExtNew (osTimerFunc_t func, osTimerType_t type, void *argument, const osTimerAttr_t *attr,
-                           osTimerRouses_t ucRouses, osTimerAlign_t ucSensitive);
+                           osTimerRouses_t rouses, osTimerAlign_t sensitive);
 #endif
 
 #ifdef __cplusplus

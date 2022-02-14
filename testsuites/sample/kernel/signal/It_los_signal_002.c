@@ -55,11 +55,11 @@ STATIC UINT32 Testcase(VOID)
     h = LOS_SignalSet(SIGUSR2, SigHandler2);
     ICUNIT_ASSERT_NOT_EQUAL(h, SIG_ERR, h);
 
-    ret = LOS_SignalSend(LOS_CurTaskIDGet(), SIGUSR1);
+    ret = LOS_SignalSend(LOS_CurTaskIdGet(), SIGUSR1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_ASSERT_EQUAL(g_sigValue1, SIGUSR1, g_sigValue1);
 
-    ret = LOS_SignalSend(LOS_CurTaskIDGet(), SIGUSR2);
+    ret = LOS_SignalSend(LOS_CurTaskIdGet(), SIGUSR2);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     ICUNIT_ASSERT_EQUAL(g_sigValue2, SIGUSR2, g_sigValue2);
 

@@ -43,7 +43,7 @@ static VOID TaskF01(VOID)
     g_testCount++;
 EXIT:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return;
 }
 
@@ -55,30 +55,32 @@ static VOID HwiF01(VOID)
 
     return;
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return;
 }
 
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    HWI_PRIOR_T hwiPrio = 1;
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
-    TSK_INIT_PARAM_S task;
+    HwiPrio hwiPrio = 1;
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = 0;
+    TskInitParam task;
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "Tsk015A";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF01, &irqParam);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 3, g_testCount, EXIT2); // Compare wiht the expected value 3.
@@ -87,7 +89,7 @@ static UINT32 Testcase(VOID)
 
 EXIT2:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 
 EXIT1:

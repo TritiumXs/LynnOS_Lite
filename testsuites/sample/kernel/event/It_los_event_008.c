@@ -51,7 +51,7 @@ static VOID TaskF01(VOID)
     g_testCount++;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return;
 }
@@ -60,27 +60,27 @@ EXIT:
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1;
-    (void)memset_s(&task1, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    TskInitParam task1;
+    (void)memset_s(&task1, sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task1.pcName = "EventTsk8";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
-    task1.usTaskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the test task.
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
+    task1.taskPrio = TASK_PRIO_TEST - 2; // 2, set new task priority, it is higher than the test task.
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
 
-    g_pevent.uwEventID = 0;
+    g_pevent.eventId = 0;
     LOS_EventInit(&g_pevent);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     ICUNIT_GOTO_EQUAL(g_testCount, 3, g_testCount, EXIT); // 3, Here, assert that g_testCount is equal to 3.
 
     g_testCount++;
 
     LOS_EventWrite(&g_pevent, 0x10011);
-    ICUNIT_GOTO_EQUAL(g_pevent.uwEventID, 0x10011, g_pevent.uwEventID, EXIT1);
+    ICUNIT_GOTO_EQUAL(g_pevent.eventId, 0x10011, g_pevent.eventId, EXIT1);
     ICUNIT_GOTO_EQUAL(g_testCount, 4, g_testCount, EXIT1); // 4, Here, assert that g_testCount is equal to 4.
 
 EXIT1:
@@ -92,7 +92,7 @@ EXIT1:
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return LOS_OK;
 }

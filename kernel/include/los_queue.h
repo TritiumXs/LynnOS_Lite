@@ -333,22 +333,32 @@ extern "C" {
 
 /**
  * @ingroup los_queue
- * In struct QUEUE_INFO_S, the length of each waitReadTask/waitWriteTask/waitMemTask array depends on the value
+ * Queue error code: The buffer size passed in during queue readding or writting is bigger than the biggest size.
+ *
+ * Value: 0x02000620
+ *
+ * Solution: Decrease the buffer size.
+ */
+#define LOS_ERRNO_QUEUE_BUFFER_SIZE_TOO_BIG LOS_ERRNO_OS_ERROR(LOS_MOD_QUE, 0x20)
+
+/**
+ * @ingroup los_queue
+ * In struct QueueInfo, the length of each waitReadTask/waitWriteTask/waitMemTask array depends on the value
  * LOSCFG_BASE_CORE_TSK_LIMIT. The type of each array element is UINT32, which means that each element could mark 32(=2^5) tasks.
  * OS_WAIT_TASK_ARRAY_LEN is used to calculate the array length.
  * OS_WAIT_TASK_ID_TO_ARRAY_IDX is used to transfer task ID to array index.
  * OS_WAIT_TASK_ARRAY_ELEMENT_MASK is the mask for each element.
  */
 #define OS_WAIT_TASK_ARRAY_LEN                   ((LOSCFG_BASE_CORE_TSK_LIMIT >> 5) + 1)
-#define OS_WAIT_TASK_ID_TO_ARRAY_IDX(taskID)     (taskID >> 5)
+#define OS_WAIT_TASK_ID_TO_ARRAY_IDX(taskId)     (taskId >> 5)
 #define OS_WAIT_TASK_ARRAY_ELEMENT_MASK          (31)
 
 /**
  * @ingroup los_queue
  * Structure of the block for queue information query
  */
-typedef struct tagQueueInfo {
-    UINT32 queueID; /**< Queue ID */
+typedef struct TagQueueInfo {
+    UINT32 queueId; /**< Queue ID */
     UINT16 queueLen; /**< Queue length */
     UINT16 queueSize; /**< Node size */
     UINT16 queueHead; /**< Node head */
@@ -358,7 +368,7 @@ typedef struct tagQueueInfo {
     UINT32 waitReadTask[OS_WAIT_TASK_ARRAY_LEN]; /**< Resource reading task*/
     UINT32 waitWriteTask[OS_WAIT_TASK_ARRAY_LEN]; /**< Resource writing task */
     UINT32 waitMemTask[OS_WAIT_TASK_ARRAY_LEN]; /**< Memory task */
-} QUEUE_INFO_S;
+} QueueInfo;
 
 /**
  * @ingroup los_queue
@@ -372,14 +382,14 @@ typedef struct tagQueueInfo {
  * </ul>
  * @param queueName        [IN]    Message queue name. Reserved parameter, not used for now.
  * @param len              [IN]    Queue length. The value range is [1,0xffff].
- * @param queueID          [OUT]   ID of the queue control structure that is successfully created.
+ * @param queueId          [OUT]   ID of the queue control structure that is successfully created.
  * @param flags            [IN]    Queue mode. Reserved parameter, not used for now.
  * @param maxMsgSize       [IN]    Node size. The value range is [1,0xffff-4].
  *
  * @retval   #LOS_OK                               The message queue is successfully created.
  * @retval   #LOS_ERRNO_QUEUE_CB_UNAVAILABLE       The upper limit of the number of created queues is exceeded.
  * @retval   #LOS_ERRNO_QUEUE_CREATE_NO_MEMORY     Insufficient memory for queue creation.
- * @retval   #LOS_ERRNO_QUEUE_CREAT_PTR_NULL       Null pointer, queueID is NULL.
+ * @retval   #LOS_ERRNO_QUEUE_CREAT_PTR_NULL       Null pointer, queueId is NULL.
  * @retval   #LOS_ERRNO_QUEUE_PARA_ISZERO          The queue length or message node size passed in during queue
  * creation is 0.
  * @retval   #LOS_ERRNO_QUEUE_SIZE_TOO_BIG         The parameter maxMsgSize is larger than 0xffff - 4.
@@ -387,9 +397,9 @@ typedef struct tagQueueInfo {
  * <ul><li>los_queue.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_QueueDelete
  */
-extern UINT32 LOS_QueueCreate(CHAR *queueName,
+extern UINT32 LOS_QueueCreate(const CHAR *queueName,
                               UINT16 len,
-                              UINT32 *queueID,
+                              UINT32 *queueId,
                               UINT32 flags,
                               UINT16 maxMsgSize);
 
@@ -411,7 +421,7 @@ extern UINT32 LOS_QueueCreate(CHAR *queueName,
  * <li>The argument timeOut is a relative time.</li>
  * </ul>
  *
- * @param queueID        [IN]     Queue ID created by LOS_QueueCreate. The value range is
+ * @param queueId        [IN]     Queue ID created by LOS_QueueCreate. The value range is
  * [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param bufferAddr     [OUT]    Starting address that stores the obtained data. The starting address must not be
  * null.
@@ -436,7 +446,7 @@ extern UINT32 LOS_QueueCreate(CHAR *queueName,
  * <ul><li>los_queue.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_QueueWriteCopy | LOS_QueueCreate
  */
-extern UINT32 LOS_QueueReadCopy(UINT32 queueID,
+extern UINT32 LOS_QueueReadCopy(UINT32 queueId,
                                 VOID *bufferAddr,
                                 UINT32 *bufferSize,
                                 UINT32 timeOut);
@@ -458,7 +468,7 @@ extern UINT32 LOS_QueueReadCopy(UINT32 queueID,
  * <li>The argument timeOut is a relative time.</li>
  * </ul>
  *
- * @param queueID        [IN]        Queue ID created by LOS_QueueCreate. The value range is
+ * @param queueId        [IN]        Queue ID created by LOS_QueueCreate. The value range is
  * [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param bufferAddr     [IN]        Starting address that stores the data to be written.The starting address must
  * not be null.
@@ -482,7 +492,7 @@ extern UINT32 LOS_QueueReadCopy(UINT32 queueID,
  * <ul><li>los_queue.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_QueueReadCopy | LOS_QueueCreate
  */
-extern UINT32 LOS_QueueWriteCopy(UINT32 queueID,
+extern UINT32 LOS_QueueWriteCopy(UINT32 queueId,
                                  VOID *bufferAddr,
                                  UINT32 bufferSize,
                                  UINT32 timeOut);
@@ -508,7 +518,7 @@ extern UINT32 LOS_QueueWriteCopy(UINT32 queueID,
  * <li>The buffer which the bufferAddr pointing to must be greater than or equal to 4 bytes.</li>
  * </ul>
  *
- * @param queueID        [IN]        Queue ID created by LOS_QueueCreate. The value range is
+ * @param queueId        [IN]        Queue ID created by LOS_QueueCreate. The value range is
  * [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param bufferAddr     [OUT]       Starting address that stores the obtained data. The starting address must
  * not be null.
@@ -531,7 +541,7 @@ extern UINT32 LOS_QueueWriteCopy(UINT32 queueID,
  * <ul><li>los_queue.h: The header file that contains the API declaration.</li></ul>
  * @see LOS_QueueWrite | LOS_QueueCreate
  */
-extern UINT32 LOS_QueueRead(UINT32 queueID,
+extern UINT32 LOS_QueueRead(UINT32 queueId,
                             VOID *bufferAddr,
                             UINT32 bufferSize,
                             UINT32 timeOut);
@@ -554,7 +564,7 @@ extern UINT32 LOS_QueueRead(UINT32 queueID,
  * of data specified by bufferAddr into a queue.</li>
  * </ul>
  *
- * @param queueID        [IN]        Queue ID created by LOS_QueueCreate. The value range is
+ * @param queueId        [IN]        Queue ID created by LOS_QueueCreate. The value range is
  * [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param bufferAddr     [IN]        Starting address that stores the data to be written. The starting address
  * must not be null.
@@ -578,7 +588,7 @@ extern UINT32 LOS_QueueRead(UINT32 queueID,
  * <ul><li>los_queue.h: The header file that contains the API declaration.</li></ul>
  * @see LOS_QueueRead | LOS_QueueCreate
  */
-extern UINT32 LOS_QueueWrite(UINT32 queueID,
+extern UINT32 LOS_QueueWrite(UINT32 queueId,
                              VOID *bufferAddr,
                              UINT32 bufferSize,
                              UINT32 timeOut);
@@ -601,7 +611,7 @@ extern UINT32 LOS_QueueWrite(UINT32 queueID,
  * <li>
  * </ul>
  *
- * @param queueID        [IN]        Queue ID created by LOS_QueueCreate. The value range is
+ * @param queueId        [IN]        Queue ID created by LOS_QueueCreate. The value range is
  * [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param bufferAddr     [OUT]       Starting address that stores the data to be written. The starting address
  * must not be null.
@@ -625,7 +635,7 @@ extern UINT32 LOS_QueueWrite(UINT32 queueID,
  * <ul><li>los_queue.h: The header file that contains the API declaration.</li></ul>
  * @see LOS_QueueRead | LOS_QueueCreate
  */
-extern UINT32 LOS_QueueWriteHead(UINT32 queueID,
+extern UINT32 LOS_QueueWriteHead(UINT32 queueId,
                                  VOID *bufferAddr,
                                  UINT32 bufferSize,
                                  UINT32 timeOut);
@@ -648,7 +658,7 @@ extern UINT32 LOS_QueueWriteHead(UINT32 queueID,
  * used.<li>
  * </ul>
  *
- * @param queueID        [IN]        Queue ID created by LOS_QueueCreate. The value range is
+ * @param queueId        [IN]        Queue ID created by LOS_QueueCreate. The value range is
  * [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param bufferAddr     [OUT]       Starting address that stores the data to be written.
  * The starting address must not be null.
@@ -672,7 +682,7 @@ extern UINT32 LOS_QueueWriteHead(UINT32 queueID,
  * <ul><li>los_queue.h: The header file that contains the API declaration.</li></ul>
  * @see LOS_QueueWrite | LOS_QueueWriteHead
  */
-extern UINT32 LOS_QueueWriteHeadCopy(UINT32 queueID,
+extern UINT32 LOS_QueueWriteHeadCopy(UINT32 queueId,
                                      VOID *bufferAddr,
                                      UINT32 bufferSize,
                                      UINT32 timeOut);
@@ -690,7 +700,7 @@ extern UINT32 LOS_QueueWriteHeadCopy(UINT32 queueID,
  * written.</li>
  * </ul>
  *
- * @param queueID     [IN]      Queue ID created by LOS_QueueCreate. The value range is
+ * @param queueId     [IN]      Queue ID created by LOS_QueueCreate. The value range is
  * [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  *
  * @retval   #LOS_OK                           The queue is successfully deleted.
@@ -703,7 +713,7 @@ extern UINT32 LOS_QueueWriteHeadCopy(UINT32 queueID,
  * <ul><li>los_queue.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_QueueCreate | LOS_QueueCreate
  */
-extern UINT32 LOS_QueueDelete(UINT32 queueID);
+extern UINT32 LOS_QueueDelete(UINT32 queueId);
 
 /**
  * @ingroup los_queue
@@ -715,7 +725,7 @@ extern UINT32 LOS_QueueDelete(UINT32 queueID);
  * <ul>
  * <li>The specific queue should be created firstly.</li>
  * </ul>
- * @param queueID       [IN]        Queue ID created by LOS_QueueCreate. The value range is
+ * @param queueId       [IN]        Queue ID created by LOS_QueueCreate. The value range is
  * [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param queueInfo     [OUT]       The queue information to be read must not be null.
  *
@@ -729,7 +739,7 @@ extern UINT32 LOS_QueueDelete(UINT32 queueID);
  * <ul><li>los_queue.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_QueueCreate
  */
-extern UINT32 LOS_QueueInfoGet(UINT32 queueID, QUEUE_INFO_S *queueInfo);
+extern UINT32 LOS_QueueInfoGet(UINT32 queueId, QueueInfo *queueInfo);
 
 typedef enum {
     OS_QUEUE_READ,
@@ -768,7 +778,7 @@ typedef struct {
     UINT16 queueState; /**< Queue state */
     UINT16 queueLen;   /**< Queue length */
     UINT16 queueSize;  /**< Node size */
-    UINT16 queueID;    /**< queueID */
+    UINT16 queueId;    /**< queueId */
     UINT16 queueHead;  /**< Node head */
     UINT16 queueTail;  /**< Node tail */
     UINT16 readWriteableCnt[OS_READWRITE_LEN]; /**< Count of readable or writable resources, 0:readable, 1:writable */
@@ -825,7 +835,7 @@ extern LosQueueCB *g_allQueue;
  * @brief Alloc a stationary memory for a mail.
  *
  * @par Description:
- * This API is used to alloc a stationary memory for a mail according to queueID.
+ * This API is used to alloc a stationary memory for a mail according to queueId.
  * @attention
  * <ul>
  * <li>Do not alloc memory in unblocking modes such as interrupt.</li>
@@ -833,7 +843,7 @@ extern LosQueueCB *g_allQueue;
  * <li>The argument timeOut is a relative time.</li>
  * </ul>
  *
- * @param queueID        [IN]        Queue ID. The value range is [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
+ * @param queueId        [IN]        Queue ID. The value range is [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param mailPool       [IN]        The memory poll that stores the mail.
  * @param timeOut        [IN]        Expiry time. The value range is [0,LOS_WAIT_FOREVER].
  *
@@ -843,20 +853,20 @@ extern LosQueueCB *g_allQueue;
  * <ul><li>los_queue.h: the header file that contains the API declaration.</li></ul>
  * @see OsQueueMailFree
  */
-extern VOID *OsQueueMailAlloc(UINT32 queueID, VOID *mailPool, UINT32 timeOut);
+extern VOID *OsQueueMailAlloc(UINT32 queueId, VOID *mailPool, UINT32 timeOut);
 
 /**
  * @ingroup los_queue
  * @brief Free a stationary memory of a mail.
  *
  * @par Description:
- * This API is used to free a stationary memory for a mail according to queueID.
+ * This API is used to free a stationary memory for a mail according to queueId.
  * @attention
  * <ul>
  * <li>This API cannot be called before the Huawei LiteOS is initialized.</li>
  * </ul>
  *
- * @param queueID         [IN]        Queue ID. The value range is [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
+ * @param queueId         [IN]        Queue ID. The value range is [1,LOSCFG_BASE_IPC_QUEUE_LIMIT].
  * @param mailPool        [IN]        The mail memory poll address.
  * @param mailMem         [IN]        The mail memory block address.
  *
@@ -869,7 +879,7 @@ extern VOID *OsQueueMailAlloc(UINT32 queueID, VOID *mailPool, UINT32 timeOut);
  * <ul><li>los_queue.h: the header file that contains the API declaration.</li></ul>
  * @see OsQueueMailAlloc
  */
-extern UINT32 OsQueueMailFree(UINT32 queueID, VOID *mailPool, VOID *mailMem);
+extern UINT32 OsQueueMailFree(UINT32 queueId, VOID *mailPool, VOID *mailMem);
 
 /**
  * @ingroup los_queue
@@ -902,7 +912,7 @@ extern UINT32 OsQueueInit(VOID);
  * <li>None.</li>
  * </ul>
  *
- * @param queueID        [IN]       Queue id.
+ * @param queueId        [IN]       Queue id.
  * @param operateType    [IN]       Operate type
  * @param bufferAddr     [IN]       Buffer address.
  * @param bufferSize     [IN]       Buffer size.
@@ -913,7 +923,7 @@ extern UINT32 OsQueueInit(VOID);
  * <ul><li>los_queue.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern UINT32 OsQueueOperate(UINT32 queueID, UINT32 operateType, VOID *bufferAddr, UINT32 *bufferSize,
+extern UINT32 OsQueueOperate(UINT32 queueId, UINT32 operateType, VOID *bufferAddr, UINT32 *bufferSize,
                              UINT32 timeOut);
 
 #ifdef __cplusplus

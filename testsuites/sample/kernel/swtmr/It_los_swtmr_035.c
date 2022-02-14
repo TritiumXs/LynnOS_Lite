@@ -73,7 +73,7 @@ VOID Case4()
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     if (g_swtmrCountC == SWTMR_LOOP_NUM) {
-        LOS_TaskDelete(g_testTaskID03);
+        LOS_TaskDelete(g_testTaskId03);
     }
 }
 
@@ -86,7 +86,7 @@ VOID Case5()
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     if (g_swtmrCountB == SWTMR_LOOP_NUM) {
-        LOS_TaskDelete(g_testTaskID02);
+        LOS_TaskDelete(g_testTaskId02);
     }
 }
 
@@ -99,14 +99,14 @@ VOID Case6()
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     if (g_swtmrCountA == SWTMR_LOOP_NUM) {
-        LOS_TaskDelete(g_testTaskID01);
+        LOS_TaskDelete(g_testTaskId01);
     }
 }
 
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1;
+    TskInitParam task1;
 
     g_testCount = 0;
     g_swtmrCountA = 0;
@@ -122,21 +122,21 @@ static UINT32 Testcase(VOID)
     ret = LOS_EventInit(&g_eventCB3);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     // 1, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)Case6, &g_swtmrId1, 0xffff
+    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)Case6, &g_swtmrId1, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
     );
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     // 2, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(2, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)Case5, &g_swtmrId2, 0xffff
+    ret = LOS_SwtmrCreate(2, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)Case5, &g_swtmrId2, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
     );
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     // 3, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(3, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)Case4, &g_swtmrId3, 0xffff
+    ret = LOS_SwtmrCreate(3, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)Case4, &g_swtmrId3, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
@@ -145,26 +145,26 @@ static UINT32 Testcase(VOID)
 
     LOS_TaskLock();
 
-    (void)memset_s(&task1, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)Case3;
+    (void)memset_s(&task1, sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    task1.pfnTaskEntry = (TskEntryFunc)Case3;
     task1.pcName = "TskNameA";
-    task1.usTaskPrio = TASK_PRIO_TEST_NORMAL;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST * 2; // 2, set statck size 
+    task1.taskPrio = TASK_PRIO_TEST_NORMAL;
+    task1.stackSize = TASK_STACK_SIZE_TEST * 2; // 2, Set statck size
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)Case2;
+    task1.pfnTaskEntry = (TskEntryFunc)Case2;
     task1.pcName = "TskNameB";
-    task1.usTaskPrio = TASK_PRIO_TEST_NORMAL - 1;
-    ret = LOS_TaskCreate(&g_testTaskID02, &task1);
+    task1.taskPrio = TASK_PRIO_TEST_NORMAL - 1;
+    ret = LOS_TaskCreate(&g_testTaskId02, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)Case1;
+    task1.pfnTaskEntry = (TskEntryFunc)Case1;
     task1.pcName = "TskNameC";
-    // 2, set new task priority, it is higher than the current task.
-    task1.usTaskPrio = TASK_PRIO_TEST_NORMAL - 2;
-    ret = LOS_TaskCreate(&g_testTaskID03, &task1);
+    // 2, Set new task priority, it is higher than the current task.
+    task1.taskPrio = TASK_PRIO_TEST_NORMAL - 2;
+    ret = LOS_TaskCreate(&g_testTaskId03, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     LOS_SwtmrStart(g_swtmrId3);
@@ -214,8 +214,8 @@ EXIT:
     LOS_SwtmrDelete(g_swtmrId3);
     LOS_SwtmrDelete(g_swtmrId2);
     LOS_SwtmrDelete(g_swtmrId1);
-    LOS_TaskDelete(g_testTaskID02);
-    LOS_TaskDelete(g_testTaskID03);
+    LOS_TaskDelete(g_testTaskId02);
+    LOS_TaskDelete(g_testTaskId03);
 
     return LOS_OK;
 }

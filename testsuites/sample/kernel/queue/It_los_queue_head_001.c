@@ -41,24 +41,24 @@ static UINT32 Testcase(VOID)
     UINT32 buff3 = 3;
     UINT32 buff4;
 
-    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueID01, 0, 4); // 4, set maxMsgSize
+    ret = LOS_QueueCreate("Q1", QUEUE_BASE_NUM, &g_testQueueId01, 0, 4); // 4, set maxMsgSize
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, (VOID *)buff1, 4, 0); // 4, size
+    ret = LOS_QueueWrite(g_testQueueId01, (VOID *)buff1, 4, 0); // 4, size
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, (VOID *)buff2, 4, 0); // 4, size
+    ret = LOS_QueueWrite(g_testQueueId01, (VOID *)buff2, 4, 0); // 4, size
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueWriteHead(g_testQueueID01, (VOID *)buff3, 4, 0); // 4, size
+    ret = LOS_QueueWriteHead(g_testQueueId01, (VOID *)buff3, 4, 0); // 4, size
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, &buff4, 4, 0); // 4, size
+    ret = LOS_QueueRead(g_testQueueId01, &buff4, 4, 0); // 4, size
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     ICUNIT_GOTO_EQUAL(buff4, buff3, buff4, EXIT);
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

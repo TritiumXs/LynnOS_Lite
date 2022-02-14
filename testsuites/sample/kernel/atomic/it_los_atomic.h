@@ -44,8 +44,8 @@ extern "C" {
 
 #define ATOMIC_MUTI_TASK_NUM            3
 
-extern Atomic g_testAtomicID03;
-extern Atomic64 g_testAtomicID05;
+extern Atomic g_testAtomicId03;
+extern Atomic64 g_testAtomicId05;
 
 extern VOID ItLosAtomic001(VOID);
 extern VOID ItLosAtomic002(VOID);

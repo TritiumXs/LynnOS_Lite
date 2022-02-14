@@ -47,20 +47,20 @@ static VOID HwiF01(VOID)
 
     g_testCount++;
 
-    ret = LOS_QueueCreate(queName, len, &g_testQueueID01, flags, maxMsgSize); // Los_QueueCreateSyn
+    ret = LOS_QueueCreate(queName, len, &g_testQueueId01, flags, maxMsgSize); // Los_QueueCreateSyn
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ret = LOS_QueueRead(g_testQueueID01, queueRead, maxMsgSize, 0); // Los_QueueReadSyn
+    ret = LOS_QueueRead(g_testQueueId01, queueRead, maxMsgSize, 0); // Los_QueueReadSyn
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_ISEMPTY, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, queueWrite, maxMsgSize, 0); // Los_QueueWriteSyn
+    ret = LOS_QueueWrite(g_testQueueId01, queueWrite, maxMsgSize, 0); // Los_QueueWriteSyn
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    ret = LOS_QueueRead(g_testQueueID01, queueRead, maxMsgSize, 0); // Los_QueueReadSyn
+    ret = LOS_QueueRead(g_testQueueId01, queueRead, maxMsgSize, 0); // Los_QueueReadSyn
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
 EXIT:
-    ret = LOS_QueueDelete(g_testQueueID01); // Los_QueueDelete
+    ret = LOS_QueueDelete(g_testQueueId01); // Los_QueueDelete
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     return;
@@ -69,13 +69,15 @@ EXIT:
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    HWI_PRIOR_T hwiPrio = 1;
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
+    HwiPrio hwiPrio = 1;
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = 0;
 
     g_testCount = 0;
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF01, &irqParam);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     TestHwiTrigger(HWI_NUM_TEST);

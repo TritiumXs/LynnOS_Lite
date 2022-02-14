@@ -52,7 +52,7 @@ typedef struct {
 
 #define TIM_INT_NUM          1
 
-STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler);
+STATIC UINT32 SysTickStart(HwiProcFunc handler);
 STATIC UINT64 SysTickReload(UINT64 nextResponseTime);
 STATIC UINT64 SysTickCycleGet(UINT32 *period);
 STATIC VOID SysTickLock(VOID);
@@ -77,7 +77,7 @@ Input       : none
 output      : none
 return      : LOS_OK - Success , or LOS_ERRNO_TICK_CFG_INVALID - failed
 **************************************************************************** */
-STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
+STATIC UINT32 SysTickStart(HwiProcFunc handler)
 {
     ArchTickTimer *tick = &g_archTickTimer;
 

@@ -44,8 +44,8 @@ void __DLIB_TLS_MEMORY *__iar_dlib_perthread_access(void _DLIB_TLS_MEMORY *symbp
         tlsAreaPtr += __IAR_DLIB_PERTHREAD_SYMBOL_OFFSET(symbp);
         return (void __DLIB_TLS_MEMORY *)tlsAreaPtr;
     } else {
-        UINT32 taskID = LOS_CurTaskIDGet();
-        LosTaskCB *task = OS_TCB_FROM_TID(taskID);
+        UINT32 taskId = LOS_CurTaskIdGet();
+        LosTaskCB *task = OS_TCB_FROM_TID(taskId);
         if (task->iarTlsArea == NULL) {
             task->iarTlsArea = __iar_dlib_perthread_allocate();
         }
@@ -60,8 +60,8 @@ void *__aeabi_read_tp(void)
     if (!LOS_TaskIsRunning()) {
         return __section_begin("__iar_tls$$DATA");
     } else {
-        UINT32 taskID = LOS_CurTaskIDGet();
-        LosTaskCB *task = OS_TCB_FROM_TID(taskID);
+        UINT32 taskId = LOS_CurTaskIdGet();
+        LosTaskCB *task = OS_TCB_FROM_TID(taskId);
         if (task->iarTlsArea == NULL) {
             task->iarTlsArea = IarPerThreadTlsAreaAllocate();
         }
@@ -76,7 +76,7 @@ void *IarPerThreadTlsAreaAllocate(void)
     if (tlsAreaPtr == NULL) {
         return NULL;
     }
-    
+
     __iar_tls_init(tlsAreaPtr);
     return tlsAreaPtr;
 }
@@ -97,7 +97,7 @@ void IarPerThreadTlsAreaDeallocate(void *tlsArea)
 #endif
 
 struct IarMutexInfo {
-    UINT32 muxID;
+    UINT32 muxId;
     BOOL usedFlag;
 };
 
@@ -107,10 +107,10 @@ STATIC struct IarMutexInfo g_iarFileMutex[_MAX_FLOCK] = {0};
 STATIC __iar_Rmtx IarMtxCreate(struct IarMutexInfo *mutexArray, UINT32 size)
 {
     UINT32 i;
-    
+
     for (i = 0; i < size; i++) {
         if (mutexArray[i].usedFlag == FALSE) {
-            UINT32 ret = LOS_MuxCreate(&mutexArray[i].muxID);
+            UINT32 ret = LOS_MuxCreate(&mutexArray[i].muxId);
             if (ret == LOS_OK) {
                 mutexArray[i].usedFlag = TRUE;
                 return (__iar_Rmtx)&mutexArray[i];
@@ -119,7 +119,7 @@ STATIC __iar_Rmtx IarMtxCreate(struct IarMutexInfo *mutexArray, UINT32 size)
             }
         }
     }
-    
+
     return NULL;
 }
 
@@ -138,8 +138,8 @@ void __iar_system_Mtxdst(__iar_Rmtx *m)
         return;
     }
     struct IarMutexInfo *muxInfo = (struct IarMutexInfo *)*m;
-    
-    (void)LOS_MuxDelete(muxInfo->muxID);
+
+    (void)LOS_MuxDelete(muxInfo->muxId);
     muxInfo->usedFlag = FALSE;
     *m = (__iar_Rmtx)NULL;
 }
@@ -150,9 +150,9 @@ void __iar_system_Mtxlock(__iar_Rmtx *m)
         return;
     }
     struct IarMutexInfo *muxInfo = (struct IarMutexInfo *)*m;
-    
+
     if (LOS_TaskIsRunning()) {
-        (void)LOS_MuxPend(muxInfo->muxID, LOS_WAIT_FOREVER);
+        (void)LOS_MuxPend(muxInfo->muxId, LOS_WAIT_FOREVER);
     }
 }
 
@@ -162,9 +162,9 @@ void __iar_system_Mtxunlock(__iar_Rmtx *m)
         return;
     }
     struct IarMutexInfo *muxInfo = (struct IarMutexInfo *)*m;
-    
+
     if (LOS_TaskIsRunning()) {
-        (void)LOS_MuxPost(muxInfo->muxID);
+        (void)LOS_MuxPost(muxInfo->muxId);
     }
 }
 
@@ -183,8 +183,8 @@ void __iar_file_Mtxdst(__iar_Rmtx *m)
         return;
     }
     struct IarMutexInfo *muxInfo = (struct IarMutexInfo *)*m;
-    
-    (void)LOS_MuxDelete(muxInfo->muxID);
+
+    (void)LOS_MuxDelete(muxInfo->muxId);
     muxInfo->usedFlag = FALSE;
     *m = (__iar_Rmtx)NULL;
 }
@@ -195,9 +195,9 @@ void __iar_file_Mtxlock(__iar_Rmtx *m)
         return;
     }
     struct IarMutexInfo *muxInfo = (struct IarMutexInfo *)*m;
-    
+
     if (LOS_TaskIsRunning()) {
-        (void)LOS_MuxPend(muxInfo->muxID, LOS_WAIT_FOREVER);
+        (void)LOS_MuxPend(muxInfo->muxId, LOS_WAIT_FOREVER);
     }
 }
 
@@ -207,8 +207,8 @@ void __iar_file_Mtxunlock(__iar_Rmtx *m)
         return;
     }
     struct IarMutexInfo *muxInfo = (struct IarMutexInfo *)*m;
-    
+
     if (LOS_TaskIsRunning()) {
-        (void)LOS_MuxPost(muxInfo->muxID);
+        (void)LOS_MuxPost(muxInfo->muxId);
     }
 }

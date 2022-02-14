@@ -48,7 +48,7 @@ EXIT:
     // 10, Set the number to determine whether the process is as expected.
     g_testCount = 10;
 
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static VOID Case2()
@@ -65,17 +65,17 @@ static UINT32 Testcase(VOID)
     UINT32 ret;
     UINT32 swTmrID;
 
-    TSK_INIT_PARAM_S task1;
-    (void)memset_s(&task1, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)Case1;
+    TskInitParam task1;
+    (void)memset_s(&task1, sizeof(TskInitParam), 0, sizeof(TskInitParam));
+    task1.pfnTaskEntry = (TskEntryFunc)Case1;
     task1.pcName = "TskName";
-    task1.usTaskPrio = TASK_PRIO_TEST_NORMAL;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    task1.taskPrio = TASK_PRIO_TEST_NORMAL;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
 
     g_testCount = 0;
     LOS_EventInit(&g_eventCB0);
 
-    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)Case2, &swTmrID, 0xffff
+    ret = LOS_SwtmrCreate(1, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)Case2, &swTmrID, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
@@ -84,7 +84,7 @@ static UINT32 Testcase(VOID)
 
     LOS_TaskLock();
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     LOS_SwtmrStart(swTmrID);
@@ -99,7 +99,7 @@ static UINT32 Testcase(VOID)
     return LOS_OK;
 EXIT:
     LOS_SwtmrDelete(swTmrID);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
     return LOS_OK;
 }
 

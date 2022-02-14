@@ -40,27 +40,27 @@ static VOID *TaskJoinf01(void *argument)
 
 static UINT32 TestCase(VOID)
 {
-    UINT32 taskID;
+    UINT32 taskId;
     UINT32 ret;
     UINTPTR uwtemp = 1;
-    TSK_INIT_PARAM_S osTaskInitParam = { 0 };
+    TskInitParam osTaskInitParam = { 0 };
 
     g_testCount = 0;
 
-    osTaskInitParam.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskJoinf01;
-    osTaskInitParam.uwStackSize = OS_TSK_TEST_STACK_SIZE;
+    osTaskInitParam.pfnTaskEntry = (TskEntryFunc)TaskJoinf01;
+    osTaskInitParam.stackSize = OS_TSK_TEST_STACK_SIZE;
     osTaskInitParam.pcName = "Join";
-    osTaskInitParam.usTaskPrio = TASK_PRIO_TEST;
-    osTaskInitParam.uwResved = LOS_TASK_ATTR_JOINABLE;
+    osTaskInitParam.taskPrio = TASK_PRIO_TEST;
+    osTaskInitParam.resved = LOS_TASK_ATTR_JOINABLE;
 
-    ret = LOS_TaskCreate(&taskID, &osTaskInitParam);
+    ret = LOS_TaskCreate(&taskId, &osTaskInitParam);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    ret = LOS_TaskJoin(taskID, &uwtemp);
+    ret = LOS_TaskJoin(taskId, &uwtemp);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
     ICUNIT_ASSERT_EQUAL(uwtemp, 9, uwtemp); /* 8: pthread exit code */
 
-    ret = LOS_TaskDelete(taskID);
+    ret = LOS_TaskDelete(taskId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_NOT_CREATED, ret);
 
     return LOS_OK;

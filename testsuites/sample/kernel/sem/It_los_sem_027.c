@@ -44,29 +44,29 @@ static VOID TaskF01(void)
     g_testCount++;
 
     for (i = 0; i < IT_SEMLOOP + 1; i++) {
-        ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+        ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
         ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
     }
 
     g_testCount++;
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 }
 
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task = { 0 };
+    TskInitParam task = { 0 };
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "SemTsk_27";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
 
     g_testCount = 0;
-    ret = LOS_SemCreate(IT_SEMLOOP, &g_usSemID);
+    ret = LOS_SemCreate(IT_SEMLOOP, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     LOS_TaskDelay(100);// 100, set delay time.
@@ -74,10 +74,10 @@ static UINT32 Testcase(VOID)
     ICUNIT_GOTO_NOT_EQUAL(g_testCount, 2, g_testCount, EXIT); // 2, Here, assert that g_testCount is equal to 2.
     ICUNIT_TRACK_EQUAL(g_testCount, 1, g_testCount);
 
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
 EXIT:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

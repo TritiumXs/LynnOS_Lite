@@ -37,7 +37,7 @@ static UINT32 Testcase(VOID)
 {
     int ret;
 
-    g_pevent.uwEventID = 0;
+    g_pevent.eventId = 0;
 
     ret = LOS_EventInit(&g_pevent);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);

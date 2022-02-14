@@ -37,17 +37,17 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
 
-    ret = LOS_SemCreate(2, &g_usSemID); // 2, The semaphore count, number of available semaphores.
+    ret = LOS_SemCreate(2, &g_testSemId); // 2, The semaphore count, number of available semaphores.
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     LOS_TaskLock();
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_SEM_PEND_IN_LOCK, ret, EXIT);
 
     LOS_TaskUnlock();
 EXIT:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;

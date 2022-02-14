@@ -88,15 +88,15 @@ Return     : None
 *****************************************************************************/
 LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleStart(VOID)
 {
-    UINT32 taskID;
+    UINT32 taskId;
 
     if (g_cpupInitFlg == 0) {
         return;
     }
 
-    taskID = g_losTask.newTask->taskID;
-    g_cpup[taskID].cpupID = taskID;
-    g_cpup[taskID].startTime = LOS_SysCycleGet();
+    taskId = g_losTask.newTask->taskId;
+    g_cpup[taskId].cpupID = taskId;
+    g_cpup[taskId].startTime = LOS_SysCycleGet();
 
     return;
 }
@@ -108,27 +108,27 @@ Return     : None
 *****************************************************************************/
 LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleEnd(VOID)
 {
-    UINT32 taskID;
+    UINT32 taskId;
     UINT64 cpuCycle;
 
     if (g_cpupInitFlg == 0) {
         return;
     }
 
-    taskID = g_losTask.runTask->taskID;
+    taskId = g_losTask.runTask->taskId;
 
-    if (g_cpup[taskID].startTime == 0) {
+    if (g_cpup[taskId].startTime == 0) {
         return;
     }
 
     cpuCycle = LOS_SysCycleGet();
 
-    if (cpuCycle < g_cpup[taskID].startTime) {
+    if (cpuCycle < g_cpup[taskId].startTime) {
         cpuCycle += g_cyclesPerTick;
     }
 
-    g_cpup[taskID].allTime += (cpuCycle - g_cpup[taskID].startTime);
-    g_cpup[taskID].startTime = 0;
+    g_cpup[taskId].allTime += (cpuCycle - g_cpup[taskId].startTime);
+    g_cpup[taskId].startTime = 0;
 
     return;
 }
@@ -140,7 +140,7 @@ Return     : None
 *****************************************************************************/
 LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleEndStart(VOID)
 {
-    UINT32 taskID;
+    UINT32 taskId;
     UINT64 cpuCycle;
     UINT16 loopNum;
 
@@ -148,21 +148,21 @@ LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleEndStart(VOID)
         return;
     }
 
-    taskID = g_losTask.runTask->taskID;
+    taskId = g_losTask.runTask->taskId;
     cpuCycle = LOS_SysCycleGet();
 
-    if (g_cpup[taskID].startTime != 0) {
-        if (cpuCycle < g_cpup[taskID].startTime) {
+    if (g_cpup[taskId].startTime != 0) {
+        if (cpuCycle < g_cpup[taskId].startTime) {
             cpuCycle += g_cyclesPerTick;
         }
 
-        g_cpup[taskID].allTime += (cpuCycle - g_cpup[taskID].startTime);
-        g_cpup[taskID].startTime = 0;
+        g_cpup[taskId].allTime += (cpuCycle - g_cpup[taskId].startTime);
+        g_cpup[taskId].startTime = 0;
     }
 
-    taskID = g_losTask.newTask->taskID;
-    g_cpup[taskID].cpupID = taskID;
-    g_cpup[taskID].startTime = cpuCycle;
+    taskId = g_losTask.newTask->taskId;
+    g_cpup[taskId].cpupID = taskId;
+    g_cpup[taskId].startTime = cpuCycle;
 
     if ((cpuCycle - g_lastRecordTime) > OS_CPUP_RECORD_PERIOD) {
         g_lastRecordTime = cpuCycle;
@@ -231,7 +231,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_SysCpuUsage(VOID)
 
     if (cpuCycleAll) {
         cpupRet = LOS_CPUP_PRECISION -  (UINT32)((LOS_CPUP_PRECISION *
-            g_cpup[g_idleTaskID].allTime) / cpuCycleAll);
+            g_cpup[g_idleTaskId].allTime) / cpuCycleAll);
     }
 
     OsTskCycleStart();
@@ -275,10 +275,10 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistorySysCpuUsage(UINT16 mode)
     }
 
     if (mode == CPUP_IN_1S) {
-        idleCycleAll += g_cpup[g_idleTaskID].historyTime[curPos] -
-                           g_cpup[g_idleTaskID].historyTime[prePos];
+        idleCycleAll += g_cpup[g_idleTaskId].historyTime[curPos] -
+                           g_cpup[g_idleTaskId].historyTime[prePos];
     } else {
-        idleCycleAll += g_cpup[g_idleTaskID].allTime - g_cpup[g_idleTaskID].historyTime[curPos];
+        idleCycleAll += g_cpup[g_idleTaskId].allTime - g_cpup[g_idleTaskId].historyTime[curPos];
     }
 
     if (cpuCycleAll) {
@@ -294,10 +294,10 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistorySysCpuUsage(UINT16 mode)
 /*****************************************************************************
 Function   : LOS_TaskCpuUsage
 Description: get CPU usage of certain task
-Input      : taskID : task ID
+Input      : taskId : task ID
 Return     : cpupRet:CPU usage of certain task
 *****************************************************************************/
-LITE_OS_SEC_TEXT_MINOR UINT32 LOS_TaskCpuUsage(UINT32 taskID)
+LITE_OS_SEC_TEXT_MINOR UINT32 LOS_TaskCpuUsage(UINT32 taskId)
 {
     UINT64  cpuCycleAll = 0;
     UINT16  loopNum;
@@ -307,13 +307,13 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_TaskCpuUsage(UINT32 taskID)
     if (g_cpupInitFlg == 0) {
         return LOS_ERRNO_CPUP_NO_INIT;
     }
-    if (OS_TSK_GET_INDEX(taskID) >= g_taskMaxNum) {
+    if (OS_TSK_GET_INDEX(taskId) >= g_taskMaxNum) {
         return LOS_ERRNO_CPUP_TSK_ID_INVALID;
     }
-    if (g_cpup[taskID].cpupID != taskID) {
+    if (g_cpup[taskId].cpupID != taskId) {
         return LOS_ERRNO_CPUP_THREAD_NO_CREATED;
     }
-    if ((g_cpup[taskID].status & OS_TASK_STATUS_UNUSED) || (g_cpup[taskID].status == 0)) {
+    if ((g_cpup[taskId].status & OS_TASK_STATUS_UNUSED) || (g_cpup[taskId].status == 0)) {
         return LOS_ERRNO_CPUP_THREAD_NO_CREATED;
     }
     intSave = LOS_IntLock();
@@ -328,7 +328,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_TaskCpuUsage(UINT32 taskID)
     }
 
     if (cpuCycleAll) {
-        cpupRet = (UINT32)((LOS_CPUP_PRECISION * g_cpup[taskID].allTime) / cpuCycleAll);
+        cpupRet = (UINT32)((LOS_CPUP_PRECISION * g_cpup[taskId].allTime) / cpuCycleAll);
     }
 
     OsTskCycleStart();
@@ -340,11 +340,11 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_TaskCpuUsage(UINT32 taskID)
 /*****************************************************************************
 Function   : LOS_HistoryTaskCpuUsage
 Description: get CPU usage history of certain task
-Input      : taskID : task ID
+Input      : taskId : task ID
            : mode: mode,0 = usage in 10s,1 = usage in last 1s, else = less than 1s
 Return     : cpupRet:CPU usage history of task
 *****************************************************************************/
-LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistoryTaskCpuUsage(UINT32 taskID, UINT16 mode)
+LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistoryTaskCpuUsage(UINT32 taskId, UINT16 mode)
 {
     UINT64  cpuCycleAll = 0;
     UINT64  cpuCycleCurTsk = 0;
@@ -356,13 +356,13 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistoryTaskCpuUsage(UINT32 taskID, UINT16 mode
     if (g_cpupInitFlg == 0) {
         return LOS_ERRNO_CPUP_NO_INIT;
     }
-    if (OS_TSK_GET_INDEX(taskID) >= g_taskMaxNum) {
+    if (OS_TSK_GET_INDEX(taskId) >= g_taskMaxNum) {
         return LOS_ERRNO_CPUP_TSK_ID_INVALID;
     }
-    if (g_cpup[taskID].cpupID != taskID) {
+    if (g_cpup[taskId].cpupID != taskId) {
         return LOS_ERRNO_CPUP_THREAD_NO_CREATED;
     }
-    if ((g_cpup[taskID].status & OS_TASK_STATUS_UNUSED) || (g_cpup[taskID].status == 0)) {
+    if ((g_cpup[taskId].status & OS_TASK_STATUS_UNUSED) || (g_cpup[taskId].status == 0)) {
         return LOS_ERRNO_CPUP_THREAD_NO_CREATED;
     }
     intSave = LOS_IntLock();
@@ -384,9 +384,9 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistoryTaskCpuUsage(UINT32 taskID, UINT16 mode
     }
 
     if (mode == CPUP_IN_1S) {
-        cpuCycleCurTsk += g_cpup[taskID].historyTime[curPos] - g_cpup[taskID].historyTime[prePos];
+        cpuCycleCurTsk += g_cpup[taskId].historyTime[curPos] - g_cpup[taskId].historyTime[prePos];
     } else {
-        cpuCycleCurTsk += g_cpup[taskID].allTime - g_cpup[taskID].historyTime[curPos];
+        cpuCycleCurTsk += g_cpup[taskId].allTime - g_cpup[taskId].historyTime[curPos];
     }
     if (cpuCycleAll) {
         cpupRet = (UINT32)((LOS_CPUP_PRECISION * cpuCycleCurTsk) / cpuCycleAll);
@@ -462,11 +462,11 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_AllTaskCpuUsage(CPUP_INFO_S *cpupInfo, UINT16 
 Function   : LOS_CpupUsageMonitor
 Description: Get CPU usage history of certain task.
 Input      : type: cpup type, SYS_CPU_USAGE and TASK_CPU_USAGE
-           : taskID: task ID, Only in SYS_CPU_USAGE type, taskID is invalid
+           : taskId: task ID, Only in SYS_CPU_USAGE type, taskId is invalid
            : mode: mode, CPUP_IN_10S = usage in 10s, CPUP_IN_1S = usage in last 1s, CPUP_LESS_THAN_1S = less than 1s
 Return     : LOS_OK on success, or OS_ERROR on failure
 *****************************************************************************/
-LITE_OS_SEC_TEXT_MINOR UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E mode, UINT32 taskID)
+LITE_OS_SEC_TEXT_MINOR UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E mode, UINT32 taskId)
 {
     UINT32 ret;
     LosTaskCB *taskCB = NULL;
@@ -485,23 +485,23 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E
             break;
 
         case TASK_CPU_USAGE:
-            if (taskID > LOSCFG_BASE_CORE_TSK_LIMIT) {
-                PRINT_ERR("\nThe taskid is invalid.\n");
+            if (taskId > LOSCFG_BASE_CORE_TSK_LIMIT) {
+                PRINT_ERR("\nThe taskId is invalid.\n");
                 return OS_ERROR;
             }
-            taskCB = OS_TCB_FROM_TID(taskID);
+            taskCB = OS_TCB_FROM_TID(taskId);
             if ((taskCB->taskStatus & OS_TASK_STATUS_UNUSED)) {
-                PRINT_ERR("\nThe taskid is invalid.\n");
+                PRINT_ERR("\nThe taskId is invalid.\n");
                 return OS_ERROR;
             }
             if (mode == CPUP_IN_10S) {
-                PRINTK("\nCPUusage of taskID %d in 10s: ", taskID);
+                PRINTK("\nCPUusage of taskId %d in 10s: ", taskId);
             } else if (mode == CPUP_IN_1S) {
-                PRINTK("\nCPUusage of taskID %d in 1s: ", taskID);
+                PRINTK("\nCPUusage of taskId %d in 1s: ", taskId);
             } else {
-                PRINTK("\nCPUusage of taskID %d in <1s: ", taskID);
+                PRINTK("\nCPUusage of taskId %d in <1s: ", taskId);
             }
-            ret = LOS_HistoryTaskCpuUsage(taskID, mode);
+            ret = LOS_HistoryTaskCpuUsage(taskId, mode);
             PRINTK("%u.%u", ret / LOS_CPUP_PRECISION_MULT, ret % LOS_CPUP_PRECISION_MULT);
             break;
 

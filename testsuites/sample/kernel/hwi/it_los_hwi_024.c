@@ -41,14 +41,14 @@ static VOID HwiF01(VOID)
 
     g_testCount++;
 
-    ret = LOS_SemPost(g_usSemID);
+    ret = LOS_SemPost(g_testSemId);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     return;
 
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_SemDelete(g_usSemID);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_SemDelete(g_testSemId);
     return;
 }
 
@@ -58,21 +58,21 @@ static VOID TaskF01(VOID)
 
     g_testCount++;
 
-    ret = LOS_SemPend(g_usSemID, LOS_WAIT_FOREVER);
+    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT1); // Compare wiht the expected value 2.
     g_testCount++;
 
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_TaskDelete(g_testTaskId01);
 
     return;
 
 EXIT1:
     TestHwiDelete(HWI_NUM_TEST);
-    LOS_SemDelete(g_usSemID);
-    LOS_TaskDelete(g_testTaskID01);
+    LOS_SemDelete(g_testSemId);
+    LOS_TaskDelete(g_testTaskId01);
     return;
 }
 
@@ -80,42 +80,44 @@ static UINT32 Testcase(VOID)
 {
     UINT32 ret;
     UINT32 semCount = 1;
-    HWI_PRIOR_T hwiPrio = OS_HWI_PRIO_LOWEST;
-    HWI_MODE_T mode = 0;
-    HWI_ARG_T arg = 0;
-    TSK_INIT_PARAM_S task;
+    HwiPrio hwiPrio = OS_HWI_PRIO_LOWEST;
+    HwiMode mode = 0;
+    HwiIrqParam irqParam;
+    (void)memset_s(&irqParam, sizeof(HwiIrqParam), 0, sizeof(HwiIrqParam));
+    irqParam.arg = 0;
+    TskInitParam task;
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
     task.pcName = "HwiTask024A";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.usTaskPrio = TASK_PRIO_TEST - 1;
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.taskPrio = TASK_PRIO_TEST - 1;
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
     g_testCount = 0;
 
-    ret = LOS_SemCreate(semCount, &g_usSemID);
+    ret = LOS_SemCreate(semCount, &g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_SemPend(g_usSemID, LOS_NO_WAIT);
+    ret = LOS_SemPend(g_testSemId, LOS_NO_WAIT);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HWI_PROC_FUNC)HwiF01, arg);
+    ret = LOS_HwiCreate(HWI_NUM_TEST, hwiPrio, mode, (HwiProcFunc)HwiF01, &irqParam);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT1);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT2);
 
     TestHwiTrigger(HWI_NUM_TEST);
     ICUNIT_ASSERT_EQUAL(g_testCount, 3, g_testCount); // Compare wiht the expected value 3.
 
 EXIT1:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     return LOS_OK;
 
 EXIT2:
-    ret = LOS_SemDelete(g_usSemID);
+    ret = LOS_SemDelete(g_testSemId);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     TestHwiDelete(HWI_NUM_TEST);

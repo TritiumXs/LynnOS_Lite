@@ -41,10 +41,10 @@ static VOID HwiF01(VOID)
 
     g_testCount++;
 
-    ret = LOS_QueueRead(g_testQueueID01, buff2, QUEUE_BASE_MSGSIZE, 0xff);
+    ret = LOS_QueueRead(g_testQueueId01, buff2, QUEUE_BASE_MSGSIZE, 0xff);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_READ_IN_INTERRUPT, ret, EXIT);
 
-    ret = LOS_QueueWrite(g_testQueueID01, buff2, QUEUE_BASE_MSGSIZE, 0xff);
+    ret = LOS_QueueWrite(g_testQueueId01, buff2, QUEUE_BASE_MSGSIZE, 0xff);
     ICUNIT_GOTO_EQUAL(ret, LOS_ERRNO_QUEUE_WRITE_IN_INTERRUPT, ret, EXIT);
     g_testCount++;
 EXIT:
@@ -57,7 +57,7 @@ static UINT32 Testcase(VOID)
 
     g_testCount = 0;
 
-    ret = LOS_QueueCreate("Q1", 1, &g_testQueueID01, 0, QUEUE_BASE_MSGSIZE);
+    ret = LOS_QueueCreate("Q1", 1, &g_testQueueId01, 0, QUEUE_BASE_MSGSIZE);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ret = LOS_HwiCreate(HWI_NUM_TEST, 1, 0, HwiF01, 0);
@@ -67,7 +67,7 @@ static UINT32 Testcase(VOID)
 
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // Compare wiht the expected value 2.
 
-    ret = LOS_QueueDelete(g_testQueueID01);
+    ret = LOS_QueueDelete(g_testQueueId01);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     TestHwiDelete(HWI_NUM_TEST);
@@ -75,7 +75,7 @@ static UINT32 Testcase(VOID)
     return LOS_OK;
 
 EXIT:
-    LOS_QueueDelete(g_testQueueID01);
+    LOS_QueueDelete(g_testQueueId01);
     TestHwiDelete(HWI_NUM_TEST);
     return LOS_OK;
 }

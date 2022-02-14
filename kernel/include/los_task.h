@@ -445,7 +445,7 @@ extern "C" {
  * Define the type of the task entry function.
  *
  */
-typedef VOID *(*TSK_ENTRY_FUNC)(UINT32 arg);
+typedef VOID *(*TskEntryFunc)(UINT32 arg);
 
 /**
  * @ingroup los_task
@@ -453,14 +453,14 @@ typedef VOID *(*TSK_ENTRY_FUNC)(UINT32 arg);
  *
  * Information of specified parameters passed in during task creation.
  */
-typedef struct tagTskInitParam {
-    TSK_ENTRY_FUNC       pfnTaskEntry;              /**< Task entrance function                 */
-    UINT16               usTaskPrio;                /**< Task priority                          */
-    UINT32               uwArg;                     /**< Task parameters                        */
-    UINT32               uwStackSize;               /**< Task stack size                        */
-    CHAR                 *pcName;                   /**< Task name                              */
-    UINT32               uwResved;                  /**< Reserved                               */
-} TSK_INIT_PARAM_S;
+typedef struct TagTskInitParam {
+    TskEntryFunc       pfnTaskEntry;            /**< Task entrance function                 */
+    UINT16             taskPrio;                /**< Task priority                          */
+    UINT32             arg;                     /**< Task parameters                        */
+    UINT32             stackSize;               /**< Task stack size                        */
+    CHAR               *pcName;                 /**< Task name                              */
+    UINT32             resved;                  /**< Reserved                               */
+} TskInitParam;
 
 /**
  * @ingroup los_task
@@ -478,25 +478,25 @@ typedef struct tagTskInitParam {
  * @ingroup los_task
  * Task information structure.
  */
-typedef struct tagTskInfo {
+typedef struct TagTskInfo {
     CHAR                acName[LOS_TASK_NAMELEN];   /**< Task entrance function         */
-    UINT32              uwTaskID;                   /**< Task ID                        */
-    UINT16              usTaskStatus;               /**< Task status                    */
-    UINT16              usTaskPrio;                 /**< Task priority                  */
+    UINT32              taskId;                     /**< Task ID                        */
+    UINT16              taskStatus;                 /**< Task status                    */
+    UINT16              taskPrio;                   /**< Task priority                  */
     VOID                *pTaskSem;                  /**< Semaphore pointer              */
     VOID                *pTaskMux;                  /**< Mutex pointer                  */
-    UINT32              uwSemID;                    /**< Sem ID                         */
-    UINT32              uwMuxID;                    /**< Mux ID                         */
-    EVENT_CB_S          uwEvent;                    /**< Event                          */
-    UINT32              uwEventMask;                /**< Event mask                     */
-    UINT32              uwStackSize;                /**< Task stack size                */
-    UINT32              uwTopOfStack;               /**< Task stack top                 */
-    UINT32              uwBottomOfStack;            /**< Task stack bottom              */
-    UINT32              uwSP;                       /**< Task SP pointer                */
-    UINT32              uwCurrUsed;                 /**< Current task stack usage       */
-    UINT32              uwPeakUsed;                 /**< Task stack usage peak          */
+    UINT32              semId;                      /**< Sem ID                         */
+    UINT32              muxId;                      /**< Mux ID                         */
+    LosEventCB          event;                      /**< Event                          */
+    UINT32              eventMask;                  /**< Event mask                     */
+    UINT32              stackSize;                  /**< Task stack size                */
+    UINT32              topOfStack;                 /**< Task stack top                 */
+    UINT32              bottomOfStack;              /**< Task stack bottom              */
+    UINT32              sp;                         /**< Task SP pointer                */
+    UINT32              currUsed;                   /**< Current task stack usage       */
+    UINT32              peakUsed;                   /**< Task stack usage peak          */
     BOOL                bOvf;                       /**< Flag that indicates whether a task stack overflow occurs */
-} TSK_INFO_S;
+} TskInfo;
 
 /**
  * @ingroup los_task
@@ -608,13 +608,13 @@ extern UINT32 LOS_KernelInit(VOID);
  * <li>The two parameters of this interface is pointer, it should be a correct value, otherwise, the system may be
  * abnormal.</li>
  * <li>If user mode is enabled, user should input user stack pointer and size, the size must fit the stack pointer,
- * uwStackSize remain as the kernel stack size.</li>
+ * stackSize remain as the kernel stack size.</li>
  * </ul>
  *
- * @param  taskID        [OUT] Type  #UINT32 * Task ID.
- * @param  taskInitParam [IN]  Type  #TSK_INIT_PARAM_S * Parameter for task creation.
+ * @param  taskId        [OUT] Type  #UINT32 * Task ID.
+ * @param  taskInitParam [IN]  Type  #TskInitParam * Parameter for task creation.
  *
- * @retval #LOS_ERRNO_TSK_ID_INVALID        Invalid Task ID, param puwTaskID is NULL.
+ * @retval #LOS_ERRNO_TSK_ID_INVALID        Invalid Task ID, param taskId is NULL.
  * @retval #LOS_ERRNO_TSK_PTR_NULL          Param pstInitParam is NULL.
  * @retval #LOS_ERRNO_TSK_NAME_EMPTY        The task name is NULL.
  * @retval #LOS_ERRNO_TSK_ENTRY_NULL        The task entrance is NULL.
@@ -629,7 +629,7 @@ extern UINT32 LOS_KernelInit(VOID);
  * <ul><li>los_config.h: the header file that contains system configuration items.</li></ul>
  * @see LOS_TaskDelete
  */
-extern UINT32 LOS_TaskCreateOnly(UINT32 *taskID, TSK_INIT_PARAM_S *taskInitParam);
+extern UINT32 LOS_TaskCreateOnly(UINT32 *taskId, TskInitParam *taskInitParam);
 
 /**
  * @ingroup  los_task
@@ -655,13 +655,13 @@ extern UINT32 LOS_TaskCreateOnly(UINT32 *taskID, TSK_INIT_PARAM_S *taskInitParam
  * <li>The two parameters of this interface is pointer, it should be a correct value, otherwise, the system may be
  * abnormal.</li>
  * <li>If user mode is enabled, user should input user stack pointer and size, the size must fit the stack pointer,
- * uwStackSize remain as the kernel stack size.</li>
+ * stackSize remain as the kernel stack size.</li>
  * </ul>
  *
- * @param  taskID        [OUT] Type  #UINT32 * Task ID.
- * @param  taskInitParam [IN]  Type  #TSK_INIT_PARAM_S * Parameter for task creation.
+ * @param  taskId        [OUT] Type  #UINT32 * Task ID.
+ * @param  taskInitParam [IN]  Type  #TskInitParam * Parameter for task creation.
  *
- * @retval #LOS_ERRNO_TSK_ID_INVALID        Invalid Task ID, param puwTaskID is NULL.
+ * @retval #LOS_ERRNO_TSK_ID_INVALID        Invalid Task ID, param taskId is NULL.
  * @retval #LOS_ERRNO_TSK_PTR_NULL          Param pstInitParam is NULL.
  * @retval #LOS_ERRNO_TSK_NAME_EMPTY        The task name is NULL.
  * @retval #LOS_ERRNO_TSK_ENTRY_NULL        The task entrance is NULL.
@@ -676,7 +676,7 @@ extern UINT32 LOS_TaskCreateOnly(UINT32 *taskID, TSK_INIT_PARAM_S *taskInitParam
  * <ul><li>los_config.h: the header file that contains system configuration items.</li></ul>
  * @see LOS_TaskDelete
  */
-extern UINT32 LOS_TaskCreate(UINT32 *taskID, TSK_INIT_PARAM_S *taskInitParam);
+extern UINT32 LOS_TaskCreate(UINT32 *taskId, TskInitParam *taskInitParam);
 
 /**
  * @ingroup  los_task
@@ -692,7 +692,7 @@ extern UINT32 LOS_TaskCreate(UINT32 *taskID, TSK_INIT_PARAM_S *taskInitParam);
  * is not locked, it is scheduled for running.</li>
  * </ul>
  *
- * @param  taskID [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
+ * @param  taskId [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
  *
  * @retval #LOS_ERRNO_TSK_ID_INVALID        Invalid Task ID
  * @retval #LOS_ERRNO_TSK_NOT_CREATED       The task is not created.
@@ -702,7 +702,7 @@ extern UINT32 LOS_TaskCreate(UINT32 *taskID, TSK_INIT_PARAM_S *taskInitParam);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_TaskSuspend
  */
-extern UINT32 LOS_TaskResume(UINT32 taskID);
+extern UINT32 LOS_TaskResume(UINT32 taskId);
 
 /**
  * @ingroup  los_task
@@ -717,7 +717,7 @@ extern UINT32 LOS_TaskResume(UINT32 taskID);
  * <li>The idle task and swtmr task cannot be suspended.</li>
  * </ul>
  *
- * @param  taskID [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
+ * @param  taskId [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
  *
  * @retval #LOS_ERRNO_TSK_OPERATE_IDLE                  Check the task ID and do not operate on the idle task.
  * @retval #LOS_ERRNO_TSK_SUSPEND_SWTMR_NOT_ALLOWED     Check the task ID and do not operate on the swtmr task.
@@ -731,7 +731,7 @@ extern UINT32 LOS_TaskResume(UINT32 taskID);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_TaskResume
  */
-extern UINT32 LOS_TaskSuspend(UINT32 taskID);
+extern UINT32 LOS_TaskSuspend(UINT32 taskId);
 
 /**
  * @ingroup  los_task
@@ -748,7 +748,7 @@ extern UINT32 LOS_TaskSuspend(UINT32 taskID);
  * this mutex maybe never be shchduled.</li>
  * </ul>
  *
- * @param  taskID [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
+ * @param  taskId [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
  *
  * @retval #LOS_ERRNO_TSK_OPERATE_IDLE                  Check the task ID and do not operate on the idle task.
  * @retval #LOS_ERRNO_TSK_SUSPEND_SWTMR_NOT_ALLOWED     Check the task ID and do not operate on the swtmr task.
@@ -759,7 +759,7 @@ extern UINT32 LOS_TaskSuspend(UINT32 taskID);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_TaskCreate | LOS_TaskCreateOnly
  */
-extern UINT32 LOS_TaskDelete(UINT32 taskID);
+extern UINT32 LOS_TaskDelete(UINT32 taskId);
 
 /**
  * @ingroup  los_task
@@ -854,7 +854,7 @@ extern VOID LOS_TaskUnlock(VOID);
  * <li>Using the interface in the interrupt is not allowed.</li>
  * </ul>
  *
- * @param  taskID   [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
+ * @param  taskId   [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
  * @param  taskPrio [IN] Type #UINT16 Task priority.
  *
  * @retval #LOS_ERRNO_TSK_PRIOR_ERROR    Incorrect task priority.Re-configure the task priority
@@ -866,7 +866,7 @@ extern VOID LOS_TaskUnlock(VOID);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_TaskPriSet
  */
-extern UINT32 LOS_TaskPriSet(UINT32 taskID, UINT16 taskPrio);
+extern UINT32 LOS_TaskPriSet(UINT32 taskId, UINT16 taskPrio);
 
 /**
  * @ingroup  los_task
@@ -931,7 +931,7 @@ extern UINT32 LOS_TaskYield(VOID);
  *
  * @attention None.
  *
- * @param  taskID [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
+ * @param  taskId [IN] Type #UINT32 Task ID. The task id value is obtained from task creation.
  *
  * @retval #OS_INVALID      The task priority fails to be obtained.
  * @retval #UINT16          The task priority.
@@ -939,7 +939,7 @@ extern UINT32 LOS_TaskYield(VOID);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_TaskPriSet
  */
-extern UINT16 LOS_TaskPriGet(UINT32 taskID);
+extern UINT16 LOS_TaskPriGet(UINT32 taskId);
 
 /**
  * @ingroup  los_task
@@ -959,7 +959,7 @@ extern UINT16 LOS_TaskPriGet(UINT32 taskID);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-extern UINT32 LOS_CurTaskIDGet(VOID);
+extern UINT32 LOS_CurTaskIdGet(VOID);
 
 /**
  * @ingroup  los_task
@@ -977,7 +977,7 @@ extern UINT32 LOS_CurTaskIDGet(VOID);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-extern UINT32 LOS_NextTaskIDGet(VOID);
+extern UINT32 LOS_NextTaskIdGet(VOID);
 
 /**
  * @ingroup  los_task
@@ -1010,8 +1010,8 @@ extern CHAR *LOS_CurTaskNameGet(VOID);
  * abnormal.</li>
  * </ul>
  *
- * @param  taskID    [IN]  Type  #UINT32 Task ID. The task id value is obtained from task creation.
- * @param  taskInfo  [OUT] Type  #TSK_INFO_S* Pointer to the task information structure to be obtained.
+ * @param  taskId    [IN]  Type  #UINT32 Task ID. The task id value is obtained from task creation.
+ * @param  taskInfo  [OUT] Type  #TskInfo* Pointer to the task information structure to be obtained.
  *
  * @retval #LOS_ERRNO_TSK_PTR_NULL        Null parameter.
  * @retval #LOS_ERRNO_TSK_ID_INVALID      Invalid task ID.
@@ -1021,7 +1021,7 @@ extern CHAR *LOS_CurTaskNameGet(VOID);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-extern UINT32 LOS_TaskInfoGet(UINT32 taskID, TSK_INFO_S *taskInfo);
+extern UINT32 LOS_TaskInfoGet(UINT32 taskId, TskInfo *taskInfo);
 
 /**
  * @ingroup  los_task
@@ -1032,7 +1032,7 @@ extern UINT32 LOS_TaskInfoGet(UINT32 taskID, TSK_INFO_S *taskInfo);
  *
  * @attention None.
  *
- * @param  taskID     [IN] Type  #TSK_HANDLE_T Task ID.
+ * @param  taskId     [IN] Type  #TSK_HANDLE_T Task ID.
  * @param  taskStatus [OUT] Type  #UINT32 Pointer to the task status to be obtained.
  *
  * @retval #LOS_ERRNO_TSK_PTR_NULL                    0x02000201: Null parameter.
@@ -1043,7 +1043,7 @@ extern UINT32 LOS_TaskInfoGet(UINT32 taskID, TSK_INFO_S *taskInfo);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-extern UINT32 LOS_TaskStatusGet(UINT32 taskID, UINT32* taskStatus);
+extern UINT32 LOS_TaskStatusGet(UINT32 taskId, UINT32* taskStatus);
 
 /**
  * @ingroup los_monitor
@@ -1058,7 +1058,7 @@ extern UINT32 LOS_TaskStatusGet(UINT32 taskID, UINT32* taskStatus);
  *
  * @param None.
  *
- * @retval #OS_ERROR           -1:all tasks info obtain failed.
+ * @retval #LOS_NOK            -1:all tasks info obtain failed.
  * @retval #LOS_OK              0:all tasks info is successfully obtained.
  * @par Dependency:
  * <ul><li>los_monitor.h: the header file that contains the API declaration.</li></ul>
@@ -1122,7 +1122,7 @@ extern BOOL LOS_TaskIsRunning(VOID);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-extern  UINT32 LOS_NewTaskIDGet(VOID);
+extern  UINT32 LOS_NewTaskIdGet(VOID);
  /**
   * @ingroup  los_task
   * @brief Obtain the task name.
@@ -1132,7 +1132,7 @@ extern  UINT32 LOS_NewTaskIDGet(VOID);
   *
   * @attention None.
   *
-  * @param  taskID            [IN]  Task ID.
+  * @param  taskId            [IN]  Task ID.
   *
   * @retval #NULL: invalid Task name.
   * @retval # Task name.
@@ -1140,26 +1140,7 @@ extern  UINT32 LOS_NewTaskIDGet(VOID);
   * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
   * @see
   */
-extern CHAR* LOS_TaskNameGet(UINT32 taskID);
-
-/* *
- * @ingroup  los_task
- * @brief: cpu delay.
- *
- * @par Description:
- * This API is used to cpu delay, no task switching.
- *
- * @attention:
- * <ul><li>None.</li></ul>
- *
- * @param  UINT64  [IN] delay times, microseconds.
- *
- * @retval: None.
- * @par Dependency:
- * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
- * @see None.
- */
-extern VOID LOS_UDelay(UINT64 microseconds);
+extern CHAR* LOS_TaskNameGet(UINT32 taskId);
 
 /* *
  * @ingroup  los_task
@@ -1171,7 +1152,7 @@ extern VOID LOS_UDelay(UINT64 microseconds);
  * @attention:
  * <ul><li>None.</li></ul>
  *
- * @param taskID [IN] task ID.
+ * @param taskId [IN] task ID.
  * @param retval [IN] Value returned when the task is complete.
  *
  * @retval: None.
@@ -1179,7 +1160,7 @@ extern VOID LOS_UDelay(UINT64 microseconds);
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_TaskDetach.
  */
-extern UINT32 LOS_TaskJoin(UINT32 taskID, UINTPTR *retval);
+extern UINT32 LOS_TaskJoin(UINT32 taskId, UINTPTR *retval);
 
 /* *
  * @ingroup  los_task
@@ -1191,14 +1172,14 @@ extern UINT32 LOS_TaskJoin(UINT32 taskID, UINTPTR *retval);
  * @attention:
  * <ul><li>None.</li></ul>
  *
- * @param taskID [IN] task ID.
+ * @param taskId [IN] task ID.
  *
  * @retval: None.
  * @par Dependency:
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see LOS_TaskJoin.
  */
-extern UINT32 LOS_TaskDetach(UINT32 taskID);
+extern UINT32 LOS_TaskDetach(UINT32 taskId);
 
 /**
  * @ingroup los_task
@@ -1423,14 +1404,14 @@ extern UINT32 LOS_TaskDetach(UINT32 taskID);
  * This API is used to get the real task ID.
  * @attention None.
  *
- * @param  taskID [IN] Task ID.
+ * @param  taskId [IN] Task ID.
  *
  * @retval  real task ID.
  * @par Dependency:
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-#define OS_TSK_GET_INDEX(taskID)                        (taskID)
+#define OS_TSK_GET_INDEX(taskId)                        (taskId)
 
 /**
  * @ingroup  los_task
@@ -1457,15 +1438,15 @@ extern UINT32 LOS_TaskDetach(UINT32 taskID);
  * This API is used to obtain the pointer to a task control block that has a specified task ID.
  * @attention None.
  *
- * @param  taskID [IN] task ID.
+ * @param  taskId [IN] task ID.
  *
  * @retval Pointer to the task control block.
  * @par Dependency:
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-#define OS_TCB_FROM_TID(taskID)                         (((LosTaskCB *)g_taskCBArray) + (taskID))
-#define OS_IDLE_TASK_ENTRY                              ((TSK_ENTRY_FUNC)OsIdleTask)
+#define OS_TCB_FROM_TID(taskId)                         (((LosTaskCB *)g_taskCBArray) + (taskId))
+#define OS_IDLE_TASK_ENTRY                              ((TskEntryFunc)OsIdleTask)
 
 
 /**
@@ -1482,8 +1463,8 @@ typedef struct {
     UINT64                      startTime;
     UINT32                      stackSize;                /**< Task stack size */
     UINT32                      topOfStack;               /**< Task stack top */
-    UINT32                      taskID;                   /**< Task ID */
-    TSK_ENTRY_FUNC              taskEntry;                /**< Task entrance function */
+    UINT32                      taskId;                   /**< Task ID */
+    TskEntryFunc                taskEntry;                /**< Task entrance function */
     VOID                        *taskSem;                 /**< Task-held semaphore */
     VOID                        *taskMux;                 /**< Task-held mutex */
     UINT32                      arg;                      /**< Parameter */
@@ -1492,7 +1473,7 @@ typedef struct {
     LOS_DL_LIST                 timerList;
     LOS_DL_LIST                 joinList;
     UINTPTR                     joinRetval;               /**< Return value of the end of the task, If the task does not exit by itself, the ID of the task that killed the task is recorded. */
-    EVENT_CB_S                  event;
+    LosEventCB                  event;
     UINT32                      eventMask;                /**< Event mask */
     UINT32                      eventMode;                /**< Event mode */
     VOID                        *msg;                     /**< Memory allocated to queues */
@@ -1572,14 +1553,14 @@ extern UINT32               g_taskMaxNum;
  * Idle task ID.
  *
  */
-extern UINT32               g_idleTaskID;
+extern UINT32               g_idleTaskId;
 
 /**
  * @ingroup los_task
  * Software timer task ID.
  *
  */
-extern UINT32               g_swtmrTaskID;
+extern UINT32               g_swtmrTaskId;
 
 /**
  * @ingroup los_task
@@ -1698,14 +1679,14 @@ extern VOID OsTaskMonInit(VOID);
  * <li>None.</li>
  * </ul>
  *
- * @param  taskID  [IN] Type #UINT32   task id.
+ * @param  taskId  [IN] Type #UINT32   task id.
  *
  * @retval  None.
  * @par Dependency:
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-extern VOID OsTaskEntry(UINT32 taskID);
+extern VOID OsTaskEntry(UINT32 taskId);
 
 /**
  * @ingroup  los_task
@@ -1719,14 +1700,14 @@ extern VOID OsTaskEntry(UINT32 taskID);
  * <li>None.</li>
  * </ul>
  *
- * @param  taskID [IN] Type #UINT32 task id.
+ * @param  taskId [IN] Type #UINT32 task id.
  *
  * @retval  UINT32  Task water line.
  * @par Dependency:
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see None.
  */
-extern UINT32 OsGetTaskWaterLine(UINT32 taskID);
+extern UINT32 OsGetTaskWaterLine(UINT32 taskId);
 
 /**
  * @ingroup  los_task

@@ -85,7 +85,7 @@ static VOID TaskFuncB(VOID)
 static VOID TaskFuncA(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1, task2;
+    TskInitParam task1, task2;
 
     g_testCount++;
 
@@ -93,14 +93,14 @@ static VOID TaskFuncA(VOID)
     ret = LOS_MuxPend(g_mutexTest1, 0);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskFuncB;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskFuncB;
     // 5, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task1.usTaskPrio = 5;
+    task1.taskPrio = 5;
     task1.pcName = "TaskB";
-    task1.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task1);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 3, g_testCount); // 3, Here, assert that g_testCount is equal to 3.
@@ -110,14 +110,14 @@ static VOID TaskFuncA(VOID)
     ret = LOS_MuxPend(g_mutexTest2, 0);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    task2.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskFuncC;
+    task2.pfnTaskEntry = (TskEntryFunc)TaskFuncC;
     task2.pcName = "TaskC";
     // 3, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task2.usTaskPrio = 3;
-    task2.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    task2.uwResved = LOS_TASK_STATUS_DETACHED;
+    task2.taskPrio = 3;
+    task2.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    task2.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID03, &task2);
+    ret = LOS_TaskCreate(&g_testTaskId03, &task2);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     ret = LOS_MuxPost(g_mutexTest2);
@@ -144,7 +144,7 @@ static VOID TaskFuncA(VOID)
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task;
+    TskInitParam task;
 
     g_testCount = 0;
 
@@ -153,14 +153,14 @@ static UINT32 Testcase(VOID)
     ret = LOS_MuxCreate(&g_mutexTest1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskFuncA;
+    task.pfnTaskEntry = (TskEntryFunc)TaskFuncA;
     // 10, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task.usTaskPrio = 10;
+    task.taskPrio = 10;
     task.pcName = "TaskA";
-    task.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     // 9, Here, assert that g_testCount is equal to 9.

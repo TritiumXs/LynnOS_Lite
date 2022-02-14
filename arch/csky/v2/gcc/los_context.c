@@ -69,17 +69,17 @@ LITE_OS_SEC_TEXT_MINOR VOID ArchSysExit(VOID)
 /* ****************************************************************************
  Function    : ArchTskStackInit
  Description : Task stack initialization function
- Input       : taskID     --- TaskID
+ Input       : taskId     --- TaskID
                stackSize  --- Total size of the stack
                topStack   --- Top of task's stack
  Output      : None
  Return      : Context pointer
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack)
+LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskId, UINT32 stackSize, VOID *topStack)
 {
     TaskContext *context = (TaskContext *)((UINTPTR)topStack + stackSize - sizeof(TaskContext));
 
-    context->R0  = taskID;
+    context->R0  = taskId;
     context->R1  = 0x01010101L;
     context->R2  = 0x02020202L;
     context->R3  = 0x03030303L;

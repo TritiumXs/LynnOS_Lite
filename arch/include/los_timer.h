@@ -57,12 +57,12 @@ typedef struct {
     UINT32        freq;
     INT32         irqNum;
     UINT64        periodMax;
-    UINT32        (*init)(HWI_PROC_FUNC tickHandler);
+    UINT32        (*init)(HwiProcFunc tickHandler);
     UINT64        (*getCycle)(UINT32 *period);
     UINT64        (*reload)(UINT64 time);
     VOID          (*lock)(VOID);
     VOID          (*unlock)(VOID);
-    HWI_PROC_FUNC tickHandler;
+    HwiProcFunc   tickHandler;
 } ArchTickTimer;
 
 UINT32 ArchEnterSleep(VOID);

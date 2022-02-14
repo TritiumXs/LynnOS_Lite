@@ -41,7 +41,7 @@ static VOID TaskF01(VOID)
 
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 1, g_testCount);
 
-    ret = LOS_TaskPriGet(g_testTaskID01);
+    ret = LOS_TaskPriGet(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL_VOID(ret, TASK_PRIO_TEST - 1, ret);
 
     g_testCount++;
@@ -50,36 +50,36 @@ static VOID TaskF01(VOID)
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1 = { 0 };
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
+    TskInitParam task1 = { 0 };
+    task1.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk100A";
-    task1.usTaskPrio = TASK_PRIO_TEST - 1;
-    task1.uwResved = LOS_TASK_ATTR_JOINABLE;
+    task1.taskPrio = TASK_PRIO_TEST - 1;
+    task1.resved = LOS_TASK_ATTR_JOINABLE;
 
     g_testCount = 0;
 
-    ret = LOS_TaskPriGet(g_testTaskID01);
+    ret = LOS_TaskPriGet(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, (UINT16)OS_INVALID, ret);
 
     ret = LOS_TaskPriGet(g_taskMaxNum + 1);
     ICUNIT_GOTO_EQUAL(ret, (UINT16)OS_INVALID, ret, EXIT);
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task1);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
     ICUNIT_GOTO_EQUAL(g_testCount, 2, g_testCount, EXIT); // 2, Here, assert that g_testCount is equal to 2.
 
-    ret = LOS_TaskJoin(g_testTaskID01, NULL);
+    ret = LOS_TaskJoin(g_testTaskId01, NULL);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    ret = LOS_TaskPriGet(g_testTaskID01);
+    ret = LOS_TaskPriGet(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, (UINT16)OS_INVALID, ret);
 
     return LOS_OK;
 EXIT:
-    LOS_TaskDelete(g_testTaskID01);
-    LOS_TaskJoin(g_testTaskID01, NULL);
+    LOS_TaskDelete(g_testTaskId01);
+    LOS_TaskJoin(g_testTaskId01, NULL);
     return LOS_OK;
 }
 

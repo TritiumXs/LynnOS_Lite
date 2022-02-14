@@ -81,7 +81,7 @@ static VOID TaskFuncB(VOID)
 static VOID TaskFuncA(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task1, task2;
+    TskInitParam task1, task2;
     g_testCount++;
 
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 1, g_testCount); // 1, Here, assert that g_testCount is equal to 1.
@@ -89,24 +89,24 @@ static VOID TaskFuncA(VOID)
     ret = LOS_MuxPend(g_mutexTest1, 0);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskFuncB;
+    task1.pfnTaskEntry = (TskEntryFunc)TaskFuncB;
     // 8, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task1.usTaskPrio = 8;
+    task1.taskPrio = 8;
     task1.pcName = "TaskB";
-    task1.uwStackSize = TASK_STACK_SIZE_TEST;
-    task1.uwResved = LOS_TASK_STATUS_DETACHED;
+    task1.stackSize = TASK_STACK_SIZE_TEST;
+    task1.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID02, &task1);
+    ret = LOS_TaskCreate(&g_testTaskId02, &task1);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    task2.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskFuncC;
+    task2.pfnTaskEntry = (TskEntryFunc)TaskFuncC;
     // 5, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task2.usTaskPrio = 5;
+    task2.taskPrio = 5;
     task2.pcName = "TaskC";
-    task2.uwStackSize = TASK_STACK_SIZE_TEST;
-    task2.uwResved = LOS_TASK_STATUS_DETACHED;
+    task2.stackSize = TASK_STACK_SIZE_TEST;
+    task2.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID03, &task2);
+    ret = LOS_TaskCreate(&g_testTaskId03, &task2);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
     LOS_TaskDelay(5); // 5, set delay time.
@@ -123,20 +123,20 @@ static VOID TaskFuncA(VOID)
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task;
+    TskInitParam task;
     g_testCount = 0;
 
     ret = LOS_MuxCreate(&g_mutexTest1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskFuncA;
+    task.pfnTaskEntry = (TskEntryFunc)TaskFuncA;
     // 10, Set the priority according to the task purpose,a smaller number means a higher priority.
-    task.usTaskPrio = 10;
+    task.taskPrio = 10;
     task.pcName = "TaskA";
-    task.uwStackSize = TASK_STACK_SIZE_TEST;
-    task.uwResved = LOS_TASK_STATUS_DETACHED;
+    task.stackSize = TASK_STACK_SIZE_TEST;
+    task.resved = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 3, g_testCount); // 3, Here, assert that g_testCount is equal to 3.

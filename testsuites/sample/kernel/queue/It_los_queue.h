@@ -45,11 +45,11 @@ extern "C" {
 
 #define PER_ADDED_VALUE 1
 
-extern UINT32 g_testTaskID01;
-extern UINT32 g_testTaskID02;
-extern UINT32 g_testQueueID01;
-extern UINT32 g_testQueueID02;
-extern UINT32 g_testQueueID03;
+extern UINT32 g_testTaskId01;
+extern UINT32 g_testTaskId02;
+extern UINT32 g_testQueueId01;
+extern UINT32 g_testQueueId02;
+extern UINT32 g_testQueueId03;
 
 extern VOID ItLosQueue001(VOID);
 extern VOID ItLosQueue002(VOID);

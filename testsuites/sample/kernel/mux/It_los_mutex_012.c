@@ -59,20 +59,20 @@ static VOID TaskF01(void)
 static UINT32 Testcase(VOID)
 {
     UINT32 ret;
-    TSK_INIT_PARAM_S task;
+    TskInitParam task;
 
     ret = LOS_MuxCreate(&g_mutexTest);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     g_testCount = 0;
 
-    task.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
-    task.usTaskPrio = (TASK_PRIO_TEST - 1); // 1, set new task priority, it is higher than the current task.
+    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
+    task.taskPrio = (TASK_PRIO_TEST - 1); // 1, set new task priority, it is higher than the current task.
     task.pcName = "VMutexB7";
-    task.uwStackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    task.uwResved = 0;
+    task.stackSize = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    task.resved = 0;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &task);
+    ret = LOS_TaskCreate(&g_testTaskId01, &task);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 1, g_testCount); // 1, Here, assert that g_testCount is equal to 1.
@@ -87,7 +87,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_MuxDelete(g_mutexTest);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
 
-    ret = LOS_TaskDelete(g_testTaskID01);
+    ret = LOS_TaskDelete(g_testTaskId01);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_NOT_CREATED, ret);
 
     return LOS_OK;

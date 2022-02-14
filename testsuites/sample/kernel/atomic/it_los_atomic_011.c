@@ -43,13 +43,13 @@ static VOID TaskF01(VOID)
     Atomic atomicTestCounter = 0;
     INT32 readCounter = 0;
     INT32 atomicRet = 0;
-    
+
     Atomic64 atomic64TestCounter = 0;
     INT64 read64Counter = 0;
     INT64 atomic64Ret = 0;
 
     ICUNIT_ASSERT_EQUAL(g_testCount, 0, g_testCount);
-    
+
     atomicTestCounter = 0x88888888;
     LOS_AtomicSet(&atomicTestCounter, 0x88888888);
     atomicRet = LOS_AtomicAdd(&atomicTestCounter, 0x33333333);
@@ -227,14 +227,14 @@ static UINT32 TestCase(VOID)
     UINT32 ret;
     g_testCount = 0;
 
-    TSK_INIT_PARAM_S stTask1 = {0};
-    stTask1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
+    TskInitParam stTask1 = {0};
+    stTask1.pfnTaskEntry = (TskEntryFunc)TaskF01;
     stTask1.pcName       = "Atomic_011";
-    stTask1.uwStackSize  = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
-    stTask1.usTaskPrio   = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2 has higher priority than TASK_PRIO_TEST
-    stTask1.uwResved     = LOS_TASK_STATUS_DETACHED;
+    stTask1.stackSize    = LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE;
+    stTask1.taskPrio     = TASK_PRIO_TEST - 2; // TASK_PRIO_TEST - 2 has higher priority than TASK_PRIO_TEST
+    stTask1.resved       = LOS_TASK_STATUS_DETACHED;
 
-    ret = LOS_TaskCreate(&g_testTaskID01, &stTask1);
+    ret = LOS_TaskCreate(&g_testTaskId01, &stTask1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     LOS_TaskDelay(20); // delay 20 ticks.
 

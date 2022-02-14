@@ -65,21 +65,21 @@ static UINT32 Testcase(VOID)
     g_testCount = 0;
 
     // 5, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(5, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)Case3, &swtmrId1, 0xffff
+    ret = LOS_SwtmrCreate(5, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)Case3, &swtmrId1, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
     );
     ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
     // 6, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(6, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)Case2, &swtmrId2, 0xffff
+    ret = LOS_SwtmrCreate(6, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)Case2, &swtmrId2, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif
     );
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
     // 7, Timeout interval of a periodic software timer.
-    ret = LOS_SwtmrCreate(7, LOS_SWTMR_MODE_PERIOD, (SWTMR_PROC_FUNC)Case1, &swtmrId3, 0xffff
+    ret = LOS_SwtmrCreate(7, LOS_SWTMR_MODE_PERIOD, (SwtmrProcFunc)Case1, &swtmrId3, 0xffff
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
         , OS_SWTMR_ROUSES_ALLOW, OS_SWTMR_ALIGN_INSENSITIVE
 #endif

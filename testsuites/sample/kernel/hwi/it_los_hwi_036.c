@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2022-2022 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -30,60 +29,47 @@
  */
 
 #include "osTest.h"
-#include "It_los_sem.h"
-
-
-static VOID TaskF01(void)
-{
-    UINT32 ret;
-
-    g_testCount++;
-
-    ret = LOS_SemCreate(0, &g_testSemId);
-    ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
-
-    ret = LOS_SemPost(g_testSemId);
-    ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
-
-    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
-    ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
-
-    ret = LOS_SemPend(g_testSemId, LOS_WAIT_FOREVER);
-    ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
-
-    g_testCount++;
-
-EXIT:
-    LOS_TaskDelete(g_testTaskId01);
-}
+#include "it_los_hwi.h"
 
 static UINT32 Testcase(VOID)
 {
-    UINT32 ret;
-    TskInitParam task = { 0 };
+    UINT32 intSave;
+    UINT32 deltaTicks;
+    UINT64 timeRecordNS;
+    UINT64 timeUpdateNS;
+    UINT64 delayMs = 10; // delay 10 MS
+    UINT32 deltaMs;
+    UINT64 delayTicks;
+    UINT32 loop = 10; // loop 10 time
+    delayTicks = delayMs * LOSCFG_BASE_CORE_TICK_PER_SECOND / OS_SYS_MS_PER_SECOND;
 
-    task.pfnTaskEntry = (TskEntryFunc)TaskF01;
-    task.pcName = "SemTsk17";
-    task.stackSize = TASK_STACK_SIZE_TEST;
-    task.taskPrio = TASK_PRIO_TEST - 1;
+    for (int i = 0; i <= loop; i++, delayTicks++) {
+        timeRecordNS = LOS_CurrNanosec();
+        LOS_TaskDelay(delayTicks);
+        timeUpdateNS = LOS_CurrNanosec();
+        deltaTicks = ((timeUpdateNS - timeRecordNS) * LOSCFG_BASE_CORE_TICK_PER_SECOND / OS_SYS_NS_PER_SECOND);
 
-    g_testCount = 0;
+        if (deltaTicks >= (delayTicks - 1) && deltaTicks <= (delayTicks + 1)) {
+            continue;
+        } else {
+            ICUNIT_ASSERT_EQUAL(deltaTicks, delayTicks, deltaTicks);
+        }
+    }
 
-    ret = LOS_TaskCreate(&g_testTaskId01, &task);
-    ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
-    ICUNIT_GOTO_EQUAL(g_testCount, 1, g_testCount, EXIT);
-
-    LOS_TaskDelete(g_testTaskId01);
-
-EXIT:
-    ret = LOS_SemDelete(g_testSemId);
-    ICUNIT_ASSERT_EQUAL(ret, LOS_OK, ret);
+    intSave = LOS_IntLock();
+    for (int i = 1; i <= loop; i++) {
+        timeRecordNS = LOS_CurrNanosec();
+        LOS_MDelay(i);
+        timeUpdateNS = LOS_CurrNanosec();
+        deltaMs = (timeUpdateNS - timeRecordNS) / OS_SYS_NS_PER_MS;
+        ICUNIT_ASSERT_EQUAL(deltaMs, i, deltaMs);
+    }
+    LOS_IntRestore(intSave);
 
     return LOS_OK;
 }
 
-VOID ItLosSem017(void)
+VOID ItLosHwi036(VOID) // IT_Layer_ModuleORFeature_No
 {
-    TEST_ADD_CASE("ItLosSem017", Testcase, TEST_LOS, TEST_SEM, TEST_LEVEL1, TEST_FUNCTION);
+    TEST_ADD_CASE("ItLosHwi036", Testcase, TEST_LOS, TEST_HWI, TEST_LEVEL3, TEST_PRESSURE);
 }
-

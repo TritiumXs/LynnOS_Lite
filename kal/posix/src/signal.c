@@ -53,7 +53,7 @@ static inline unsigned int TimeSpec2Tick(const struct timespec *tp)
 
 int raise(int sig)
 {
-    unsigned int ret = LOS_SignalSend(LOS_CurTaskIDGet(), sig);
+    unsigned int ret = LOS_SignalSend(LOS_CurTaskIdGet(), sig);
     if (ret != LOS_OK) {
         return -1;
     }
