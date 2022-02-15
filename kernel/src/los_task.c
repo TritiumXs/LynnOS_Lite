@@ -1040,6 +1040,7 @@ LITE_OS_SEC_TEXT_INIT STATIC_INLINE VOID OsRunningTaskDelete(UINT32 taskID, LosT
     g_losTask.runTask->taskStatus = taskCB->taskStatus | OS_TASK_STATUS_RUNNING;
     g_losTask.runTask->topOfStack = taskCB->topOfStack;
     g_losTask.runTask->taskName = taskCB->taskName;
+    g_losTask.runTask->stackPointer = taskCB->stackPointer;
 }
 /*****************************************************************************
  Function    : LOS_TaskDelete
