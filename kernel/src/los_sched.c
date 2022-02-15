@@ -266,6 +266,8 @@ VOID OsSchedTaskExit(LosTaskCB *taskCB)
         OsDeleteSortLink(&taskCB->sortList);
         taskCB->taskStatus &= ~(OS_TASK_STATUS_DELAY | OS_TASK_STATUS_PEND_TIME);
     }
+
+    taskCB->taskStatus |= OS_TASK_STATUS_EXIT;
 }
 
 VOID OsSchedYield(VOID)
