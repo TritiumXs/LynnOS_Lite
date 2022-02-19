@@ -128,7 +128,7 @@ STATIC_INLINE UINT32 OsCheckTaskIDValid(UINT32 taskID)
 
 STATIC VOID OsRecycleTaskResources(LosTaskCB *taskCB, UINTPTR *stackPtr)
 {
-    if (!(taskCB->taskStatus & OS_TASK_STATUS_EXIT)) {
+    if (!(taskCB->taskStatus & OS_TASK_FLAG_JOINABLE)) {
         LOS_ListAdd(&g_losFreeTask, &taskCB->pendList);
         taskCB->taskStatus = OS_TASK_STATUS_UNUSED;
     }
@@ -918,7 +918,6 @@ STATIC VOID OsTaskJoinPostUnsafe(LosTaskCB *taskCB)
             resumedTask = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&(taskCB->joinList)));
             OsSchedTaskWake(resumedTask);
         }
-        taskCB->taskStatus |= OS_TASK_STATUS_EXIT;
     }
 }
 
@@ -990,7 +989,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_TaskJoin(UINT32 taskID, UINTPTR *retval)
         }
 
         intSave = LOS_IntLock();
-        taskCB->taskStatus &= ~OS_TASK_STATUS_EXIT;
+        taskCB->taskStatus &= ~OS_TASK_FLAG_JOINABLE;
         OsRecycleTaskResources(taskCB, &stackPtr);
         LOS_IntRestore(intSave);
         (VOID)LOS_MemFree(OS_TASK_STACK_ADDR, (VOID *)stackPtr);
@@ -1088,8 +1087,8 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_TaskDelete(UINT32 taskID)
     }
 
     OsHookCall(LOS_HOOK_TYPE_TASK_DELETE, taskCB);
-    OsSchedTaskExit(taskCB);
     OsTaskJoinPostUnsafe(taskCB);
+    OsSchedTaskExit(taskCB);
 
     LOS_EventDestroy(&(taskCB->event));
     taskCB->event.uwEventID = OS_NULL_INT;
@@ -1109,7 +1108,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_TaskDelete(UINT32 taskID)
     LOSCFG_TASK_DELETE_EXTENSION_HOOK(taskCB);
 
     if (taskCB->taskStatus & OS_TASK_STATUS_RUNNING) {
-        if (!(taskCB->taskStatus & OS_TASK_STATUS_EXIT)) {
+        if (!(taskCB->taskStatus & OS_TASK_FLAG_JOINABLE)) {
             taskCB->taskStatus = OS_TASK_STATUS_UNUSED;
             OsRunningTaskDelete(taskID, taskCB);
         }
