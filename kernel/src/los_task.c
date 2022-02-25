@@ -718,7 +718,8 @@ STATIC UINT32 OsNewTaskInit(LosTaskCB *taskCB, TSK_INIT_PARAM_S *taskInitParam)
         taskCB->taskStatus |= OS_TASK_FLAG_STACK_FREE;
     } else {
         taskCB->topOfStack = LOS_Align(taskInitParam->stackAddr, LOSCFG_STACK_POINT_ALIGN_SIZE);
-        taskCB->stackSize = ALIGN(taskCB->stackSize, OS_TASK_STACK_ADDR_ALIGN);
+        taskCB->stackSize = taskInitParam->uwStackSize - (taskCB->topOfStack - taskInitParam->stackAddr);
+        taskCB->stackSize = TRUNCATE(taskCB->stackSize, OS_TASK_STACK_ADDR_ALIGN);
     }
 
     /* initialize the task stack, write magic num to stack top */
