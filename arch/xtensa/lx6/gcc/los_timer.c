@@ -45,7 +45,7 @@ STATIC VOID SysTickUnlock(VOID);
 STATIC ArchTickTimer g_archTickTimer = {
     .freq = 0,
     .irqNum = OS_TICK_INT_NUM,
-    .periodMax = LOSCFG_BASE_CORE_TICK_RESPONSE_MAX,
+    .periodMax = LOSCFG_BASE_CORE_TICK_RESPONSE_MAX - (OS_SYS_CLOCK / LOSCFG_BASE_CORE_TICK_PER_SECOND),
     .init = SysTickStart,
     .getCycle = SysTickCycleGet,
     .reload = SysTickReload,
