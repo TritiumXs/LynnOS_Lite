@@ -98,40 +98,40 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
     context->R12 = 0x12121212L;
     context->R13 = 0x13131313L;
     context->R15 = 0xfffffffeL;
-	
-	context->R16 = 0x16161616L;
-	context->R17 = 0x17171717L;
-	context->R18 = 0x18181818L;
-	context->R19 = 0x19191919L;
-	context->R20 = 0x20202020L;
-	context->R21 = 0x21212121L;
-	context->R22 = 0x22222222L;
-	context->R23 = 0x23232323L;
-	context->R24 = 0x24242424L;
-	context->R25 = 0x25252525L;
-	context->R26 = 0x26262626L;
-	context->R27 = 0x27272727L;
-	context->R28 = 0x28282828L;
-	context->R29 = 0x29292929L;
-	context->R30 = 0x30303030L;
-	context->R31 = 0x31313131L;
-	
-	context->VR0 = 0x12345678L;
-	context->VR1 = 0x12345678L;
-	context->VR2 = 0x12345678L;
-	context->VR3 = 0x12345678L;
-	context->VR4 = 0x12345678L;
-	context->VR5 = 0x12345678L;
-	context->VR6 = 0x12345678L;
-	context->VR7 = 0x12345678L;
-	context->VR8 = 0x12345678L;
-	context->VR9 = 0x12345678L;
-	context->VR10 = 0x12345678L;
-	context->VR11 = 0x12345678L;
-	context->VR12 = 0x12345678L;
-	context->VR13 = 0x12345678L;
-	context->VR14 = 0x12345678L;
-	context->VR15 = 0x12345678L;
+
+    context->R16 = 0x16161616L;
+    context->R17 = 0x17171717L;
+    context->R18 = 0x18181818L;
+    context->R19 = 0x19191919L;
+    context->R20 = 0x20202020L;
+    context->R21 = 0x21212121L;
+    context->R22 = 0x22222222L;
+    context->R23 = 0x23232323L;
+    context->R24 = 0x24242424L;
+    context->R25 = 0x25252525L;
+    context->R26 = 0x26262626L;
+    context->R27 = 0x27272727L;
+    context->R28 = 0x28282828L;
+    context->R29 = 0x29292929L;
+    context->R30 = 0x30303030L;
+    context->R31 = 0x31313131L;
+
+    context->VR0 = 0x12345678L;
+    context->VR1 = 0x12345678L;
+    context->VR2 = 0x12345678L;
+    context->VR3 = 0x12345678L;
+    context->VR4 = 0x12345678L;
+    context->VR5 = 0x12345678L;
+    context->VR6 = 0x12345678L;
+    context->VR7 = 0x12345678L;
+    context->VR8 = 0x12345678L;
+    context->VR9 = 0x12345678L;
+    context->VR10 = 0x12345678L;
+    context->VR11 = 0x12345678L;
+    context->VR12 = 0x12345678L;
+    context->VR13 = 0x12345678L;
+    context->VR14 = 0x12345678L;
+    context->VR15 = 0x12345678L;
     context->EPSR = 0x80000340L;
     context->EPC = (UINT32)OsTaskEntry;
     return (VOID *)context;
@@ -148,46 +148,13 @@ LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 
 VOID HalIrqEndCheckNeedSched(VOID)
 {
-#if 0
-    if (g_sysNeedSched && g_taskScheduled && LOS_CHECK_SCHEDULE) {
-        ArchTaskSchedule();
-    }
-#endif
+
 }
 volatile int g_sysSchedCount = 0;
 int *p_sysSchedCount = &g_sysSchedCount;
 VOID ArchTaskSchedule(VOID)
 {
-#if 0
-    UINT32 intSave;
-
-    if (OS_INT_ACTIVE) {
-        g_sysNeedSched = TRUE;
-        return;
-    }
-
-    intSave = LOS_IntLock();
-	if(g_sysSchedCount > 0) {
-		g_sysNeedSched = TRUE;
-    	LOS_IntRestore(intSave);
-        return;
-    }
-    g_sysNeedSched = FALSE;
-	//assert(g_sysSchedCount > 0);
-	g_sysSchedCount++;
-    BOOL isSwitch = OsSchedTaskSwitch();
-    if (isSwitch) {
-        HalTaskContextSwitch();
-    }
-	else
-	{
-		g_sysSchedCount--;
-	}
-    LOS_IntRestore(intSave);
-    return;
-#else
 	HalTaskContextSwitch();
-#endif
 }
 
 
