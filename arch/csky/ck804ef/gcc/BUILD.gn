@@ -29,10 +29,16 @@
 
 import("//kernel/liteos_m/liteos.gni")
 
-module_group("csky") {
-  if ("$board_cpu" == "ck804ef") {
-    modules = [ "$board_cpu/gcc" ]
-  } else{
-    modules = [ "v2/gcc" ]
-  }
+module_name = "arch"
+kernel_module(module_name) {
+  sources = [
+    "los_context.c",
+    "los_dispatch.S",
+    "los_interrupt.c",
+    "los_timer.c",
+  ]
+}
+
+config("public") {
+  include_dirs = [ "." ]
 }
