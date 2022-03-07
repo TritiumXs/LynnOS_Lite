@@ -30,7 +30,6 @@
  */
 #include <stdio.h>
 #include <assert.h>
-#include "los_context.h"
 #include "securec.h"
 #include "los_arch_context.h"
 #include "los_arch_interrupt.h"
@@ -38,6 +37,7 @@
 #include "los_sched.h"
 #include "los_interrupt.h"
 #include "los_debug.h"
+#include "los_context.h"
 
 STATIC volatile UINT32 g_sysNeedSched = FALSE;
 #define  ATTRIBUTE_ISR __attribute__((isr))
@@ -51,7 +51,7 @@ STATIC volatile UINT32 g_sysNeedSched = FALSE;
  **************************************************************************** */
 LITE_OS_SEC_TEXT_INIT VOID ArchInit(VOID)
 {
-    //HalHwiInit();
+
 }
 
 /* ****************************************************************************
@@ -63,7 +63,6 @@ LITE_OS_SEC_TEXT_INIT VOID ArchInit(VOID)
  **************************************************************************** */
 LITE_OS_SEC_TEXT_MINOR VOID ArchSysExit(VOID)
 {
-    //LOS_IntLock();
     printf("\nArchSysExit\n");
     while (1) {
     }
@@ -148,13 +147,11 @@ LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 
 VOID HalIrqEndCheckNeedSched(VOID)
 {
-
 }
 volatile int g_sysSchedCount = 0;
 int *p_sysSchedCount = &g_sysSchedCount;
 VOID ArchTaskSchedule(VOID)
 {
-	HalTaskContextSwitch();
+    HalTaskContextSwitch();
 }
-
 

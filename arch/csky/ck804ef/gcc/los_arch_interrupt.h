@@ -236,17 +236,14 @@ extern VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector);
  * @ingroup  los_arch_interrupt
  * @brief: Hardware interrupt entry function.
  *
- * @par Description:
- * This API is used as all hardware interrupt handling function entry.
+ * @par Description:This API is used as all hardware interrupt handling function entry.
  *
- * @attention:
- * <ul><li>None.</li></ul>
+ * @attention:None.
  *
  * @param:None.
  *
  * @retval:None.
- * @par Dependency:
- * <ul><li>los_arch_interrupt.h: the header file that contains the API declaration.</li></ul>
+ * @par Dependency:los_arch_interrupt.h: the header file that contains the API declaration.
  * @see None.
  */
 extern VOID HalInterrupt(VOID);
@@ -255,17 +252,14 @@ extern VOID HalInterrupt(VOID);
  * @ingroup  los_arch_interrupt
  * @brief: Get an interrupt number.
  *
- * @par Description:
- * This API is used to get the current interrupt number.
+ * @par Description:This API is used to get the current interrupt number.
  *
- * @attention:
- * <ul><li>None.</li></ul>
+ * @attention:None.
  *
  * @param: None.
  *
  * @retval: Interrupt Indexes number.
- * @par Dependency:
- * <ul><li>los_arch_interrupt.h: the header file that contains the API declaration.</li></ul>
+ * @par Dependency:los_arch_interrupt.h: the header file that contains the API declaration.
  * @see None.
  */
 extern UINT32 HalIntNumGet(VOID);
@@ -274,17 +268,14 @@ extern UINT32 HalIntNumGet(VOID);
  * @ingroup  los_arch_interrupt
  * @brief: Default vector handling function.
  *
- * @par Description:
- * This API is used to configure interrupt for null function.
+ * @par Description:This API is used to configure interrupt for null function.
  *
- * @attention:
- * <ul><li>None.</li></ul>
+ * @attention:None.
  *
  * @param:None.
  *
  * @retval:None.
- * @par Dependency:
- * <ul><li>los_arch_interrupt.h: the header file that contains the API declaration.</li></ul>
+ * @par Dependency:los_arch_interrupt.h: the header file that contains the API declaration.
  * @see None.
  */
 extern VOID HalHwiDefaultHandler(VOID);

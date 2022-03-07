@@ -44,7 +44,6 @@
 #include "los_membox.h"
 
 #define INT_OFFSET       6
-//TODO
 #define PRI_OFF_PER_INT  8
 #define PRI_PER_REG      4
 #define PRI_OFF_IN_REG   6
@@ -115,16 +114,15 @@ UINT32 ArchIntLocked(VOID)
 
 UINT32 ArchIsIntActive(VOID)
 {
-	UINT32 intSave;
+    UINT32 intSave;
 
     intSave = LOS_IntLock();
-    if (g_intCount > 0)
-    {
-    	LOS_IntRestore(intSave);
-    	return 1;
+    if (g_intCount > 0) {
+        LOS_IntRestore(intSave);
+        return 1;
     }
     LOS_IntRestore(intSave);
-	return 0;
+    return 0;
 }
 
 /* stack protector */
@@ -146,7 +144,7 @@ WEAK VOID __stack_chk_fail(VOID)
 VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg)
 {
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
-		csi_vic_set_vector(num, vector);
+        csi_vic_set_vector(num, vector);
     }
 }
 #else
@@ -157,30 +155,29 @@ VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector, VOID *arg)
 VOID OsSetVector(UINT32 num, HWI_PROC_FUNC vector)
 {
     if ((num + OS_SYS_VECTOR_CNT) < OS_VECTOR_CNT) {
-		csi_vic_set_vector(num, vector);
+        csi_vic_set_vector(num, vector);
     }
 }
 #endif
 
 int csi_kernel_intrpt_enter(void)
 {
-	UINT32 intSave;
+    UINT32 intSave;
     intSave = LOS_IntLock();
     g_intCount++;
     LOS_IntRestore(intSave);
-	return 0;
+    return 0;
 }
 int csi_kernel_intrpt_exit(void)
 {
-	UINT32 intSave;
+    UINT32 intSave;
 
 	intSave = LOS_IntLock();
-	if(g_intCount > 0)
-	{
+	if (g_intCount > 0) {
 		g_intCount--;
 	}
     HalIrqEndCheckNeedSched();
     LOS_IntRestore(intSave);
-	return 0;
+    return 0;
 }
 
