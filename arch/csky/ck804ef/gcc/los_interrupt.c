@@ -125,16 +125,6 @@ UINT32 ArchIsIntActive(VOID)
     return 0;
 }
 
-/* stack protector */
-WEAK UINT32 __stack_chk_guard = 0xd00a0dff;
-
-WEAK VOID __stack_chk_fail(VOID)
-{
-    /* __builtin_return_address is a builtin function, building in gcc */
-    LOS_Panic("stack-protector: Kernel stack is corrupted in: %x\n",
-              __builtin_return_address(0));
-}
-
 #if (LOSCFG_PLATFORM_HWI_WITH_ARG == 1)
 
 /* *
@@ -172,10 +162,10 @@ int csi_kernel_intrpt_exit(void)
 {
     UINT32 intSave;
 
-	intSave = LOS_IntLock();
-	if (g_intCount > 0) {
-		g_intCount--;
-	}
+    intSave = LOS_IntLock();
+    if (g_intCount > 0) {
+        g_intCount--;
+    }
     HalIrqEndCheckNeedSched();
     LOS_IntRestore(intSave);
     return 0;

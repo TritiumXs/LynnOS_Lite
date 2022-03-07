@@ -333,15 +333,13 @@ typedef struct TagExcContext {
  * @par Description:
  * This API is used to handle Exception.
  *
- * @attention:
- * <ul><li>None.</li></ul>
+ * @attention:None.
  *
  * @param  excBufAddr     [IN] The address of stack pointer at which the error occurred.
  * @param  faultAddr      [IN] The address at which the error occurred.
  *
  * @retval:None.
- * @par Dependency:
- * <ul><li>los_arch_interrupt.h: the header file that contains the API declaration.</li></ul>
+ * @par Dependency:los_arch_interrupt.h: the header file that contains the API declaration.
  * @see None.
  */
 LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(EXC_CONTEXT_S *excBufAddr, UINT32 faultAddr);
@@ -369,7 +367,7 @@ typedef struct TagExcInfo {
     EXC_CONTEXT_S *context;
 } ExcInfo;
 
-extern ExcInfo g_excInfo;
+//extern ExcInfo g_excInfo;
 
 #define MAX_INT_INFO_SIZE       (8 + 0x164)
 
