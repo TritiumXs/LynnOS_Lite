@@ -68,12 +68,6 @@ extern "C" {
 
 /* *
  * @ingroup  los_arch_interrupt
- * Check the interrupt priority.
- */
-#define HWI_PRI_VALID(pri)              (((pri) >= OS_HWI_PRIO_HIGHEST) && ((pri) <= OS_HWI_PRIO_LOWEST))
-
-/* *
- * @ingroup  los_arch_interrupt
  * Define the type of a hardware interrupt vector table function.
  */
 typedef VOID (**HWI_VECTOR_FUNC)(VOID);
@@ -127,7 +121,6 @@ typedef struct {
     UINT32 TSPR;
 } VIC_TYPE;
 
-//extern VIC_TYPE *VIC_REG;
 /* *
  * @ingroup los_arch_interrupt
  * Hardware interrupt error code: Invalid interrupt number.
@@ -366,8 +359,6 @@ typedef struct TagExcInfo {
     UINT16 reserved;
     EXC_CONTEXT_S *context;
 } ExcInfo;
-
-//extern ExcInfo g_excInfo;
 
 #define MAX_INT_INFO_SIZE       (8 + 0x164)
 

@@ -68,20 +68,14 @@ LITE_OS_SEC_TEXT_MINOR VOID ArchSysExit(VOID)
 }
 
 /* ****************************************************************************
- Function    : ArchTskStackInit
- Description : Task stack initialization function
- Input       : taskID     --- TaskID
-               stackSize  --- Total size of the stack
-               topStack   --- Top of task's stack
+ Function    : ArchTskStackRegInit
+ Description : Task exit function
+ Input       : None
  Output      : None
- Return      : Context pointer
+ Return      : None
  **************************************************************************** */
-LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack)
+ VOID ArchTskStackRegInit(TaskContext *context)
 {
-    TaskContext *context = NULL;
-    context = (TaskContext *)(((UINTPTR)topStack + stackSize) - sizeof(TaskContext));
-
-    context->R0  = taskID;
     context->R1  = 0x01010101L;
     context->R2  = 0x02020202L;
     context->R3  = 0x03030303L;
@@ -96,7 +90,6 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
     context->R12 = 0x12121212L;
     context->R13 = 0x13131313L;
     context->R15 = 0xfffffffeL;
-
     context->R16 = 0x16161616L;
     context->R17 = 0x17171717L;
     context->R18 = 0x18181818L;
@@ -113,7 +106,6 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
     context->R29 = 0x29292929L;
     context->R30 = 0x30303030L;
     context->R31 = 0x31313131L;
-
     context->VR0 = 0x12345678L;
     context->VR1 = 0x12345678L;
     context->VR2 = 0x12345678L;
@@ -131,6 +123,23 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
     context->VR14 = 0x12345678L;
     context->VR15 = 0x12345678L;
     context->EPSR = 0x80000340L;
+}
+
+/* ****************************************************************************
+ Function    : ArchTskStackInit
+ Description : Task stack initialization function
+ Input       : taskID     --- TaskID
+               stackSize  --- Total size of the stack
+               topStack   --- Top of task's stack
+ Output      : None
+ Return      : Context pointer
+ **************************************************************************** */
+LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VOID *topStack)
+{
+    TaskContext *context = NULL;
+    context = (TaskContext *)(((UINTPTR)topStack + stackSize) - sizeof(TaskContext));
+    context->R0  = taskID;
+    ArchTskStackRegInit(context);
     context->EPC = (UINT32)OsTaskEntry;
     return (VOID *)context;
 }
