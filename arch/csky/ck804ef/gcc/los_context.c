@@ -74,7 +74,7 @@ LITE_OS_SEC_TEXT_MINOR VOID ArchSysExit(VOID)
  Output      : None
  Return      : None
  **************************************************************************** */
- VOID ArchTskStackRegInit(TaskContext *context)
+VOID ArchTskStackRegInit(TaskContext *context)
 {
     context->R1  = 0x01010101L;
     context->R2  = 0x02020202L;
