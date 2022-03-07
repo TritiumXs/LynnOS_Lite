@@ -61,7 +61,7 @@
 UINT32 volatile g_intCount = 0;
 CHAR g_trapStackBase[OS_TRAP_STACK_SIZE];
 
-VIC_TYPE *VIC_REG = (VIC_TYPE *)VIC_REG_BASE;
+STATIC VIC_TYPE *VIC_REG = (VIC_TYPE *)VIC_REG_BASE;
 
 UINT32 HwiNumValid(UINT32 num)
 {

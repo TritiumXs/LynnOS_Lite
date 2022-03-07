@@ -127,7 +127,7 @@ typedef struct {
     UINT32 TSPR;
 } VIC_TYPE;
 
-extern VIC_TYPE *VIC_REG;
+//extern VIC_TYPE *VIC_REG;
 /* *
  * @ingroup los_arch_interrupt
  * Hardware interrupt error code: Invalid interrupt number.

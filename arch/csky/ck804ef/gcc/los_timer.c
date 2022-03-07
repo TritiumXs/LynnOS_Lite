@@ -45,6 +45,8 @@ typedef struct {
 #define CORE_TIM_BASE        (0xE000E010UL)
 #define SysTick              ((CORE_TIM_TYPE *)CORE_TIM_BASE)
 
+STATIC VIC_TYPE *VIC_REG = (VIC_TYPE *)VIC_REG_BASE;
+
 #define CORETIM_ENABLE       (1UL << 0)
 #define CORETIM_INTMASK      (1UL << 1)
 #define CORETIM_SOURCE       (1UL << 2)
