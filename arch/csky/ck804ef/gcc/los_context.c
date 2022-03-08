@@ -162,4 +162,3 @@ VOID ArchTaskSchedule(VOID)
 {
     HalTaskContextSwitch();
 }
-
