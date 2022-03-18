@@ -241,7 +241,7 @@ static INLINE VOID OsQueueBufferOperate(LosQueueCB *queueCB, UINT32 operateType,
     } else {
         if (OS_QUEUE_IS_READ(operateType)) {
             msgDataSize = *((UINT32 *)(UINTPTR)((queueNode + queueCB->queueSize) - sizeof(UINT32)));
-            if(*bufferSize < msgDataSize) {
+            if (*bufferSize < msgDataSize) {
                 msgDataSize = *bufferSize;
             }
             rc = memcpy_s((VOID *)bufferAddr, *bufferSize, (VOID *)queueNode, msgDataSize);
