@@ -244,6 +244,9 @@ static INLINE VOID OsQueueBufferOperate(LosQueueCB *queueCB, UINT32 operateType,
     } else {
         if (OS_QUEUE_IS_READ(operateType)) {
             msgDataSize = *((UINT32 *)(UINTPTR)((queueNode + queueCB->queueSize) - sizeof(UINT32)));
+            if (*bufferSize < msgDataSize) {
+                msgDataSize = *bufferSize;
+            }
             rc = memcpy_s((VOID *)bufferAddr, *bufferSize, (VOID *)queueNode, msgDataSize);
             if (rc != EOK) {
                 PRINT_ERR("%s[%d] memcpy failed, error type = %u\n", __FUNCTION__, __LINE__, rc);
@@ -268,9 +271,7 @@ static INLINE UINT32 OsQueueOperateParamCheck(const LosQueueCB *queueCB, UINT32 
         return LOS_ERRNO_QUEUE_NOT_CREATE;
     }
 
-    if (OS_QUEUE_IS_READ(operateType) && (*bufferSize < (queueCB->queueSize - sizeof(UINT32)))) {
-        return LOS_ERRNO_QUEUE_READ_SIZE_TOO_SMALL;
-    } else if (OS_QUEUE_IS_WRITE(operateType) && (*bufferSize > (queueCB->queueSize - sizeof(UINT32)))) {
+    if (OS_QUEUE_IS_WRITE(operateType) && (*bufferSize > (queueCB->queueSize - sizeof(UINT32)))) {
         return LOS_ERRNO_QUEUE_WRITE_SIZE_TOO_BIG;
     }
 
