@@ -46,6 +46,37 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
+extern CHAR __boot_data_sram_start__;
+extern CHAR __boot_data_sram_end__;
+
+extern CHAR __bss_start__;
+extern CHAR __bss_end__;
+extern CHAR __sram_bss_start__;
+extern CHAR __sram_bss_end__;
+
+extern CHAR __data_start__;
+extern CHAR __data_end__;
+extern CHAR __sram_text_data_start_flash__;
+extern CHAR __sram_text_data_end_flash__;
+
+extern CHAR __text_end__;
+extern CHAR __text_start__;
+
+extern CHAR __cp_text_sram_exec_end__;
+extern CHAR __cp_text_sram_exec_start__;
+extern CHAR __psramx_text_end__;
+extern CHAR __flashx_text_end__;
+extern CHAR __flashx_text_start__;
+extern CHAR __fast_sram_text_exec_end__;
+extern CHAR __fast_sram_text_exec_start__;
+extern CHAR __sram_text_end__;
+extern CHAR __sram_text_start__;
+
+extern CHAR __cp_data_sram_start;
+extern CHAR __cp_data_sram_end;
+extern CHAR __overlay_data_end__;
+extern CHAR __overlay_data_start__;
+
 /* =============================================================================
                                         System clock module configuration
 ============================================================================= */

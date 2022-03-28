@@ -991,10 +991,40 @@ UINT32 LOS_MemDeInit(VOID *pool)
     return LOS_OK;
 }
 
+STATIC VOID OsRoMemPrint(VOID)
+{
+    size_t romTotal = 0x100000; /* from _best2001.lds */
+    size_t romUsed = &__boot_data_sram_end__ - &__boot_data_sram_start__;
+
+    size_t ramTotal = 0x800000 - 0x10000; /* from _best2001.lds */
+    size_t textLen = (&__sram_text_data_end_flash__ - &__sram_text_data_start_flash__) + \
+                     (&__sram_text_end__ - &__sram_text_start__) + \
+                     (&__fast_sram_text_exec_end__ - &__fast_sram_text_exec_start__) + \
+                     (&__flashx_text_end__ - &__flashx_text_start__) + \
+                     (&__cp_text_sram_exec_end__ - &__cp_text_sram_exec_start__);
+
+    size_t dataLen = (&__cp_data_sram_end - &__cp_data_sram_start) + \
+                     (&__overlay_data_end__ - &__overlay_data_start__) + \
+                     (&__sram_text_data_end_flash__ - &__sram_text_data_start_flash__) - (&__sram_text_end__ - &__sram_text_start__) + \
+                     (&__data_end__ - &__data_start__);
+
+    size_t bssLen = &__bss_end__ - &__bss_start__ + &__sram_bss_end__ - &__sram_bss_start__;
+    size_t totalLen = textLen + dataLen + bssLen;
+
+    PRINTK("ROM:\n");
+    PRINTK("\r\n    romTotal    romUsed    free\n");
+    PRINTK("    --------    ------    ------\n");
+    PRINTK("    0x%-9x\t    0x%-9x\t    0x%-9x\t\n", romTotal, romUsed, romTotal - romUsed);
+    PRINTK("\r\n    ramTotal\t    data\t    text\t    bss\t            totalUsed\t      free\t\n");
+    PRINTK("    --------       -------          -----           ---------       ----------        ---------\n");
+    PRINTK("    0x%-9x\t    0x%-9x\t    0x%-9x    0x%-9x\t    0x%-9x\t    0x%-9x\t\n", ramTotal, dataLen, textLen,\
+           bssLen, totalLen, ramTotal - totalLen);
+}
 UINT32 LOS_MemPoolList(VOID)
 {
     VOID *nextPool = g_poolHead;
     UINT32 index = 0;
+    OsRoMemPrint();
     while (nextPool != NULL) {
         PRINTK("pool%u :\n", index);
         index++;
