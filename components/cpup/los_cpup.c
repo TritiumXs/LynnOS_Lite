@@ -55,6 +55,12 @@ LITE_OS_SEC_BSS UINT16    g_cpupInitFlg = 0;
 LITE_OS_SEC_BSS OsCpupCB  *g_cpup = NULL;
 LITE_OS_SEC_BSS UINT64    g_lastRecordTime;
 LITE_OS_SEC_BSS UINT16    g_hisPos; /* <current Sampling point of historyTime */
+#if (LOSCFG_CPUP_INCLUDE_IRQ == 1)
+LITE_OS_SEC_BSS UINT16    g_irqCpupInitFlg = 0;
+LITE_OS_SEC_BSS OsIrqCpupCB *g_irqCpup = NULL;
+LITE_OS_SEC_BSS UINT16    g_irqHisPos; /* <current Sampling point of historyTime */
+LITE_OS_SEC_BSS UINT64    g_irqLastRecordTime;
+#endif
 
 /*****************************************************************************
 Function   : OsCpupInit
@@ -76,6 +82,17 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsCpupInit()
     // Ignore the return code when matching CSEC rule 6.6(3).
     (VOID)memset_s(g_cpup, size, 0, size);
     g_cpupInitFlg = 1;
+
+#if (LOSCFG_CPUP_INCLUDE_IRQ == 1)
+    size = LOSCFG_PLATFORM_HWI_LIMIT * sizeof(OsIrqCpupCB);
+    g_irqCpup = (OsIrqCpupCB *)LOS_MemAlloc(m_aucSysMem0, size);
+    if (g_irqCpup == NULL) {
+        return LOS_ERRNO_CPUP_NO_MEMORY;
+    }
+
+    (VOID)memset_s(g_irqCpup, size, 0, size);
+    g_irqCpupInitFlg = 1;
+#endif
 
     return LOS_OK;
 }
@@ -512,5 +529,162 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_CpupUsageMonitor(CPUP_TYPE_E type, CPUP_MODE_E
 
     return LOS_OK;
 }
+
+#if (LOSCFG_CPUP_INCLUDE_IRQ == 1)
+#define OS_CPUP_USED        0x1U
+#define SYS_TICK_IRQNUM     15      /* 15, sysyick irq num */
+LITE_OS_SEC_TEXT_MINOR VOID OsCpupIrqStart(UINT32 intNum)
+{
+    if (g_irqCpupInitFlg == 0) {
+        return;
+    }
+
+    if (intNum == SYS_TICK_IRQNUM) {
+        return;
+    }
+
+    g_irqCpup[intNum].startTime = LOS_SysCycleGet();
+    return;
+}
+
+LITE_OS_SEC_TEXT_MINOR VOID OsCpupIrqEnd(UINT32 intNum)
+{
+    UINT64 cpuCycle;
+    UINT64 usedTime;
+    UINT16 loopNum;
+
+    if (g_irqCpupInitFlg == 0) {
+        return;
+    }
+
+    if (g_irqCpup[intNum].startTime == 0) {
+        return;
+    }
+
+    if (intNum == SYS_TICK_IRQNUM) {
+        return;
+    }
+
+    cpuCycle = LOS_SysCycleGet();
+
+    if (cpuCycle < g_irqCpup[intNum].startTime) {
+        cpuCycle += g_cyclesPerTick;
+    }
+
+
+    g_irqCpup[intNum].cpupID = intNum;
+    g_irqCpup[intNum].status = OS_CPUP_USED;
+    usedTime = cpuCycle - g_irqCpup[intNum].startTime;
+
+    /* 100, Take 100 samples */
+    if (g_irqCpup[intNum].count <= 100) {
+        g_irqCpup[intNum].allTime += usedTime;
+        g_irqCpup[intNum].count++;
+    } else {
+        g_irqCpup[intNum].allTime = 0;
+        g_irqCpup[intNum].count = 0;
+    }
+    g_irqCpup[intNum].startTime = 0;
+    if (usedTime > g_irqCpup[intNum].timeMax) {
+        g_irqCpup[intNum].timeMax = usedTime;
+    }
+
+    if ((cpuCycle - g_irqLastRecordTime) > OS_CPUP_RECORD_PERIOD) {
+        g_irqLastRecordTime = cpuCycle;
+
+        for (loopNum = 0; loopNum < LOSCFG_PLATFORM_HWI_LIMIT; loopNum++) {
+            g_irqCpup[loopNum].historyTime[g_irqHisPos] = g_irqCpup[loopNum].allTime;
+        }
+
+        if (g_irqHisPos == (OS_CPUP_HISTORY_RECORD_NUM - 1)) {
+            g_irqHisPos = 0;
+        } else {
+            g_irqHisPos++;
+        }
+    }
+
+    return;
+}
+
+LITE_OS_SEC_TEXT_MINOR OsIrqCpupCB *OsGetIrqCpupArrayBase(VOID)
+{
+    return g_irqCpup;
+}
+
+LITE_OS_SEC_TEXT_MINOR static VOID OsGetIrqPositions(UINT16 mode, UINT16* curPosAddr, UINT16* prePosAddr)
+{
+    UINT16 curPos;
+    UINT16 prePos = 0;
+
+    curPos = g_irqHisPos;
+
+    if (mode == CPUP_IN_1S) {
+        curPos = OsGetPrePos(curPos);
+        prePos = OsGetPrePos(curPos);
+    } else if (mode == CPUP_LESS_THAN_1S) {
+        curPos = OsGetPrePos(curPos);
+    }
+
+    *curPosAddr = curPos;
+    *prePosAddr = prePos;
+}
+
+LITE_OS_SEC_TEXT_MINOR UINT32 LOS_GetAllIrqCpuUsage(UINT16 mode, CPUP_INFO_S *cpupInfo)
+{
+    UINT16 loopNum;
+    UINT16 curPos;
+    UINT16 prePos = 0;
+    UINT32 intSave;
+    UINT64 cpuCycleAll = 0;
+    UINT64 cpuCycleCurIrq = 0;
+
+    if (g_irqCpupInitFlg == 0) {
+        return  LOS_ERRNO_CPUP_NO_INIT;
+    }
+
+    if (cpupInfo == NULL) {
+        return LOS_ERRNO_CPUP_TASK_PTR_NULL;
+    }
+
+    intSave = LOS_IntLock();
+
+    OsGetIrqPositions(mode, &curPos, &prePos);
+
+    for (loopNum = 0; loopNum < LOSCFG_PLATFORM_HWI_LIMIT; loopNum++) {
+        if (g_irqCpup[loopNum].status != OS_CPUP_USED) {
+            continue;
+        }
+
+        if (mode == CPUP_IN_1S) {
+            cpuCycleAll += g_irqCpup[loopNum].historyTime[curPos] - g_irqCpup[loopNum].historyTime[prePos];
+        } else {
+            cpuCycleAll += g_irqCpup[loopNum].allTime - g_irqCpup[loopNum].historyTime[curPos];
+        }
+    }
+
+
+    for (loopNum = 0; loopNum < LOSCFG_PLATFORM_HWI_LIMIT; loopNum++) {
+        if (g_irqCpup[loopNum].status != OS_CPUP_USED) {
+            continue;
+        }
+
+        if (mode == CPUP_IN_1S) {
+            cpuCycleCurIrq += g_irqCpup[loopNum].historyTime[curPos] - g_irqCpup[loopNum].historyTime[prePos];
+        } else {
+            cpuCycleCurIrq += g_irqCpup[loopNum].allTime - g_irqCpup[loopNum].historyTime[curPos];
+        }
+        cpupInfo[loopNum].usStatus = g_irqCpup[loopNum].status;
+
+        if (cpuCycleAll) {
+            cpupInfo[loopNum].uwUsage = (UINT32)((LOS_CPUP_PRECISION * cpuCycleCurIrq) / cpuCycleAll);
+        }
+
+        cpuCycleCurIrq = 0;
+    }
+
+    LOS_IntRestore(intSave);
+    return LOS_OK;
+}
+#endif
 
 #endif /* LOSCFG_BASE_CORE_CPUP */
