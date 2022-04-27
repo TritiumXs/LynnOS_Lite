@@ -88,12 +88,10 @@ VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, Sort
 
     if (type == OS_SORT_LINK_TASK) {
         sortLinkHead = &g_taskSortLink;
-
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
     } else if (type == OS_SORT_LINK_SWTMR) {
         sortLinkHead = &g_swtmrSortLink;
 #endif
-
     } else {
         LOS_Panic("Sort link type error : %u\n", type);
     }
@@ -141,19 +139,16 @@ VOID OsSortLinkResponseTimeConvertFreq(UINT32 oldFreq)
     SortLinkAttribute *swtmrHead = &g_swtmrSortLink;
     SortLinkNodeTimeUpdate(swtmrHead, oldFreq);
 #endif
-
 }
 
 SortLinkAttribute *OsGetSortLinkAttribute(SortLinkType type)
 {
     if (type == OS_SORT_LINK_TASK) {
         return &g_taskSortLink;
-
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
     } else if (type == OS_SORT_LINK_SWTMR) {
         return &g_swtmrSortLink;
 #endif
-
     }
 
     PRINT_ERR("Invalid sort link type!\n");
