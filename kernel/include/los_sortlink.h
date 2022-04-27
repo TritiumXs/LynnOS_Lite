@@ -56,7 +56,10 @@ typedef struct {
 } SortLinkAttribute;
 
 extern SortLinkAttribute g_taskSortLink;
+
+#if (LOSCFG_BASE_CORE_SWTMR == 1)
 extern SortLinkAttribute g_swtmrSortLink;
+#endif
 
 #define OS_SORT_LINK_INVALID_TIME ((UINT64)-1)
 #define SET_SORTLIST_VALUE(sortList, value) (((SortLinkList *)(sortList))->responseTime = (value))
