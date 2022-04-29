@@ -38,6 +38,9 @@
 #if (LOSCFG_KERNEL_PM == 1)
 #include "los_pm.h"
 #endif
+#if (LOSCFG_CPUP_INCLUDE_IRQ == 1)
+#include "los_debugtools.h"
+#endif
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -545,6 +548,9 @@ BOOL OsSchedTaskSwitch(VOID)
         isTaskSwitch = TRUE;
 
         OsHookCall(LOS_HOOK_TYPE_TASK_SWITCHEDIN);
+#if (LOSCFG_CPUP_INCLUDE_IRQ == 1)
+        OsTaskTraceRecord(newTask);
+#endif
     }
 
     OsSchedTaskDeQueue(newTask);
