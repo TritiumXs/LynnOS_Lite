@@ -979,7 +979,6 @@ static void *PthreadStackTest(void *argument)
 {
     (void)argument;
     g_testCount++;
-    return NULL;
 }
 
 /**
@@ -1034,7 +1033,6 @@ static void *PosixTestThread(void *arg)
     ADD_TEST_CASE(TestPthread015);
     ADD_TEST_CASE(TestPthread016);
     ADD_TEST_CASE(TestPthread017);
-    return NULL;
 }
 
 int PthreadFuncTestSuite(void)
