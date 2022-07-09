@@ -565,11 +565,13 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
     return result;
 }
 
+#ifndef __ICCARM__
 struct tm *localtime(const time_t *timer)
 {
     static struct tm tm;
     return localtime_r(timer, &tm);
 }
+#endif
 
 static time_t ConvertUtc2Secs(struct tm *tm)
 {
