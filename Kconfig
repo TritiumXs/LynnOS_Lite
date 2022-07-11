@@ -91,7 +91,7 @@ menu "Platform"
 ######################### config options of bsp #####################
 config PLATFORM
     string
-    default "virt"            if PLATFORM_QEMU_ARM_VIRT_CM7 || PLATFORM_QEMU_ARM_VIRT_CM4 || PLATFORM_QEMU_ARM_VIRT_CM55 || PRODUCT_QEMU_RISCV32_VIRT || PLATFORM_QEMU_CSKY_SMARTL || PLATFORM_QEMU_XTENSA_ESP32
+    default "virt"            if PLATFORM_QEMU_ARM_VIRT_CM7 || PLATFORM_QEMU_ARM_VIRT_CM4 || PLATFORM_QEMU_ARM_VIRT_CM55 || PRODUCT_QEMU_RISCV32_VIRT || PLATFORM_QEMU_CSKY_SMARTL || PLATFORM_QEMU_XTENSA_ESP32  || PLATFORM_QEMU_PI32V2_AC69
 
 config PRODUCT_NAME
     string
@@ -101,10 +101,11 @@ config PRODUCT_NAME
     default "riscv32_virt" if PRODUCT_QEMU_RISCV32_VIRT
     default "csky_smartl_e802" if PRODUCT_QEMU_CSKY_SMARTL_E802
     default "xtensa_esp32" if PRODUCT_QEMU_XTENSA_ESP32
+    default "pi32v2_ac69" if PRODUCT_QEMU_PI32V2_AC69
 
 config DEVICE_COMPANY
     string
-    default "qemu" if PLATFORM_QEMU_ARM_VIRT_CM7 || PLATFORM_QEMU_ARM_VIRT_CM4 || PLATFORM_QEMU_ARM_VIRT_CM55 || PRODUCT_QEMU_RISCV32_VIRT || PLATFORM_QEMU_CSKY_SMARTL || PLATFORM_QEMU_XTENSA_ESP32
+    default "qemu" if PLATFORM_QEMU_ARM_VIRT_CM7 || PLATFORM_QEMU_ARM_VIRT_CM4 || PLATFORM_QEMU_ARM_VIRT_CM55 || PRODUCT_QEMU_RISCV32_VIRT || PLATFORM_QEMU_CSKY_SMARTL || PLATFORM_QEMU_XTENSA_ESP32 || PLATFORM_QEMU_PI32V2_AC69
 
 choice
     prompt "Chip"
@@ -116,6 +117,7 @@ choice
        - qemu_riscv32_virt
        - qemu_csky_smartl
        - qemu_xtensa_esp32
+       - qemu_pi32v2_ac69
 
 config PLATFORM_QEMU_ARM_VIRT_CM7
     bool "qemu_arm_virt_cm7"
@@ -147,11 +149,20 @@ config PLATFORM_QEMU_CSKY_SMARTL
     help
         QEMU SmartL Virtual Platform using csky CPU.
 
-config PLATFORM_QEMU_XTENSA_ESP32
+config platform_qemu_xtensa_esp32
     bool "qemu_xtensa_esp32"
-    select ARCH_XTENSA
+    select arch_xtensa
     help
-        QEMU ESP32 Virtual Platform using xtensa CPU.
+        qemu esp32 virtual platform using xtensa cpu.
+
+config PLATFORM_QEMU_PI32V2_AC69
+    bool "qemu_pi32v2_ac69"
+    select arch_pi32v2
+    help
+        qemu ac69 virtual platform using pi32v2 cpu.
+
+
+
 
 endchoice
 
@@ -177,6 +188,10 @@ config PRODUCT_QEMU_CSKY_SMARTL_E802
 
 config PRODUCT_QEMU_XTENSA_ESP32
     bool "xtensa_esp32" if PLATFORM_QEMU_XTENSA_ESP32
+
+config PRODUCT_QEMU_PI32V2_AC69
+    bool "pi32v2_ac69" if PLATFORM_QEMU_PI32V2_AC69
+
 
 endchoice
 
