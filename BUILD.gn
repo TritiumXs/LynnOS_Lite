@@ -27,7 +27,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import("//build/lite/config/component/lite_component.gni")
+import("//build/hb/config/component/lite_component.gni")
 
 LITEOS_MENUCONFIG_H = rebase_path("$root_out_dir/config.h")
 
@@ -75,7 +75,7 @@ config("arch_config") {
 }
 
 config("stdinc_config") {
-  std_include = exec_script("//build/lite/run_shell_cmd.py",
+  std_include = exec_script("//build/hb/run_shell_cmd.py",
                             [ "$cc -print-file-name=include" ],
                             "trim string")
   cflags = [
@@ -206,7 +206,7 @@ config("los_config") {
 }
 
 cmd = "if [ -f $device_path/BUILD.gn ]; then echo true; else echo false; fi"
-HAVE_DEVICE_SDK = exec_script("//build/lite/run_shell_cmd.py", [ cmd ], "value")
+HAVE_DEVICE_SDK = exec_script("//build/hb/run_shell_cmd.py", [ cmd ], "value")
 
 # board and soc decoupling feature, device_path should contains board
 BOARD_SOC_FEATURE = device_path != string_replace(device_path, "/board/", "")
@@ -284,7 +284,7 @@ executable("liteos") {
   if (liteos_kernel_only) {
     deps = [ ":kernel" ]
   } else {
-    deps = [ "//build/lite:ohos" ]
+    deps = [ "//build/hb:ohos" ]
   }
 }
 
