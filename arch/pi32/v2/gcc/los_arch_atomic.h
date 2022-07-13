@@ -10,8 +10,6 @@ extern "C" {
 #endif /* ifdef __cplusplus */
 #endif /* __cplusplus */
 
-
-
 #ifdef __cplusplus
 #if __cplusplus
 }

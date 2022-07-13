@@ -3,9 +3,7 @@
 #include "los_arch_timer.h"
 #include "los_timer.h"
 #include "los_task.h"
-/* #include "hwi.h" */
 #include "csfr.h"
-/* #include <stdio.h> */
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -13,21 +11,11 @@ extern "C" {
 #endif
 #endif
 
-extern VOID ArchHwiInit();
-extern VOID OsSchedStart(VOID);
-extern VOID ArchStartToRun(VOID);
-extern BOOL OsSchedTaskSwitch(VOID);
-extern BOOL g_taskScheduled;
+#define SOFT_PENDING      (1UL << 3)
 
 LITE_OS_SEC_TEXT_INIT VOID ArchInit(VOID)
 {
     ArchHwiInit();
-    /* UINT32 ret = SysTickStart(OsTickHandler); */
-    /* if (ret != LOS_OK) { */
-        /* printf("Tick Start failed\n"); */
-        /* return ; */
-    /* } */
-
 
 }
 LITE_OS_SEC_TEXT_MINOR VOID ArchSysExit(VOID)
@@ -42,7 +30,7 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
 {
     TaskContext  *context = NULL;
 
-    printf("    task stack init %x  size:%d\n", topStack,stackSize);
+    printf("    task stack init %x  size:%d\n", topStack, stackSize);
 
     /* initialize the task stack, write magic num to stack top */
     for (UINT32 index = 1; index < (stackSize / sizeof(UINT32)); index++) {
@@ -60,6 +48,19 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
     return (VOID *)context;
 }
 
+LITE_OS_SEC_TEXT_INIT VOID *ArchSignalContextInit(VOID *stackPointer, VOID *stackTop, UINTPTR sigHandler, UINT32 param)
+{
+    UNUSED(stackTop);
+    TaskContext *context = (TaskContext *)((UINTPTR)stackPointer - sizeof(TaskContext));
+    (VOID)memset_s((VOID *)context, sizeof(TaskContext), 0, sizeof(TaskContext));
+
+    context->r0 = param;
+    context->rets = (UINT32)ArchSysExit;
+    context->reti = sigHandler;
+    context->psr = 0x0; /* Thumb flag, always set 1 */
+
+    return (VOID *)context;
+}
 
 LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 {
@@ -79,20 +80,16 @@ LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 
 VOID ArchTaskSchedule(VOID)
 {
-    // FIXME:
     // clear watch dog
     wdt_clear();
     int cpu = 0; // cpu 0
-    q32DSP(cpu)->ILAT_SET |= BIT(3);
+    q32DSP(cpu)->ILAT_SET |= SOFT_PENDING;
 }
-
-
-
 
 VOID ArchClearSchedulePending(VOID)
 {
     int cpu = 0;
-    q32DSP(cpu)->ILAT_CLR =  BIT(3);
+    q32DSP(cpu)->ILAT_CLR = SOFT_PENDING;
 }
 
 BOOL ArchTaskSwitch(VOID)

@@ -12,9 +12,6 @@
 #include "los_membox.h"
 #include "hwi.h"
 
-
-
-
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
@@ -23,11 +20,6 @@ extern "C" {
 
 LITE_OS_SEC_BSS UINT32  g_intCount = 0;
 
-extern VOID ArchPendSV(VOID);
-
-
-
-extern void exception_irq_handler(void);
 
 LITE_OS_SEC_TEXT_INIT VOID ArchHwiInit()
 {
@@ -37,8 +29,6 @@ LITE_OS_SEC_TEXT_INIT VOID ArchHwiInit()
     request_irq(IRQ_SOFT3_IDX, 0, ArchPendSV, 0);
     /* initialize timer interrupt */
 }
-
-
 
 UINT32 ArchIsIntActive(VOID)
 {
@@ -66,15 +56,12 @@ UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
         return OS_ERROR;
     }
 
-
-
     request_irq(hwiNum, hwiPrio, handler, 0);
-
 
     return LOS_OK;
 }
 
-UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum,HwiIrqParam *irqParam)
+UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum, HwiIrqParam *irqParam)
 {
     UINT32 intSave;
 
@@ -86,10 +73,6 @@ UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum,HwiIrqParam *irqParam)
 
     return LOS_OK;
 }
-
-
-
-
 
 #ifdef __cplusplus
 #if __cplusplus

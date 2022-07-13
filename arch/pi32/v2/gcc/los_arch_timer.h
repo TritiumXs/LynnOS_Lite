@@ -11,7 +11,7 @@ extern "C" {
 #endif
 #endif
 
-
+extern volatile unsigned long jiffies;
 #ifdef __cplusplus
 #if __cplusplus
 }

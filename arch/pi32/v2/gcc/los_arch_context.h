@@ -1,4 +1,3 @@
-
 #ifndef _LOS_ARCH_CONTEXT_H
 #define _LOS_ARCH_CONTEXT_H
 
@@ -34,6 +33,9 @@ typedef struct TagTskContext {
     UINT32 r14;
     UINT32 r15;
 } TaskContext;
+
+
+extern VOID ArchPendSV(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

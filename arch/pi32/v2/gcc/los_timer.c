@@ -33,12 +33,14 @@
 #include "los_config.h"
 #include "los_tick.h"
 #include "los_arch_interrupt.h"
+#include "los_arch_timer.h"
 #include "los_debug.h"
 
 #include "csfr.h"
 
 #define IRQ_TICK_TMR_IDX   3
-
+#define TICK_CLEAR_PENDIND   (1UL << 6)
+#define TICK_START           (1UL << 0)
 
 static HWI_PROC_FUNC systick_handler = (HWI_PROC_FUNC)NULL;
 
@@ -62,21 +64,14 @@ STATIC ArchTickTimer g_archTickTimer = {
     .tickHandler = NULL,
 };
 
-
-
-extern volatile unsigned long jiffies;
-__attribute__((interrupt("")))
-static void tickISR()
+__attribute__((interrupt(""))) static void tickISR(void)
 {
-    TICK_CON |= BIT(6);
+    TICK_CON |= TICK_CLEAR_PENDIND;
     jiffies++;
     if (systick_handler != NULL) {
         systick_handler();
     }
 }
-
-
-
 
 /* ****************************************************************************
 Function    : HalTickStart
@@ -91,13 +86,13 @@ STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
 
     tick->freq = OS_SYS_CLOCK;
 
-	systick_handler = handler;
+    systick_handler = handler;
     TICK_CON = 0;
     ArchHwiCreate(IRQ_TICK_TMR_IDX, 1, 0, tickISR, 0);
 
     TICK_CNT = 0;
-    TICK_PRD =  (OS_CYCLE_PER_TICK - 1);;
-    TICK_CON = BIT(0);
+    TICK_PRD = (OS_CYCLE_PER_TICK - 1);
+    TICK_CON = TICK_START;
 
 
     return LOS_OK;
@@ -110,12 +105,11 @@ STATIC UINT64 SysTickReload(UINT64 nextResponseTime)
     }
 
 
-    TICK_CON &= ~BIT(0);
+    TICK_CON &= ~TICK_START;
     TICK_PRD = (UINT32)(nextResponseTime - 1UL); /* set reload register */
     TICK_CNT = 0UL; /* Load the SysTick Counter Value */
-    /* NVIC_ClearPendingIRQ(SysTick_IRQn); */
-    TICK_CON |= BIT(6);
-    TICK_CON |= BIT(0);
+    TICK_CON |= TICK_CLEAR_PENDIND;
+    TICK_CON |= TICK_START;
 
     return nextResponseTime;
 }
@@ -133,12 +127,12 @@ STATIC UINT64 SysTickCycleGet(UINT32 *period)
 
 STATIC VOID SysTickLock(VOID)
 {
-    TICK_CON &= ~BIT(0);
+    TICK_CON &= ~TICK_START;
 }
 
 STATIC VOID SysTickUnlock(VOID)
 {
-    TICK_CON |= BIT(0);
+    TICK_CON |= TICK_START;
 }
 
 ArchTickTimer *ArchSysTickTimerGet(VOID)
