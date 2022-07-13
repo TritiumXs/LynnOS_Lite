@@ -149,11 +149,11 @@ config PLATFORM_QEMU_CSKY_SMARTL
     help
         QEMU SmartL Virtual Platform using csky CPU.
 
-config platform_qemu_xtensa_esp32
+config PLATFORM_QEMU_XTENSA_ESP32
     bool "qemu_xtensa_esp32"
-    select arch_xtensa
+    select ARCH_XTENSA
     help
-        qemu esp32 virtual platform using xtensa cpu.
+        QEMU ESP32 Virtual Platform using xtensa CPU.
 
 config PLATFORM_QEMU_PI32V2_AC69
     bool "qemu_pi32v2_ac69"
