@@ -67,16 +67,79 @@ int GetDevIdByDevName(const char *dev)
     return LOS_NOK;
 }
 
-int LOS_DiskPartition(const char *dev, const char *fsType, int *lengthArray,
-                      int partnum)
+struct DeviceDesc *g_deviceList = NULL;
+
+struct DeviceDesc *getDeviceList(VOID)
+{
+    return g_deviceList;
+}
+
+static int AddDevice(const char *dev, const char *fsType, int *lengthArray, int *addrArray,
+                     int partNum)
+{
+    struct DeviceDesc *prev = NULL;
+    for (prev = g_deviceList; prev != NULL; prev = prev->dNext) {
+        if (strcmp(prev->dDev, dev) == 0) {
+            errno = -EFAULT;
+            return LOS_NOK;
+        }
+    }
+
+    if (addrArray == NULL) {
+        errno = -EFAULT;
+        return LOS_NOK;
+    }
+
+    prev = (struct DeviceDesc *)malloc(sizeof(struct DeviceDesc));
+    if (prev == NULL) {
+        errno = -EEXIST;
+        return LOS_NOK;
+    }
+    prev->dDev = strdup(dev);
+    prev->dFsType  = strdup(fsType);
+    prev->dAddrArray = (int *)malloc(partNum * sizeof(int));
+    if (prev->dAddrArray == NULL) {
+        goto errout;
+    }
+    (VOID)memcpy_s(prev->dAddrArray, partNum * sizeof(int), addrArray, partNum * sizeof(int));
+
+    if (lengthArray != NULL) {
+        prev->dLengthArray = (int *)malloc(partNum * sizeof(int));
+        if (prev->dLengthArray == NULL) {
+            goto errout;
+        }
+        (VOID)memcpy_s(prev->dLengthArray, partNum * sizeof(int), lengthArray, partNum * sizeof(int));
+    }
+
+    prev->dNext = g_deviceList;
+    prev->dPartNum = partNum;
+    g_deviceList = prev;
+    return LOS_OK;
+errout:
+    if (prev->dLengthArray != NULL) {
+        free(prev->dLengthArray);
+    }
+
+    free(prev);
+    errno = -EEXIST;
+    return LOS_NOK;
+}
+
+
+int LOS_DiskPartition(const char *dev, const char *fsType, int *lengthArray, int *addrArray,
+                      int partNum)
 {
     int ret = LOS_NOK;
     struct FsMap *fMap = VfsFsMapGet(fsType);
     if ((fMap != NULL) && (fMap->fsMgt != NULL) &&
         (fMap->fsMgt->fdisk != NULL)) {
-        ret = fMap->fsMgt->fdisk(dev, lengthArray, partnum);
+        ret = fMap->fsMgt->fdisk(dev, lengthArray, partNum);
+        if (ret == LOS_NOK) {
+            return ret;
+        }
     }
 
+    ret = AddDevice(dev, fsType, lengthArray, addrArray, partNum);
     return ret;
 }
 
@@ -100,5 +163,6 @@ int LOS_PartitionFormat(const char *partName, char *fsType, void *data)
         (fMap->fsMgt->format != NULL)) {
         ret = fMap->fsMgt->format(partName, data);
     }
+
     return ret;
 }
