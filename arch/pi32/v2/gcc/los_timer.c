@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -43,8 +43,6 @@
 #define TICK_START           (1UL << 0)
 
 static HWI_PROC_FUNC systick_handler = (HWI_PROC_FUNC)NULL;
-
-
 
 STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler);
 STATIC UINT64 SysTickReload(UINT64 nextResponseTime);
@@ -94,7 +92,6 @@ STATIC UINT32 SysTickStart(HWI_PROC_FUNC handler)
     TICK_PRD = (OS_CYCLE_PER_TICK - 1);
     TICK_CON = TICK_START;
 
-
     return LOS_OK;
 }
 
@@ -103,7 +100,6 @@ STATIC UINT64 SysTickReload(UINT64 nextResponseTime)
     if (nextResponseTime > g_archTickTimer.periodMax) {
         nextResponseTime = g_archTickTimer.periodMax;
     }
-
 
     TICK_CON &= ~TICK_START;
     TICK_PRD = (UINT32)(nextResponseTime - 1UL); /* set reload register */
@@ -116,7 +112,6 @@ STATIC UINT64 SysTickReload(UINT64 nextResponseTime)
 
 STATIC UINT64 SysTickCycleGet(UINT32 *period)
 {
-
     UINT32 hwCycle;
     UINT32 intSave = LOS_IntLock();
     *period = TICK_PRD;
