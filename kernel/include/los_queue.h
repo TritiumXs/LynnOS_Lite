@@ -380,7 +380,7 @@ typedef struct tagQueueInfo {
  * <ul>
  * <li>There are LOSCFG_BASE_IPC_QUEUE_LIMIT queues available, change it's value when necessary.</li>
  * </ul>
- * @param queueName        [IN]    Message queue name. Reserved parameter, not used for now.
+ * @param queueName        [IN]    Message queue name. Reserved parameter.
  * @param len              [IN]    Queue length. The value range is [1,0xffff].
  * @param queueID          [OUT]   ID of the queue control structure that is successfully created.
  * @param flags            [IN]    Queue mode. Reserved parameter, not used for now.
@@ -402,6 +402,13 @@ extern UINT32 LOS_QueueCreate(const CHAR *queueName,
                               UINT32 *queueID,
                               UINT32 flags,
                               UINT16 maxMsgSize);
+
+extern UINT32 LOS_QueueCreateStatic(const CHAR *queueName,
+                                    UINT16 len,
+                                    UINT32 *queueID,
+                                    UINT8 *staticMem,
+                                    UINT32 flags,
+                                    UINT16 maxMsgSize);
 
 /**
  * @ingroup los_queue
@@ -775,6 +782,8 @@ typedef enum {
   */
 typedef struct {
     UINT8 *queue;      /**< Pointer to a queue handle */
+    UINT8 *queueName;  /**< Queue name */
+    UINT8 *staticMem;  /**< Static queue memory */
     UINT16 queueState; /**< Queue state */
     UINT16 queueLen;   /**< Queue length */
     UINT16 queueSize;  /**< Node size */

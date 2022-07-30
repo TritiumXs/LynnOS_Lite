@@ -81,6 +81,89 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsQueueInit(VOID)
     return LOS_OK;
 }
 
+
+/*****************************************************************************
+ Function    : LOS_QueueCreateStatic
+ Description : Create a queue use static menory
+ Input       : queueName  --- Queue name, less than 4 characters
+             : len        --- Queue length
+             : queueMem   --- Queue memory for data storage
+             : flags      --- Queue type, FIFO or PRIO
+             : maxMsgSize --- Maximum message size in byte
+ Output      : queueID    --- Queue ID
+ Return      : LOS_OK on success or error code on failure
+ *****************************************************************************/
+
+LITE_OS_SEC_TEXT_INIT UINT32 LOS_QueueCreateStatic(const CHAR *queueName,
+                                                   UINT16 len,
+                                                   UINT32 *queueID,
+                                                   UINT8 *staticMem,
+                                                   UINT32 flags,
+                                                   UINT16 maxMsgSize)
+{
+    LosQueueCB *queueCB = NULL;
+    UINT32 intSave;
+    LOS_DL_LIST *unusedQueue = NULL;
+    UINT16 msgSize;
+
+    (VOID)flags;
+
+    if (queueID == NULL) {
+        return LOS_ERRNO_QUEUE_CREAT_PTR_NULL;
+    }
+
+    if (maxMsgSize > (OS_NULL_SHORT - sizeof(UINT32))) {
+        return LOS_ERRNO_QUEUE_SIZE_TOO_BIG;
+    }
+
+    if ((len == 0) || (maxMsgSize == 0)) {
+        return LOS_ERRNO_QUEUE_PARA_ISZERO;
+    }
+    msgSize = maxMsgSize + sizeof(UINT32);
+
+    /* Memory allocation is time-consuming, to shorten the time of disable interrupt,
+       move the memory allocation to here. */
+    if ((UINT32_MAX / msgSize) < len) {
+        return LOS_ERRNO_QUEUE_SIZE_TOO_BIG;
+    }
+
+    if (staticMem == NULL) {
+        return LOS_ERRNO_QUEUE_CREAT_PTR_NULL;
+    }
+
+    intSave = LOS_IntLock();
+    if (LOS_ListEmpty(&g_freeQueueList)) {
+        LOS_IntRestore(intSave);
+        return LOS_ERRNO_QUEUE_CB_UNAVAILABLE;
+    }
+
+    unusedQueue = LOS_DL_LIST_FIRST(&(g_freeQueueList));
+    LOS_ListDelete(unusedQueue);
+    queueCB = (GET_QUEUE_LIST(unusedQueue));
+    queueCB->queueName = (UINT8 *)queueName;
+    queueCB->queueLen = len;
+    queueCB->queueSize = msgSize;
+    queueCB->queue = staticMem;
+    queueCB->staticMem = staticMem;
+    queueCB->queueState = OS_QUEUE_INUSED;
+    queueCB->readWriteableCnt[OS_QUEUE_READ] = 0;
+    queueCB->readWriteableCnt[OS_QUEUE_WRITE] = len;
+    queueCB->queueHead = 0;
+    queueCB->queueTail = 0;
+    LOS_ListInit(&queueCB->readWriteList[OS_QUEUE_READ]);
+    LOS_ListInit(&queueCB->readWriteList[OS_QUEUE_WRITE]);
+    LOS_ListInit(&queueCB->memList);
+    LOS_IntRestore(intSave);
+
+    *queueID = queueCB->queueID;
+
+    OsHookCall(LOS_HOOK_TYPE_QUEUE_CREATE, queueCB);
+
+    return LOS_OK;
+
+}
+
+
 /*****************************************************************************
  Function    : LOS_QueueCreate
  Description : Create a queue
@@ -103,7 +186,6 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_QueueCreate(const CHAR *queueName,
     UINT8 *queue = NULL;
     UINT16 msgSize;
 
-    (VOID)queueName;
     (VOID)flags;
 
     if (queueID == NULL) {
@@ -139,9 +221,11 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_QueueCreate(const CHAR *queueName,
     unusedQueue = LOS_DL_LIST_FIRST(&(g_freeQueueList));
     LOS_ListDelete(unusedQueue);
     queueCB = (GET_QUEUE_LIST(unusedQueue));
+    queueCB->queueName = (UINT8 *)queueName;
     queueCB->queueLen = len;
     queueCB->queueSize = msgSize;
     queueCB->queue = queue;
+    queueCB->staticMem = NULL;
     queueCB->queueState = OS_QUEUE_INUSED;
     queueCB->readWriteableCnt[OS_QUEUE_READ] = 0;
     queueCB->readWriteableCnt[OS_QUEUE_WRITE] = len;
@@ -572,6 +656,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_QueueDelete(UINT32 queueID)
     UINT8 *queue = NULL;
     UINT32 intSave;
     UINT32 ret;
+    UINT8 *staticMem = NULL;
 
     if (queueID >= LOSCFG_BASE_IPC_QUEUE_LIMIT) {
         return LOS_ERRNO_QUEUE_NOT_FOUND;
@@ -606,15 +691,21 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_QueueDelete(UINT32 queueID)
     }
 
     queue = queueCB->queue;
+    staticMem = queueCB->staticMem;
     queueCB->queue = (UINT8 *)NULL;
+    queueCB->staticMem = (UINT8 *)NULL;
     queueCB->queueState = OS_QUEUE_UNUSED;
     LOS_ListAdd(&g_freeQueueList, &queueCB->readWriteList[OS_QUEUE_WRITE]);
     LOS_IntRestore(intSave);
 
     OsHookCall(LOS_HOOK_TYPE_QUEUE_DELETE, queueCB);
 
-    ret = LOS_MemFree(m_aucSysMem0, (VOID *)queue);
-    return ret;
+    if (staticMem == NULL) {
+        ret = LOS_MemFree(m_aucSysMem0, (VOID *)queue);
+        return ret;
+    }
+
+    return LOS_OK;
 
 QUEUE_END:
     LOS_IntRestore(intSave);
