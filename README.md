@@ -25,6 +25,7 @@ The directory structure is as follows. For more details, see [arch_spec.md](arch
 ├── arch                 # Code of the kernel instruction architecture layer
 │   ├── arm              # Code of the ARM32 architecture
 │   │   ├── arm9         # Code of the ARM9 architecture
+│   │   ├── arm926       # Code of the ARM926 architecture
 │   │   ├── cortex-m3    # Code of the cortex-m3 architecture
 │   │   ├── cortex-m33   # Code of the cortex-m33 architecture
 │   │   ├── cortex-m4    # Code of the cortex-m4 architecture
