@@ -616,7 +616,7 @@ VOID LOS_RecordLR(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount, UINTPTR SP)
     LosTaskCB *taskCB = NULL;
     UINT32 taskID;
     UINT32 stackStart, stackEnd;
-    UINTPTR framePtr, tmpFramePtr, linkReg;
+    UINTPTR linkReg;
 
     if (LR == NULL) {
         return;
