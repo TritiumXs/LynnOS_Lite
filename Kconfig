@@ -94,7 +94,7 @@ menu "Platform"
 ######################### config options of bsp #####################
 config PLATFORM
     string
-    default "virt"            if PLATFORM_QEMU_ARM_VIRT_CM7 || PLATFORM_QEMU_ARM_VIRT_CM4 || PLATFORM_QEMU_ARM_VIRT_CM55 || PRODUCT_QEMU_RISCV32_VIRT || PLATFORM_QEMU_CSKY_SMARTL || PLATFORM_QEMU_XTENSA_ESP32
+    default "virt"            if PLATFORM_QEMU_ARM_VIRT_CM7 || PLATFORM_QEMU_ARM_VIRT_CM4 || PLATFORM_QEMU_ARM_VIRT_CM55 || PRODUCT_QEMU_RISCV32_VIRT || PLATFORM_QEMU_CSKY_SMARTL || PLATFORM_QEMU_XTENSA_ESP32 || LOSCFG_PLATFORM_QEMU_ARM926_VIRT
 
 config PRODUCT_NAME
     string
@@ -104,10 +104,11 @@ config PRODUCT_NAME
     default "riscv32_virt" if PRODUCT_QEMU_RISCV32_VIRT
     default "csky_smartl_e802" if PRODUCT_QEMU_CSKY_SMARTL_E802
     default "xtensa_esp32" if PRODUCT_QEMU_XTENSA_ESP32
+    default "arm_versatilepb" if PRODUCT_QEMU_ARM_VERSATILEPB
 
 config DEVICE_COMPANY
     string
-    default "qemu" if PLATFORM_QEMU_ARM_VIRT_CM7 || PLATFORM_QEMU_ARM_VIRT_CM4 || PLATFORM_QEMU_ARM_VIRT_CM55 || PRODUCT_QEMU_RISCV32_VIRT || PLATFORM_QEMU_CSKY_SMARTL || PLATFORM_QEMU_XTENSA_ESP32
+    default "qemu" if PLATFORM_QEMU_ARM_VIRT_CM7 || PLATFORM_QEMU_ARM_VIRT_CM4 || PLATFORM_QEMU_ARM_VIRT_CM55 || PRODUCT_QEMU_RISCV32_VIRT || PLATFORM_QEMU_CSKY_SMARTL || PLATFORM_QEMU_XTENSA_ESP32 || LOSCFG_PLATFORM_QEMU_ARM926_VIRT
 
 choice
     prompt "Chip"
@@ -119,6 +120,7 @@ choice
        - qemu_riscv32_virt
        - qemu_csky_smartl
        - qemu_xtensa_esp32
+       - qemu_arm_versatilepb
 
 config PLATFORM_QEMU_ARM_VIRT_CM7
     bool "qemu_arm_virt_cm7"
@@ -156,6 +158,12 @@ config PLATFORM_QEMU_XTENSA_ESP32
     help
         QEMU ESP32 Virtual Platform using xtensa CPU.
 
+config PLATFORM_QEMU_ARM926_VIRT
+    bool "qemu_arm_versatilepb"
+    select ARCH_ARM9
+    help
+        QEMU ARM Virtual Platform using ARM926EJ-S CPU.
+
 endchoice
 
 choice
@@ -180,6 +188,9 @@ config PRODUCT_QEMU_CSKY_SMARTL_E802
 
 config PRODUCT_QEMU_XTENSA_ESP32
     bool "xtensa_esp32" if PLATFORM_QEMU_XTENSA_ESP32
+
+config PRODUCT_QEMU_ARM_VERSATILEPB
+    bool "arm_versatilepb" if PLATFORM_QEMU_ARM926_VIRT
 
 endchoice
 
