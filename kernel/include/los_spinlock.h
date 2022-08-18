@@ -51,8 +51,6 @@ struct Spinlock {
 
 STATIC INLINE VOID LOS_SpinLock(struct Spinlock *lock)
 {
-    (VOID)lock;
-
 #if LOSCFG_KERNEL_SMP
     while (LOS_AtomicCmpXchg32bits(&(lock->locked), LOS_SPINLOCK_LOCK, LOS_SPINLOCK_FREE) != TRUE) {
     }
@@ -63,10 +61,8 @@ STATIC INLINE INT32 LOS_SpinTrylock(struct Spinlock *lock)
 {
     INT32 ret = LOS_OK;
 
-    (VOID)lock;
-
 #if LOSCFG_KERNEL_SMP
-    ret = ((LOS_AtomicCmpXchg32bits(&(lock->locked), LOS_SPINLOCK_LOCK, LOS_SPINLOCK_FREE) != TRUE)?(LOS_OK):(LOS_NOK));
+    ret = (LOS_AtomicCmpXchg32bits(&(lock->locked), LOS_SPINLOCK_LOCK, LOS_SPINLOCK_FREE) != TRUE) ? LOS_OK : LOS_NOK;
 #endif
 
     return ret;
@@ -74,8 +70,6 @@ STATIC INLINE INT32 LOS_SpinTrylock(struct Spinlock *lock)
 
 STATIC INLINE VOID LOS_SpinUnlock(struct Spinlock *lock)
 {
-    (VOID)lock;
-
 #if LOSCFG_KERNEL_SMP
     LOS_AtomicSet(&(lock->locked), LOS_SPINLOCK_FREE);
 #endif
@@ -83,8 +77,6 @@ STATIC INLINE VOID LOS_SpinUnlock(struct Spinlock *lock)
 
 STATIC INLINE VOID LOS_SpinLockSave(struct Spinlock *lock, UINT32 *intSave)
 {
-    (VOID)lock;
-
     *intSave = LOS_IntLock();
 
 #if LOSCFG_KERNEL_SMP
@@ -94,8 +86,6 @@ STATIC INLINE VOID LOS_SpinLockSave(struct Spinlock *lock, UINT32 *intSave)
 
 STATIC INLINE VOID LOS_SpinUnlockRestore(struct Spinlock *lock, UINT32 intSave)
 {
-    (VOID)lock;
-
 #if LOSCFG_KERNEL_SMP
     LOS_SpinUnlock(lock);
 #endif
@@ -105,8 +95,6 @@ STATIC INLINE VOID LOS_SpinUnlockRestore(struct Spinlock *lock, UINT32 intSave)
 
 STATIC INLINE VOID LOS_SpinInit(struct Spinlock *lock)
 {
-    (VOID)lock;
-
 #if LOSCFG_KERNEL_SMP
     LOS_AtomicSet(&(lock->locked), LOS_SPINLOCK_FREE);
 #endif
