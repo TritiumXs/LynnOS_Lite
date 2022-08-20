@@ -663,6 +663,14 @@ extern UINT8 *m_aucSysMem0;
 #define LOSCFG_KERNEL_SIGNAL                          0
 #endif
 
+#ifndef LOSCFG_KERNEL_PM
+#define LOSCFG_KERNEL_PM                              0
+#endif
+
+#ifndef LOSCFG_KERNEL_PM_IDLE
+#define LOSCFG_KERNEL_PM_IDLE                         0
+#endif
+
 #ifdef __cplusplus
 #if __cplusplus
 }
