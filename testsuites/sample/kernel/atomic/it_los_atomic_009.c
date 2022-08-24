@@ -71,8 +71,8 @@ static UINT32 TestCase(VOID)
     }
 
     for (i = 0; i < uLoop; i++) {
-        memset(buf, 0, 10); // max buf size is 10.
-        memset(taskName[i], 0, 20); // max taskName size is 20.
+        (void)memset_s(buf, 10, 0, 10); // max buf size is 10.
+        (void)memset_s(taskName[i], 20, 0, 20); // max taskName size is 20.
 
         if (i % 2 == 0) { // 2 is index.
             uCount++;
