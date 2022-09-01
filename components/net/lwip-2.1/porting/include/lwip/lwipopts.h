@@ -100,6 +100,7 @@
 #define LWIP_NETIF_HOSTNAME             1
 #define LWIP_NETIF_TX_SINGLE_PBUF       1
 #define LWIP_NETCONN_FULLDUPLEX         1 // Caution
+#define LWIP_NETCONN_SEM_PER_THREAD     1
 #define LWIP_COMPAT_SOCKETS             2
 #define LWIP_POSIX_SOCKETS_IO_NAMES     0
 #define LWIP_TCP_KEEPALIVE              1
