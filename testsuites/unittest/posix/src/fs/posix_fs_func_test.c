@@ -89,7 +89,7 @@ static BOOL PosixFsFuncTestSuiteTearDown(void)
     printf("+-------------------------------------------+\n");
     return TRUE;
 }
-
+#if (LOSCFG_LIBC_MUSL == 1)
 /* *
  * @tc.number   SUB_KERNEL_FS_DIRNAME_001
  * @tc.name     dirname basic function test
@@ -162,6 +162,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsDirname004, Function | MediumTest | L
     TEST_ASSERT_EQUAL_STRING(".", workDir);
     return 0;
 }
+#endif
 
 /* *
  * @tc.number   SUB_KERNEL_FS_FOPEN_FCLOSE_001
@@ -1621,12 +1622,12 @@ void PosixFsFuncTest()
 
     RUN_ONE_TESTCASE(testFsWrite001);
     RUN_ONE_TESTCASE(testFsWrite002);
-
+#if (LOSCFG_LIBC_MUSL == 1)
     RUN_ONE_TESTCASE(testFsDirname001);
     RUN_ONE_TESTCASE(testFsDirname002);
     RUN_ONE_TESTCASE(testFsDirname003);
     RUN_ONE_TESTCASE(testFsDirname004);
-
+#endif
     RUN_ONE_TESTCASE(testFsReaddir001);
     RUN_ONE_TESTCASE(testFsReaddir002);
 
