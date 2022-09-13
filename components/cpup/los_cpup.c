@@ -210,7 +210,7 @@ LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleEnd(VOID)
 
     cpuCycle = LOS_SysCycleGet();
     if (cpuCycle < g_cpup[taskID].startTime) {
-        cpuCycle += g_cyclesPerTick;
+        cpuCycle = g_cpup[taskID].startTime + g_cyclesPerTick;
     }
 
     g_cpup[taskID].allTime += (cpuCycle - g_cpup[taskID].startTime);
@@ -239,7 +239,7 @@ LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleEndStart(VOID)
 
     if (g_cpup[taskID].startTime != 0) {
         if (cpuCycle < g_cpup[taskID].startTime) {
-            cpuCycle += g_cyclesPerTick;
+            cpuCycle = g_cpup[taskID].startTime + g_cyclesPerTick;
         }
 
         g_cpup[taskID].allTime += (cpuCycle - g_cpup[taskID].startTime);
@@ -625,7 +625,7 @@ LITE_OS_SEC_TEXT_MINOR VOID OsCpupIrqEnd(UINT32 intNum)
 
     cpuCycle = LOS_SysCycleGet();
     if (cpuCycle < g_irqCpup[intNum].startTime) {
-        cpuCycle += g_cyclesPerTick;
+        cpuCycle = g_irqCpup[intNum].startTime + g_cyclesPerTick;
     }
 
     g_irqCpup[intNum].cpupID = intNum;
