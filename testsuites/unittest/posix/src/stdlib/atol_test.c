@@ -30,7 +30,7 @@
  */
 
 #include "ohos_types.h"
-#include "hctest.h"
+#include "posix_test.h"
 #include "los_config.h"
 #include "kernel_test.h"
 #include "ctype.h"
@@ -79,6 +79,7 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol001, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 1:atol(%ld) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(2147483647, value);
+    return 0;
 }
 
 /* *
@@ -95,6 +96,7 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol002, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 2:atol(%ld) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(-2147483648, value);
+    return 0;
 }
 
 /* *
@@ -111,8 +113,10 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol003, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 3:atol(%ld) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(100, value);
+    return 0;
 }
 
+#if (LOSCFG_LIBC_MUSL == 1)
 /* *
  * @tc.number    : TEST_STDLIB_ATOL_004
  * @tc.name      : convert string to long integer
@@ -127,6 +131,7 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol004, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 4(except):atol(%ld) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(-2147483648, value);
+    return 0;
 }
 
 /* *
@@ -143,7 +148,9 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol005, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 5(except):atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(2147483647, value);
+    return 0;
 }
+#endif
 
 /* *
  * @tc.number    : TEST_STDLIB_ATOL_006
@@ -159,6 +166,7 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol006, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 6:atol(%ld) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(100, value);
+    return 0;
 }
 
 /* *
@@ -175,6 +183,7 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol007, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 7:atoi(%ld) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(-100, value);
+    return 0;
 }
 
 /* *
@@ -191,6 +200,7 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol008, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 8(except):atol(%ld) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(0, value);
+    return 0;
 }
 
 /* *
@@ -207,6 +217,7 @@ LITE_TEST_CASE(PosixStdlibAtolTest, testStdlibAtol009, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 9(except):atol(%ld) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT32(12, value);
+    return 0;
 }
 
 RUN_TEST_SUITE(PosixStdlibAtolTest);
@@ -217,8 +228,10 @@ void PosixStdlibAtolFuncTest()
     RUN_ONE_TESTCASE(testStdlibAtol001);
     RUN_ONE_TESTCASE(testStdlibAtol002);
     RUN_ONE_TESTCASE(testStdlibAtol003);
+#if (LOSCFG_LIBC_MUSL == 1)
     RUN_ONE_TESTCASE(testStdlibAtol004);
     RUN_ONE_TESTCASE(testStdlibAtol005);
+#endif
     RUN_ONE_TESTCASE(testStdlibAtol006);
     RUN_ONE_TESTCASE(testStdlibAtol007);
     RUN_ONE_TESTCASE(testStdlibAtol008);

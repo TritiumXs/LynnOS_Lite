@@ -98,7 +98,7 @@ int VfsLock(void)
 {
     if (LOS_MuxPend(g_fsMutex, LOS_WAIT_FOREVER) != LOS_OK) {
         PRINT_ERR("VfsLock failed!");
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     return LOS_OK;
@@ -245,7 +245,7 @@ static int VfsOpen(const char *path, int flags)
         VFS_ERRNO_SET(ENOMEM);
         VfsFilePut(file);
         VfsUnlock();
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     file->fFlags = (UINT32)flags;
@@ -319,7 +319,7 @@ static void VfsDetachFile(const struct File *file)
 static int VfsClose(int fd)
 {
     struct File *file = NULL;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
 
     file = VfsAttachFileWithStatus(fd, FILE_STATUS_CLOSING);
     if (file == NULL) {
@@ -383,7 +383,7 @@ static ssize_t VfsRead(int fd, char *buff, size_t bytes)
 static ssize_t VfsWrite(int fd, const void *buff, size_t bytes)
 {
     struct File *file = NULL;
-    ssize_t ret = LOS_NOK;
+    ssize_t ret = (ssize_t)LOS_NOK;
 
     if ((buff == NULL) || (bytes == 0)) {
         VFS_ERRNO_SET(EINVAL);
@@ -412,7 +412,7 @@ static ssize_t VfsWrite(int fd, const void *buff, size_t bytes)
 static off_t VfsLseek(int fd, off_t off, int whence)
 {
     struct File *file;
-    off_t ret = LOS_NOK;
+    off_t ret = (off_t)LOS_NOK;
 
     file = VfsAttachFileReady(fd);
     if (file == NULL) {
@@ -434,7 +434,7 @@ static int VfsStat(const char *path, struct stat *stat)
 {
     struct MountPoint *mp = NULL;
     const char *pathInMp = NULL;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
 
     if ((path == NULL) || (stat == NULL)) {
         VFS_ERRNO_SET(EINVAL);
@@ -467,7 +467,7 @@ static int VfsStatfs(const char *path, struct statfs *buf)
 {
     struct MountPoint *mp = NULL;
     const char *pathInMp = NULL;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
 
     if ((path == NULL) || (buf == NULL)) {
         VFS_ERRNO_SET(EINVAL);
@@ -500,7 +500,7 @@ static int VfsUnlink(const char *path)
 {
     struct MountPoint *mp = NULL;
     const char *pathInMp = NULL;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
 
     if (path == NULL) {
         VFS_ERRNO_SET(EINVAL);
@@ -532,7 +532,7 @@ static int VfsRename(const char *old, const char *new)
     struct MountPoint *mpNew = NULL;
     const char *pathInMpOld = NULL;
     const char *pathInMpNew = NULL;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
 
     if ((old == NULL) || (new == NULL)) {
         VFS_ERRNO_SET(EINVAL);
@@ -587,7 +587,7 @@ static int VfsIoctl(int fd, int func, ...)
     va_list ap;
     unsigned long arg;
     struct File *file = NULL;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
 
     va_start(ap, func);
     arg = va_arg(ap, unsigned long);
@@ -612,7 +612,7 @@ static int VfsIoctl(int fd, int func, ...)
 static int VfsSync(int fd)
 {
     struct File *file;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
 
     file = VfsAttachFileReady(fd);
     if (file == NULL) {
@@ -709,8 +709,6 @@ static struct dirent *VfsReaddir(DIR *d)
         (dir->dMp->mFs->fsFops->readdir != NULL)) {
         if (dir->dMp->mFs->fsFops->readdir(dir, &dir->dDent) == 0) {
             ret = &dir->dDent;
-        } else {
-            VFS_ERRNO_SET(EBADF);
         }
     } else {
         VFS_ERRNO_SET(ENOTSUP);
@@ -724,7 +722,7 @@ static struct dirent *VfsReaddir(DIR *d)
 static int VfsClosedir(DIR *d)
 {
     struct MountPoint *mp = NULL;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
     struct Dir *dir = (struct Dir *)d;
 
     if ((dir == NULL) || (dir->dMp == NULL)) {
@@ -762,7 +760,7 @@ static int VfsMkdir(const char *path, int mode)
 {
     struct MountPoint *mp = NULL;
     const char *pathInMp = NULL;
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
     (void)mode;
 
     if (path == NULL) {
@@ -786,7 +784,7 @@ static int VfsMkdir(const char *path, int mode)
         ret = mp->mFs->fsFops->mkdir(mp, pathInMp);
     } else {
         VFS_ERRNO_SET(ENOTSUP);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     VfsUnlock();
@@ -823,7 +821,7 @@ static ssize_t VfsPread(int fd, void *buff, size_t bytes, off_t off)
 
     if (buff == NULL) {
         VFS_ERRNO_SET(EFAULT);
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     if (bytes == 0) {
@@ -832,26 +830,26 @@ static ssize_t VfsPread(int fd, void *buff, size_t bytes, off_t off)
 
     if (VfsLock() != LOS_OK) {
         VFS_ERRNO_SET(EAGAIN);
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     savepos = LOS_Lseek(fd, 0, SEEK_CUR);
     if (savepos == (off_t)-1) {
         VfsUnlock();
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     pos = LOS_Lseek(fd, off, SEEK_SET);
     if (pos == (off_t)-1) {
         VfsUnlock();
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     ret = LOS_Read(fd, buff, bytes);
     pos = LOS_Lseek(fd, savepos, SEEK_SET);
     if ((pos == (off_t)-1) && (ret >= 0)) {
         VfsUnlock();
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     VfsUnlock();
@@ -865,7 +863,7 @@ static ssize_t VfsPwrite(int fd, const void *buff, size_t bytes, off_t off)
 
     if (buff == NULL) {
         VFS_ERRNO_SET(EFAULT);
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     if (bytes == 0) {
@@ -874,26 +872,26 @@ static ssize_t VfsPwrite(int fd, const void *buff, size_t bytes, off_t off)
 
     if (VfsLock() != LOS_OK) {
         VFS_ERRNO_SET(EAGAIN);
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     savepos = LOS_Lseek(fd, 0, SEEK_CUR);
     if (savepos == (off_t)-1) {
         VfsUnlock();
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     pos = LOS_Lseek(fd, off, SEEK_SET);
     if (pos == (off_t)-1) {
         VfsUnlock();
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     ret = LOS_Write(fd, buff, bytes);
     pos = LOS_Lseek(fd, savepos, SEEK_SET);
     if ((pos == (off_t)-1) && (ret >= 0)) {
         VfsUnlock();
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     VfsUnlock();
@@ -909,38 +907,39 @@ static int MapToPosixRet(int ret)
 int LOS_Open(const char *path, int flags, ...)
 {
 #ifdef LOSCFG_RANDOM_DEV
-    unsigned flagMask = O_RDONLY | O_WRONLY | O_RDWR | O_APPEND | O_CREAT | O_LARGEFILE | O_TRUNC | O_EXCL | O_DIRECTORY;
+    unsigned flagMask = O_RDONLY | O_WRONLY | O_RDWR | O_APPEND | O_CREAT | O_LARGEFILE \
+                        | O_TRUNC | O_EXCL | O_DIRECTORY;
     if ((unsigned)flags & ~flagMask) {
         errno = EINVAL;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     size_t pathLen = strlen(path) + 1;
     if ((unsigned)pathLen > PATH_MAX) {
         errno = EINVAL;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     char *canonicalPath = (char *)malloc(pathLen);
     if (!canonicalPath) {
         errno = ENOMEM;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
     if (GetCanonicalPath(NULL, path, canonicalPath, pathLen) == 0) {
         FREE_AND_SET_NULL(canonicalPath);
         errno = ENOMEM;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (strcmp(canonicalPath, RANDOM_DEV_PATH) == 0) {
         FREE_AND_SET_NULL(canonicalPath);
         if ((O_ACCMODE & (unsigned)flags) != O_RDONLY) {
             errno = EPERM;
-            return LOS_NOK;
+            return (int)LOS_NOK;
         }
         if ((unsigned)flags & O_DIRECTORY) {
             errno = ENOTDIR;
-            return LOS_NOK;
+            return (int)LOS_NOK;
         }
         return RANDOM_DEV_FD;
     }
@@ -949,10 +948,10 @@ int LOS_Open(const char *path, int flags, ...)
         FREE_AND_SET_NULL(canonicalPath);
         if ((unsigned)flags & O_DIRECTORY) {
             errno = EPERM;
-            return LOS_NOK;
+            return (int)LOS_NOK;
         }
         errno = EISDIR;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
     FREE_AND_SET_NULL(canonicalPath);
 #endif
@@ -984,7 +983,7 @@ int LOS_Close(int fd)
     }
 #endif
 
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
     if (fd >= 0 && fd < CONFIG_NFILE_DESCRIPTORS) {
         ret = VfsClose(fd);
     }
@@ -1025,7 +1024,7 @@ ssize_t LOS_Read(int fd, void *buff, size_t bytes)
     }
 #endif
 
-    ssize_t ret = LOS_NOK;
+    ssize_t ret = (ssize_t)LOS_NOK;
     if (fd >= 0 && fd < CONFIG_NFILE_DESCRIPTORS) {
         ret = VfsRead(fd, buff, bytes);
     }
@@ -1038,7 +1037,7 @@ ssize_t LOS_Write(int fd, const void *buff, size_t bytes)
 #ifdef LOSCFG_RANDOM_DEV
     if (fd == RANDOM_DEV_FD) {
         errno = EBADF; /* "/dev/random" is readonly */
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 #endif
 #ifdef LOSCFG_NET_LWIP_SACK
@@ -1054,7 +1053,7 @@ ssize_t LOS_Write(int fd, const void *buff, size_t bytes)
     }
 #endif
 
-    ssize_t ret = LOS_NOK;
+    ssize_t ret = (ssize_t)LOS_NOK;
     if (fd >= 0 && fd < CONFIG_NFILE_DESCRIPTORS) {
         ret = VfsWrite(fd, buff, bytes);
     }
@@ -1137,7 +1136,7 @@ int LOS_Fstat(int fd, struct stat *buf)
     int ret;
     filep = VfsAttachFileReady(fd);
     if ((filep == NULL) || (filep->fMp == NULL) || filep->fullPath == NULL) {
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
     ret = stat(filep->fullPath, buf);
     VfsDetachFile(filep);
@@ -1169,7 +1168,7 @@ int LOS_Fcntl(int fd, int cmd, ...)
 
     if (ret < 0) {
         VFS_ERRNO_SET(-ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
     return ret;
 }
@@ -1207,22 +1206,22 @@ ssize_t LOS_Readv(int fd, const struct iovec *iovBuf, int iovcnt)
     const struct iovec *iov = (const struct iovec *)iovBuf;
 
     if ((iov == NULL) || (iovcnt <= 0) || (iovcnt > IOV_MAX_CNT)) {
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     for (i = 0; i < iovcnt; ++i) {
         if ((SSIZE_MAX - bufLen) < iov[i].iov_len) {
-            return LOS_NOK;
+            return (ssize_t)LOS_NOK;
         }
         bufLen += iov[i].iov_len;
     }
     if (bufLen == 0) {
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
     totalLen = bufLen * sizeof(char);
     buf = (char *)malloc(totalLen);
     if (buf == NULL) {
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     totalBytesRead = read(fd, buf, bufLen);
@@ -1238,7 +1237,7 @@ ssize_t LOS_Readv(int fd, const struct iovec *iovBuf, int iovcnt)
         ret = memcpy_s(readBuf, bytesToRead, curBuf, lenToRead);
         if (ret != EOK) {
             free(buf);
-            return LOS_NOK;
+            return (ssize_t)LOS_NOK;
         }
         if (totalLen < (size_t)bytesToRead) {
             break;
@@ -1264,23 +1263,23 @@ ssize_t LOS_Writev(int fd, const struct iovec *iovBuf, int iovcnt)
     const struct iovec *iov = iovBuf;
 
     if ((iov == NULL) || (iovcnt <= 0) || (iovcnt > IOV_MAX_CNT)) {
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
 
     for (i = 0; i < iovcnt; ++i) {
         if ((SSIZE_MAX - bufLen) < iov[i].iov_len) {
             VFS_ERRNO_SET(EINVAL);
-            return LOS_NOK;
+            return (ssize_t)LOS_NOK;
         }
         bufLen += iov[i].iov_len;
     }
     if (bufLen == 0) {
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
     totalLen = bufLen * sizeof(char);
     buf = (char *)malloc(totalLen);
     if (buf == NULL) {
-        return LOS_NOK;
+        return (ssize_t)LOS_NOK;
     }
     curBuf = buf;
     for (i = 0; i < iovcnt; ++i) {
@@ -1292,7 +1291,7 @@ ssize_t LOS_Writev(int fd, const struct iovec *iovBuf, int iovcnt)
         ret = memcpy_s(curBuf, totalLen, writeBuf, bytesToWrite);
         if (ret != EOK) {
             free(buf);
-            return LOS_NOK;
+            return (ssize_t)LOS_NOK;
         }
         curBuf += bytesToWrite;
         totalLen -= bytesToWrite;
@@ -1318,26 +1317,26 @@ int LOS_Access(const char *path, int amode)
 
     result = stat(path, &buf);
     if (result != 0) {
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     mode = buf.st_mode;
     if ((unsigned int)amode & R_OK) {
         if ((mode & (S_IROTH | S_IRGRP | S_IRUSR)) == 0) {
             VFS_ERRNO_SET(EACCES);
-            return LOS_NOK;
+            return (int)LOS_NOK;
         }
     }
     if ((unsigned int)amode & W_OK) {
         if ((mode & (S_IWOTH | S_IWGRP | S_IWUSR)) == 0) {
             VFS_ERRNO_SET(EACCES);
-            return LOS_NOK;
+            return (int)LOS_NOK;
         }
     }
     if ((unsigned int)amode & X_OK) {
         if ((mode & (S_IXOTH | S_IXGRP | S_IXUSR)) == 0) {
             VFS_ERRNO_SET(EACCES);
-            return LOS_NOK;
+            return (int)LOS_NOK;
         }
     }
     return 0;
@@ -1345,7 +1344,7 @@ int LOS_Access(const char *path, int amode)
 
 int LOS_Ftruncate(int fd, off_t length)
 {
-    int ret = LOS_NOK;
+    int ret = (int)LOS_NOK;
     struct File *file = NULL;
 
     if (length <= 0) {
@@ -1379,7 +1378,7 @@ int LOS_Ftruncate(int fd, off_t length)
 
 ssize_t LOS_Pread(int fd, void *buff, size_t bytes, off_t off)
 {
-    ssize_t ret = LOS_NOK;
+    ssize_t ret = (ssize_t)LOS_NOK;
     if (fd >= 0 && fd < CONFIG_NFILE_DESCRIPTORS) {
         ret = VfsPread(fd, buff, bytes, off);
     }
@@ -1389,7 +1388,7 @@ ssize_t LOS_Pread(int fd, void *buff, size_t bytes, off_t off)
 
 ssize_t LOS_Pwrite(int fd, const void *buff, size_t bytes, off_t off)
 {
-    ssize_t ret = LOS_NOK;
+    ssize_t ret = (ssize_t)LOS_NOK;
     if (fd >= 0 && fd < CONFIG_NFILE_DESCRIPTORS) {
         ret = VfsPwrite(fd, buff, bytes, off);
     }

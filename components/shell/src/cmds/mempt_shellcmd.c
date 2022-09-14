@@ -49,7 +49,7 @@ LITE_OS_SEC_TEXT_MINOR STATIC UINT32 OsShellCmdFreeInfo(INT32 argc, const CHAR *
     if ((argc == 0) ||
         ((argc == 1) && (strcmp(argv[0], "-k") == 0)) ||
         ((argc == 1) && (strcmp(argv[0], "-m") == 0))) {
-        PRINTK("\r\n        total        used          free\n");
+        PRINTK("\n        total        used          free\n");
     }
 
     if ((argc == 1) && (strcmp(argv[0], "-k") == 0)) {
@@ -82,7 +82,6 @@ LITE_OS_SEC_TEXT_MINOR UINT32 OsShellCmdFree(INT32 argc, const CHAR *argv[])
 #if (LOSCFG_MEM_WATERLINE == 1)
 LITE_OS_SEC_TEXT_MINOR UINT32 OsShellCmdWaterLine(INT32 argc, const CHAR *argv[])
 {
-    UINT32 ret;
     LOS_MEM_POOL_STATUS poolStatus;
 
     if (argc > 1) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -40,12 +40,6 @@
 #include "los_task.h"
 #include "los_debug.h"
 #include "los_mux.h"
-
-#ifdef __cplusplus
-#if __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-#endif /* __cplusplus */
 
 #if (LOSCFG_DYNLINK == 1)
 
@@ -279,7 +273,7 @@ STATIC DynSharedObj *OsLoadInit(const CHAR *fileName, VOID *pool)
         goto ERR2;
     }
 
-    strcpy(dso->buf, fileName);
+    (void)strcpy_s(dso->buf, nameLen + 1, fileName);
     dso->fileName = dso->buf;
     dso->ref = 1;
     dso->pool = (pool ? pool : OS_SYS_MEM_ADDR);
@@ -867,7 +861,7 @@ STATIC VOID OsDoFini(DynSharedObj *dso)
             --func;
             finiFunc = (INIT_FINI_FUNC)(*func);
             finiFunc();
-       }
+        }
     }
 
     if (initFiniTab->fini.func != 0) {
@@ -929,10 +923,3 @@ INT32 LOS_DynlinkInit(VOID)
 }
 
 #endif /* LOSCFG_DYNLINK */
-
-#ifdef __cplusplus
-#if __cplusplus
-}
-#endif /* __cplusplus */
-#endif /* __cplusplus */
-

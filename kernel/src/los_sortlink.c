@@ -33,12 +33,6 @@
 #include "los_sched.h"
 #include "los_debug.h"
 
-#ifdef __cplusplus
-#if __cplusplus
-extern "C" {
-#endif
-#endif /* __cplusplus */
-
 SortLinkAttribute g_taskSortLink;
 
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
@@ -97,7 +91,7 @@ VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, Sort
     }
 
     intSave = LOS_IntLock();
-    SET_SORTLIST_VALUE(node, startTime + (UINT64)waitTicks * OS_CYCLE_PER_TICK);
+    SET_SORTLIST_VALUE(node, startTime + OS_SYS_TICK_TO_CYCLE(waitTicks));
     OsAddNode2SortLink(sortLinkHead, node);
     LOS_IntRestore(intSave);
 }
@@ -175,9 +169,3 @@ UINT64 OsSortLinkGetNextExpireTime(const SortLinkAttribute *sortLinkHead)
     SortLinkList *listSorted = LOS_DL_LIST_ENTRY(head->pstNext, SortLinkList, sortLinkNode);
     return OsSortLinkGetTargetExpireTime(OsGetCurrSchedTimeCycle(), listSorted);
 }
-
-#ifdef __cplusplus
-#if __cplusplus
-}
-#endif
-#endif /* __cplusplus */

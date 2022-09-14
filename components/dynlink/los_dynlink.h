@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -129,12 +129,12 @@ typedef struct {
 } DynSharedObj;
 
 typedef struct {
-  CHAR    *name;
-  UINTPTR addr;
+    CHAR    *name;
+    UINTPTR addr;
 } SymInfo;
 
 #define SYM_EXPORT(func)                                            \
-const SymInfo sym_##func __attribute__((section(".sym."#func))) = { \
+const SymInfo sym_##func __attribute__((__used__, section(".sym."#func))) = { \
     .name = #func,                                                  \
     .addr = (UINTPTR)func                                           \
 };
@@ -149,7 +149,7 @@ const SymInfo sym_##func __attribute__((section(".sym."#func))) = { \
  * then the shared library will be loaded to the heap by pool.
  *
  * @note When the heap, pool, is not NULL, you should call LOS_MemInit() to initialize the
- * pool before calling LOS_SoLoad(). By the way, the system will comsume a certain amount
+ * pool before calling LOS_SoLoad(). By the way, the system will consume a certain amount
  * of memory to initialize the pool. LOS_SoLoad must not be called in interrupt callback.
  *
  * @return Return NULL if error. Return non-NULL if success.

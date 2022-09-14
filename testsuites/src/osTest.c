@@ -35,6 +35,9 @@
 #if (LITEOS_CMSIS_TEST == 1)
 #include "cmsis_os.h"
 #endif
+#if (LOS_POSIX_TEST == 1)
+#include "posix_test.h"
+#endif
 
 UINT32 volatile g_testCount;
 UINT32 g_testTskHandle;
@@ -99,18 +102,34 @@ UINT32 SwtmrCountGetTest(VOID)
 }
 
 extern LosQueueCB *g_allQueue;
+
+#if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
+extern LosQueueCB *g_staticQueue;
+#endif
+
 UINT32 QueueUsedCountGet(VOID)
 {
     UINT32 intSave;
     UINT32 count = 0;
+    UINT32 index;
 
     intSave = LOS_IntLock();
-    for (UINT32 index = 0; index < LOSCFG_BASE_IPC_QUEUE_LIMIT; index++) {
+    for (index = 0; index < LOSCFG_BASE_IPC_QUEUE_LIMIT; index++) {
         LosQueueCB *queueNode = ((LosQueueCB *)g_allQueue) + index;
         if (queueNode->queueState == OS_QUEUE_INUSED) {
             count++;
         }
     }
+
+#if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
+    for (index = 0; index < LOSCFG_BASE_IPC_STATIC_QUEUE_LIMIT; index++) {
+        LosQueueCB *queueNode = ((LosQueueCB *)g_staticQueue) + index;
+        if (queueNode->queueState == OS_QUEUE_INUSED) {
+            count++;
+        }
+    }
+#endif
+
     LOS_IntRestore(intSave);
 
     return count;
@@ -214,18 +233,13 @@ void TestCmsis2(void)
 
 VOID TestTaskEntry()
 {
-    UINT32 ret;
     PRINTF("\t\n --- Test Start --- \n\n");
     ICunitInit();
 
     TestKernel();
 
 #if (LOS_POSIX_TEST == 1)
-    ret = PthreadFuncTestSuite();
-    if (ret != 0) {
-        PRINTF("PthreadFuncTestSuite start failed! errno: %u\n", ret);
-        return;
-    }
+    ItSuitePosix();
 #endif
 
 #if (LOS_CMSIS_TEST == 1)

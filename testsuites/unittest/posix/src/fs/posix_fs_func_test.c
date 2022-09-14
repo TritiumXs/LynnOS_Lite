@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <libgen.h>
 #include "ohos_types.h"
-#include "hctest.h"
+#include "posix_test.h"
 #include "los_config.h"
 #include "kernel_test.h"
 #include "log.h"
@@ -101,6 +101,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsDirname001, Function | MediumTest | L
     char *workDir = dirname((char *)path);
     TEST_ASSERT_NOT_NULL(workDir);
     TEST_ASSERT_EQUAL_STRING(".", workDir);
+    return 0;
 }
 
 /* *
@@ -114,6 +115,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsDirname002, Function | MediumTest | L
     char *workDir = dirname((char *)path);
     TEST_ASSERT_NOT_NULL(workDir);
     TEST_ASSERT_EQUAL_STRING(TEST_ROOT, workDir);
+    return 0;
 }
 
 /* *
@@ -128,6 +130,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsDirname003, Function | MediumTest | L
     char *workDir = dirname((char *)path);
     TEST_ASSERT_NOT_NULL(workDir);
     TEST_ASSERT_EQUAL_STRING(TEST_ROOT, workDir);
+    return 0;
 }
 
 /* *
@@ -157,6 +160,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsDirname004, Function | MediumTest | L
     workDir = dirname(".");
     TEST_ASSERT_NOT_NULL(workDir);
     TEST_ASSERT_EQUAL_STRING(".", workDir);
+    return 0;
 }
 
 /* *
@@ -173,6 +177,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose001, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -189,6 +194,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose002, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -205,6 +211,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose003, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -221,6 +228,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose004, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -234,6 +242,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose005, Function | MediumTest
     FILE *fp = NULL;
     fp = fopen(TEST_FILE_PTAH_RIGHT, "c");
     TEST_ASSERT_NULL(fp);
+    return 0;
 }
 
 /* *
@@ -252,6 +261,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose006, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -270,6 +280,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose007, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -288,6 +299,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose008, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -306,6 +318,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose009, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -324,6 +337,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose010, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -338,6 +352,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFopenFclose011, Function | MediumTest
 
     fp = fopen(TEST_FILE_PTAH_RIGHT, NULL);
     TEST_ASSERT_NULL(fp);
+    return 0;
 }
 
 /* *
@@ -360,6 +375,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFdopen001, Function | MediumTest | Le
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -382,6 +398,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFdopen002, Function | MediumTest | Le
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -404,8 +421,10 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFdopen003, Function | MediumTest | Le
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
+#if (LOSCFG_LIBC_MUSL == 1)
 /* *
  * @tc.number   SUB_KERNEL_FS_FDOPEN_004
  * @tc.name     fdopen
@@ -425,14 +444,15 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFdopen004, Function | MediumTest | Le
     // in some fs, may return ok, so return null or not is pass.
     if (NULL == fp) {
         close (fd);
-        return;
+        return 0;
     }
 
     fp->fd = fd;
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
-
+#endif
 /* *
  * @tc.number   SUB_KERNEL_FS_FTELL_FSEEK_001
  * @tc.name     ftell and fseek
@@ -452,6 +472,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek001, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -476,6 +497,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek002, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -500,6 +522,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek003, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -524,6 +547,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek004, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -548,6 +572,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek005, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -572,6 +597,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek006, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -596,6 +622,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek007, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -620,6 +647,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek008, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -644,8 +672,10 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek009, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
+#if (LOSCFG_LIBC_MUSL == 1)
 /* *
  * @tc.number   SUB_KERNEL_FS_FTELL_FSEEK_010
  * @tc.name     ftell and fseek
@@ -672,8 +702,9 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek010, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
-
+#endif
 /* *
  * @tc.number   SUB_KERNEL_FS_FTELL_FSEEK_011
  * @tc.name     ftell and fseek
@@ -699,6 +730,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek011, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 
@@ -727,6 +759,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek012, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -754,6 +787,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek013, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -780,6 +814,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek014, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -806,6 +841,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek015, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -832,6 +868,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFtellFseek016, Function | MediumTest 
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -854,6 +891,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFputs001, Function | MediumTest | Lev
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -876,6 +914,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFputs002, Function | MediumTest | Lev
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -898,6 +937,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFputs003, Function | MediumTest | Lev
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -927,6 +967,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFputs004, Function | MediumTest | Lev
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -955,6 +996,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFputs005, Function | MediumTest | Lev
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -981,6 +1023,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite001, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1007,6 +1050,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite002, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1033,6 +1077,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite003, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1059,6 +1104,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite004, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1085,6 +1131,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite005, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1126,6 +1173,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite006, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 
 }
 
@@ -1164,6 +1212,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite007, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1205,6 +1254,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite008, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1239,6 +1289,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsFreadFwrite009, Function | MediumTest
 
     ret = fclose(fp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1262,6 +1313,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsReaddir001, Function | MediumTest | L
     ret = closedir(dirp);
     TEST_ASSERT_EQUAL_INT(ret, 0);
     ret = rmdir(DIRA);
+    return 0;
 }
 
 /* *
@@ -1291,6 +1343,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsReaddir002, Function | MediumTest | L
 
     TEST_ASSERT_TRUE(tellDir0 == tellDir1);
     ret = rmdir(DIRA);
+    return 0;
 }
 
 /* *
@@ -1307,6 +1360,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsRemove001, Function | MediumTest | Le
     fclose(fp);
     ret = remove(TEST_FILE_PTAH_RIGHT);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1322,6 +1376,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsRemove002, Function | MediumTest | Le
     TEST_ASSERT_EQUAL_INT(ret, 0);
     ret = remove(DIRA);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1344,6 +1399,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsRmdir001, Function | MediumTest | Lev
 
     ret = rmdir(DIRA);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1372,6 +1428,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsRmdir002, Function | MediumTest | Lev
 
     ret = rmdir(DIRA);
     TEST_ASSERT_EQUAL_INT(ret, 0);
+    return 0;
 }
 
 /* *
@@ -1392,6 +1449,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsUnlink001, Function | MediumTest | Le
 
     ret = unlink(tmpFileName);
     TEST_ASSERT_TRUE(ret != -1);
+    return 0;
 }
 
 /* *
@@ -1414,6 +1472,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsStat001, Function | MediumTest | Leve
 
     ret = stat(tmpFileName, &buf);
     TEST_ASSERT_TRUE(ret != -1);
+    return 0;
 }
 
 /* *
@@ -1443,6 +1502,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsStat002, Function | MediumTest | Leve
     TEST_ASSERT_TRUE(ret != -1);
 
     TEST_ASSERT_TRUE(buf.st_size == sizeof(writeBuf));
+    return 0;
 }
 
 /* *
@@ -1471,6 +1531,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsStat003, Function | MediumTest | Leve
     TEST_ASSERT_TRUE(ret != -1);
 
     TEST_ASSERT_EQUAL_INT(buf.st_rdev, 0);
+    return 0;
 }
 
 /* *
@@ -1511,6 +1572,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsWrite001, Function | MediumTest | Lev
     TEST_ASSERT_TRUE((TEST_RW_SIZE + TEST_RW_SIZE) == (unsigned int)reLseek);
 
     (void)close(fd);
+    return 0;
 }
 
 /* *
@@ -1542,6 +1604,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, testFsWrite002, Function | MediumTest | Lev
     TEST_ASSERT_TRUE(ret != -1);
 
     TEST_ASSERT_TRUE(statbuf.st_size == sizeof(writeBuf) * TEST_LOOPUP_TIME);
+    return 0;
 }
 
 RUN_TEST_SUITE(PosixFsFuncTestSuite);
@@ -1588,8 +1651,9 @@ void PosixFsFuncTest()
     RUN_ONE_TESTCASE(testFsFdopen001);
     RUN_ONE_TESTCASE(testFsFdopen002);
     RUN_ONE_TESTCASE(testFsFdopen003);
+#if (LOSCFG_LIBC_MUSL == 1)
     RUN_ONE_TESTCASE(testFsFdopen004);
-
+#endif
     RUN_ONE_TESTCASE(testFsFtellFseek001);
     RUN_ONE_TESTCASE(testFsFtellFseek002);
     RUN_ONE_TESTCASE(testFsFtellFseek003);
@@ -1599,7 +1663,9 @@ void PosixFsFuncTest()
     RUN_ONE_TESTCASE(testFsFtellFseek007);
     RUN_ONE_TESTCASE(testFsFtellFseek008);
     RUN_ONE_TESTCASE(testFsFtellFseek009);
+#if (LOSCFG_LIBC_MUSL == 1)
     RUN_ONE_TESTCASE(testFsFtellFseek010);
+#endif
     RUN_ONE_TESTCASE(testFsFtellFseek011);
     RUN_ONE_TESTCASE(testFsFtellFseek012);
     RUN_ONE_TESTCASE(testFsFtellFseek013);

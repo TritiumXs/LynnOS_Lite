@@ -30,7 +30,7 @@
  */
 
 #include "ohos_types.h"
-#include "hctest.h"
+#include "posix_test.h"
 #include "los_config.h"
 #include "kernel_test.h"
 #include "ctype.h"
@@ -79,6 +79,7 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi001, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 1:atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(2147483647, value);
+    return 0;
 }
 
 /* *
@@ -95,6 +96,7 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi002, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 2:atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(-2147483648, value);
+    return 0;
 }
 
 /* *
@@ -111,8 +113,10 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi003, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 3:atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(100, value);
+    return 0;
 }
 
+#if (LOSCFG_LIBC_MUSL == 1)
 /* *
  * @tc.number    : TEST_STDLIB_ATOI_004
  * @tc.name      : convert string to integer
@@ -127,6 +131,7 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi004, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 4(except):atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(-2147483648, value);
+    return 0;
 }
 
 /* *
@@ -143,7 +148,9 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi005, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 5(except):atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(2147483647, value);
+    return 0;
 }
+#endif
 
 /* *
  * @tc.number    : TEST_STDLIB_ATOI_006
@@ -159,6 +166,7 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi006, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 6:atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(100, value);
+    return 0;
 }
 
 /* *
@@ -175,6 +183,7 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi007, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 7:atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(-100, value);
+    return 0;
 }
 
 /* *
@@ -191,6 +200,7 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi008, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 8(except):atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(0, value);
+    return 0;
 }
 
 /* *
@@ -207,8 +217,10 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi009, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 9(except):atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(12, value);
+    return 0;
 }
 
+#if (LOSCFG_LIBC_MUSL == 1)
 /* *
  * @tc.number    : TEST_STDLIB_ATOI_010
  * @tc.name      : convert string to integer
@@ -223,7 +235,9 @@ LITE_TEST_CASE(PosixStdlibAtoiTest, testStdlibAtoi010, Function | MediumTest | L
         LOG("[DEMO] posix stdlib test case 10(except):atoi(%d) fail.\n", value);
     }
     TEST_ASSERT_EQUAL_INT(-10, value);
+    return 0;
 }
+#endif
 
 RUN_TEST_SUITE(PosixStdlibAtoiTest);
 
@@ -233,13 +247,16 @@ void PosixStdlibAtoiFuncTest()
     RUN_ONE_TESTCASE(testStdlibAtoi001);
     RUN_ONE_TESTCASE(testStdlibAtoi002);
     RUN_ONE_TESTCASE(testStdlibAtoi003);
+#if (LOSCFG_LIBC_MUSL == 1)
     RUN_ONE_TESTCASE(testStdlibAtoi004);
     RUN_ONE_TESTCASE(testStdlibAtoi005);
+#endif
     RUN_ONE_TESTCASE(testStdlibAtoi006);
     RUN_ONE_TESTCASE(testStdlibAtoi007);
     RUN_ONE_TESTCASE(testStdlibAtoi008);
     RUN_ONE_TESTCASE(testStdlibAtoi009);
+#if (LOSCFG_LIBC_MUSL == 1)
     RUN_ONE_TESTCASE(testStdlibAtoi010);
-
+#endif
     return;
 }

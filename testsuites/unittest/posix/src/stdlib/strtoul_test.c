@@ -30,7 +30,7 @@
  */
 
 #include "ohos_types.h"
-#include "hctest.h"
+#include "posix_test.h"
 #include "los_config.h"
 #include "kernel_test.h"
 #include "ctype.h"
@@ -83,6 +83,7 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul001, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(12UL, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, " 0110 0XDEFE 0666 4294967295 4294967296 12.34");
+    return 0;
 }
 
 /* *
@@ -102,6 +103,7 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul002, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(6UL, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, " 0XDEFE 0666 4294967295 4294967296 12.34");
+    return 0;
 }
 
 /* *
@@ -121,6 +123,7 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul003, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(0XDEFEUL, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, " 0666 4294967295 4294967296 12.34");
+    return 0;
 }
 
 /* *
@@ -140,6 +143,7 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul004, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(0666UL, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, " 4294967295 4294967296 12.34");
+    return 0;
 }
 
 /* *
@@ -159,6 +163,7 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul005, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(4294967295UL, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, " 4294967296 12.34");
+    return 0;
 }
 
 /* *
@@ -179,8 +184,10 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul006, Function | MediumTe
 
     TEST_ASSERT_EQUAL_UINT32(ULONG_MAX, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, " 12.34");
+    return 0;
 }
 
+#if (LOSCFG_LIBC_MUSL == 1)
 /* *
  * @tc.number    : TEST_STDLIB_STRTOUL_007
  * @tc.name      : convert string by strtoul
@@ -198,7 +205,9 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul007, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(0UL, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, " 12.34");
+    return 0;
 }
+#endif
 
 /* *
  * @tc.number    : TEST_STDLIB_STRTOUL_008
@@ -217,6 +226,7 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul008, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(0UL, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, ".34");
+    return 0;
 }
 
 /**
@@ -236,6 +246,7 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul009, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(0XDEFE, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, " 0666");
+    return 0;
 }
 
 /* *
@@ -255,6 +266,7 @@ LITE_TEST_CASE(PosixStdlibStrtoulTest, testStdlibStrtoul010, Function | MediumTe
     }
     TEST_ASSERT_EQUAL_UINT32(0666, ret);
     TEST_ASSERT_EQUAL_STRING(endPtr, "");
+    return 0;
 }
 
 RUN_TEST_SUITE(PosixStdlibStrtoulTest);
@@ -268,7 +280,9 @@ void PosixStdlibStrtoulFuncTest()
     RUN_ONE_TESTCASE(testStdlibStrtoul004);
     RUN_ONE_TESTCASE(testStdlibStrtoul005);
     RUN_ONE_TESTCASE(testStdlibStrtoul006);
+#if (LOSCFG_LIBC_MUSL == 1)
     RUN_ONE_TESTCASE(testStdlibStrtoul007);
+#endif
     RUN_ONE_TESTCASE(testStdlibStrtoul008);
     RUN_ONE_TESTCASE(testStdlibStrtoul009);
     RUN_ONE_TESTCASE(testStdlibStrtoul010);

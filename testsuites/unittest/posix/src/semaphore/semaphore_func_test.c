@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "ohos_types.h"
-#include "hctest.h"
+#include "posix_test.h"
 #include "los_config.h"
 #include "kernel_test.h"
 #include "log.h"
@@ -124,6 +124,7 @@ LITE_TEST_CASE(PosixSemaphoreFuncTestSuite, testIpcSem_Timedwait001, Function | 
     TEST_ASSERT_LESS_THAN_INT(20, abs(timeDiff));
 
     TEST_ASSERT_EQUAL_INT(0, sem_destroy((sem_t *)&sem));
+    return 0;
 }
 
 /* *
@@ -154,7 +155,7 @@ LITE_TEST_CASE(PosixSemaphoreFuncTestSuite, testIpcSem_Timedwait002, Function | 
     LOG("\n timeDiff %d", timeDiff);
     TEST_ASSERT_LESS_THAN_INT(20, timeDiff);
 
-    // try get semphore again
+    // try get semaphore again
     ts = GetDelayedTime(100);
     LOG("\n ts %d, %d", ts.tv_sec, ts.tv_nsec);
     ret = sem_timedwait((sem_t *)&sem, &ts);
@@ -166,6 +167,7 @@ LITE_TEST_CASE(PosixSemaphoreFuncTestSuite, testIpcSem_Timedwait002, Function | 
     LOG("\n wait timeDiff %d", timeDiff);
 
     TEST_ASSERT_EQUAL_INT(0, sem_destroy((sem_t *)&sem));
+    return 0;
 }
 
 /* *
@@ -212,6 +214,7 @@ LITE_TEST_CASE(PosixSemaphoreFuncTestSuite, testIpcSem_Timedwait003, Function | 
     ret = sem_timedwait(NULL, &ts);
     TEST_ASSERT_EQUAL_INT(-1, ret);
     TEST_ASSERT_EQUAL_INT(errno, EINVAL);
+    return 0;
 }
 
 /* *
@@ -240,6 +243,7 @@ LITE_TEST_CASE(PosixSemaphoreFuncTestSuite, testIpcSem_Trywait004, Function | Me
     } else {
         TEST_ASSERT_EQUAL_INT(0, ret);
     }
+    return 0;
 }
 
 RUN_TEST_SUITE(PosixSemaphoreFuncTestSuite);

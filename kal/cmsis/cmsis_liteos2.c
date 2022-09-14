@@ -631,6 +631,12 @@ void osThreadExit(void)
     UNREACHABLE;
 }
 
+/* before kernel running osDelay is implemented by HalDelay interface */
+WEAK VOID HalDelay(UINT32 ticks)
+{
+
+}
+
 osStatus_t osDelay(uint32_t ticks)
 {
     UINT32 ret;
@@ -640,6 +646,12 @@ osStatus_t osDelay(uint32_t ticks)
     if (ticks == 0) {
         return osErrorParameter;
     }
+
+    if (osKernelGetState() != osKernelRunning) {
+        HalDelay(ticks);
+        return osOK;
+    }
+
     ret = LOS_TaskDelay(ticks);
     if (ret == LOS_OK) {
         return osOK;
@@ -692,11 +704,6 @@ osTimerId_t osTimerNew(osTimerFunc_t func, osTimerType_t type, void *argument, c
         return NULL;
     }
 
-    if (osTimerOnce == type) {
-        mode = LOS_SWTMR_MODE_NO_SELFDELETE;
-    } else {
-        mode = LOS_SWTMR_MODE_PERIOD;
-    }
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     if (LOS_SwtmrCreate(1, mode, (SWTMR_PROC_FUNC)func, &swtmrId, (UINT32)(UINTPTR)argument,
         osTimerRousesAllow, osTimerAlignIgnore) != LOS_OK) {
@@ -793,7 +800,7 @@ osStatus_t osTimerStop(osTimerId_t timer_id)
 uint32_t osTimerIsRunning(osTimerId_t timer_id)
 {
     if (OS_INT_ACTIVE) {
-        return osErrorISR;
+        return (uint32_t)osErrorISR;
     }
     if (timer_id == NULL) {
         return 0;
@@ -1231,14 +1238,40 @@ osMessageQueueId_t osMessageQueueNew(uint32_t msg_count, uint32_t msg_size, cons
 {
     UINT32 queueId;
     UINT32 ret;
-    UNUSED(attr);
     osMessageQueueId_t handle;
+    const char *queueName = NULL;
+
+#if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
+    UINT32 queueSize = 0;
+    UINT8 *staticMem = NULL;
+#endif
 
     if ((msg_count == 0) || (msg_size == 0) || OS_INT_ACTIVE) {
         return (osMessageQueueId_t)NULL;
     }
 
-    ret = LOS_QueueCreate((char *)NULL, (UINT16)msg_count, &queueId, 0, (UINT16)msg_size);
+    if (attr != NULL) {
+        queueName = attr->name;
+#if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
+        queueSize = attr->mq_size;
+        staticMem = attr->mq_mem;
+        if (((queueSize == 0) && (staticMem != NULL)) || ((queueSize != 0) && (staticMem == NULL))) {
+            return (osMessageQueueId_t)NULL;
+        }
+#endif
+    }
+
+#if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
+    if (staticMem != NULL) {
+        ret = LOS_QueueCreateStatic((const CHAR *)queueName, (UINT16)msg_count, &queueId, \
+                                    (UINT8 *)staticMem, 0, (UINT16)queueSize / msg_count);
+    } else {
+        ret = LOS_QueueCreate((const CHAR *)queueName, (UINT16)msg_count, &queueId, 0, (UINT16)msg_size);
+    }
+#else
+    ret = LOS_QueueCreate((const CHAR *)queueName, (UINT16)msg_count, &queueId, 0, (UINT16)msg_size);
+#endif
+
     if (ret == LOS_OK) {
         handle = (osMessageQueueId_t)(GET_QUEUE_HANDLE(queueId));
     } else {
@@ -1366,8 +1399,13 @@ osStatus_t osMessageQueueDelete(osMessageQueueId_t mq_id)
 
 const char *osMessageQueueGetName(osMessageQueueId_t mq_id)
 {
-    UNUSED(mq_id);
-    return NULL;
+    if (mq_id == NULL) {
+        return NULL;
+    }
+
+    LosQueueCB *pstQueue = (LosQueueCB *)mq_id;
+
+    return (const char *)pstQueue->queueName;
 }
 #endif
 

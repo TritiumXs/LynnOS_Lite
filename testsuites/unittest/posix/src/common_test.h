@@ -49,63 +49,6 @@
 #define THREAD_COUNT_MAX 30
 #define THREAD_STACK_SPACE_MAX 4096
 
-#define ICUNIT_GOTO_NOT_EQUAL(param, value, retcode, label)    \
-    do {                                                       \
-        if ((param) == (value)) {                              \
-            TEST_ASSERT_NOT_EQUAL(param, value);               \
-            printf("\nret = %d, expect = %d\n", param, value); \
-            goto label;                                        \
-        }                                                      \
-    } while (0)
-
-#define ICUNIT_GOTO_EQUAL(param, value, retcode, label)        \
-    do {                                                       \
-        if ((param) != (value)) {                              \
-            TEST_ASSERT_EQUAL(param, value);                   \
-            printf("\nret = %d, expect = %d\n", param, value); \
-            goto label;                                        \
-        }                                                      \
-    } while (0)
-
-#define ICUNIT_GOTO_STRING_EQUAL(str1, str2, retcode, label) \
-    do {                                                     \
-        if (strcmp(str1, str2) != 0) {                       \
-            TEST_ASSERT_EQUAL(retcode, retcode + 1);         \
-            goto label;                                      \
-        }                                                    \
-    } while (0)
-
-#define ICUNIT_ASSERT_EQUAL_VOID(param, value, retcode) \
-    do {                                                \
-        if ((param) != (value)) {                       \
-            TEST_ASSERT_EQUAL(param, value);            \
-            return;                                     \
-        }                                               \
-    } while (0)
-
-#define ICUNIT_ASSERT_NOT_EQUAL_VOID(param, value, retcode) \
-    do {                                                    \
-        if ((param) == (value)) {                           \
-            TEST_ASSERT_EQUAL(param, value);                \
-            return;                                         \
-        }                                                   \
-    } while (0)
-
-#define ICUNIT_TRACK_EQUAL(param, value, retcode)              \
-    do {                                                       \
-        if ((param) != (value)) {                              \
-            TEST_ASSERT_EQUAL(param, value);                   \
-            printf("\nret = %d, expect = %d\n", param, value); \
-        }                                                      \
-    } while (0)
-#define ICUNIT_TRACK_NOT_EQUAL(param, value, retcode)          \
-    do {                                                       \
-        if ((param) == (value)) {                              \
-            TEST_ASSERT_NOT_EQUAL(param, value);               \
-            printf("\nret = %d, expect = %d\n", param, value); \
-        }                                                      \
-    } while (0)
-
 #ifdef __cplusplus
 #if __cplusplus
 #endif

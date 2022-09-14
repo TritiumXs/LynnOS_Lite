@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -32,6 +32,7 @@
 #define _GNU_SOURCE 1
 #include "lfs_adapter.h"
 #include "los_config.h"
+#include "los_fs.h"
 #include "vfs_files.h"
 #include "vfs_operations.h"
 #include "vfs_partition.h"
@@ -39,8 +40,76 @@
 #include "vfs_mount.h"
 #include "securec.h"
 
-struct dirent g_nameValue;
-static pthread_mutex_t g_FslocalMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_fsLocalMutex = PTHREAD_MUTEX_INITIALIZER;
+
+static struct PartitionCfg g_partitionCfg;
+static struct lfs_config g_lfsCfg;
+static struct DeviceDesc *g_lfsDevice = NULL;
+
+static uint32_t LfsGetStartAddr(int partition)
+{
+    if (g_lfsDevice == NULL) {
+        struct DeviceDesc *device = NULL;
+        for (device = getDeviceList(); device != NULL; device = device->dNext) {
+            if (strcmp(device->dFsType, "littlefs") == 0) {
+                g_lfsDevice = device;
+                break;
+            }
+        }
+    }
+
+    if ((g_lfsDevice == NULL) || (partition >= g_lfsDevice->dPartNum)) {
+        return INVALID_DEVICE_ADDR;
+    }
+
+    return (uint32_t)g_lfsDevice->dAddrArray[partition];
+}
+
+WEAK int littlefs_block_read(const struct lfs_config *c, lfs_block_t block,
+                             lfs_off_t off, void *dst, lfs_size_t size)
+{
+    UINT32 addr = c->block_size * block + off;
+    UINT32 startaddr = LfsGetStartAddr((int)c->context);
+    if (startaddr == INVALID_DEVICE_ADDR) {
+        return -1;
+    }
+    addr += startaddr;
+
+    return (g_partitionCfg.readFunc)((int)c->context, &addr, dst, size);
+}
+
+WEAK int littlefs_block_write(const struct lfs_config *c, lfs_block_t block,
+                              lfs_off_t off, const void *dst, lfs_size_t size)
+{
+    UINT32 addr = c->block_size * block + off;
+    UINT32 startaddr = LfsGetStartAddr((int)c->context);
+    if (startaddr == INVALID_DEVICE_ADDR) {
+        return -1;
+    }
+
+    addr += startaddr;
+
+    return (g_partitionCfg.writeFunc)((int)c->context, &addr, dst, size);
+}
+
+WEAK int littlefs_block_erase(const struct lfs_config *c, lfs_block_t block)
+{
+    UINT32 addr = c->block_size * block;
+    UINT32 startaddr = LfsGetStartAddr((int)c->context);
+    if (startaddr == INVALID_DEVICE_ADDR) {
+        return -1;
+    }
+
+    addr += startaddr;
+
+    return (g_partitionCfg.eraseFunc)((int)c->context, addr, c->block_size);
+}
+
+WEAK int littlefs_block_sync(const struct lfs_config *c)
+{
+    (void)c;
+    return 0;
+}
 
 static int ConvertFlagToLfsOpenFlag (int oflags)
 {
@@ -82,6 +151,28 @@ static int LittlefsErrno(int result)
     return (result < 0) ? -result : result;
 }
 
+void LfsConfigAdapter(struct PartitionCfg *pCfg, struct lfs_config *lfsCfg)
+{
+    lfsCfg->context = (void *)pCfg->partNo;
+
+    lfsCfg->read_size = pCfg->readSize;
+    lfsCfg->prog_size = pCfg->writeSize;
+    lfsCfg->cache_size = pCfg->cacheSize;
+    lfsCfg->block_cycles = pCfg->blockCycles;
+    lfsCfg->lookahead_size = pCfg->lookaheadSize;
+    lfsCfg->block_size = pCfg->blockSize;
+    lfsCfg->block_count = pCfg->blockCount;
+
+    lfsCfg->read = littlefs_block_read;
+    lfsCfg->prog = littlefs_block_write;
+    lfsCfg->erase = littlefs_block_erase;
+    lfsCfg->sync = littlefs_block_sync;
+
+    g_partitionCfg.readFunc = pCfg->readFunc;
+    g_partitionCfg.writeFunc = pCfg->writeFunc;
+    g_partitionCfg.eraseFunc = pCfg->eraseFunc;
+}
+
 int LfsMount(struct MountPoint *mp, unsigned long mountflags, const void *data)
 {
     int ret;
@@ -89,31 +180,32 @@ int LfsMount(struct MountPoint *mp, unsigned long mountflags, const void *data)
 
     if ((mp == NULL) || (mp->mPath == NULL) || (data == NULL)) {
         errno = EFAULT;
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
         goto errout;
     }
 
     mountHdl = (lfs_t *)malloc(sizeof(lfs_t));
     if (mountHdl == NULL) {
         errno = ENODEV;
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
         goto errout;
     }
     (void)memset_s(mountHdl, sizeof(lfs_t), 0, sizeof(lfs_t));
     mp->mData = (void *)mountHdl;
 
-    ret = lfs_mount((lfs_t *)mp->mData, (struct lfs_config *)data);
+    LfsConfigAdapter((struct PartitionCfg *)data, &g_lfsCfg);
+
+    ret = lfs_mount((lfs_t *)mp->mData, &g_lfsCfg);
     if (ret != 0) {
-        ret = lfs_format((lfs_t *)mp->mData, (struct lfs_config*)data);
+        ret = lfs_format((lfs_t *)mp->mData, &g_lfsCfg);
         if (ret == 0) {
-            ret = lfs_mount((lfs_t *)mp->mData, (struct lfs_config*)data);
+            ret = lfs_mount((lfs_t *)mp->mData, &g_lfsCfg);
         }
     }
-
     if (ret != 0) {
         free(mountHdl);
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
 errout:
@@ -126,18 +218,18 @@ int LfsUmount(struct MountPoint *mp)
 
     if (mp == NULL) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (mp->mData == NULL) {
         errno = ENOENT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     ret = lfs_unmount((lfs_t *)mp->mData);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     free(mp->mData);
@@ -151,18 +243,18 @@ int LfsUnlink(struct MountPoint *mp, const char *fileName)
 
     if ((mp == NULL) || (fileName == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (mp->mData == NULL) {
         errno = ENOENT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     ret = lfs_remove((lfs_t *)mp->mData, fileName);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     return ret;
@@ -174,12 +266,12 @@ int LfsMkdir(struct MountPoint *mp, const char *dirName)
 
     if ((dirName == NULL) || (mp == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (mp->mData == NULL) {
         errno = ENOENT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfs_t *lfs = (lfs_t *)mp->mData;
@@ -187,7 +279,7 @@ int LfsMkdir(struct MountPoint *mp, const char *dirName)
     ret = lfs_mkdir(lfs, dirName);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     return ret;
@@ -200,25 +292,25 @@ int LfsRmdir(struct MountPoint *mp, const char *dirName)
 
     if (mp == NULL) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (mp->mData == NULL) {
         errno = ENOENT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfs = (lfs_t *)mp->mData;
 
     if (dirName == NULL) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     ret = lfs_remove(lfs, dirName);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     return ret;
@@ -230,14 +322,14 @@ int LfsOpendir(struct Dir *dir, const char *dirName)
 
     if ((dir == NULL) || (dir->dMp == NULL) || (dir->dMp->mData == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfs_t *lfs = (lfs_t *)dir->dMp->mData;
     lfs_dir_t *dirInfo = (lfs_dir_t *)malloc(sizeof(lfs_dir_t));
     if (dirInfo == NULL) {
         errno = ENOMEM;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     (void)memset_s(dirInfo, sizeof(lfs_dir_t), 0, sizeof(lfs_dir_t));
@@ -254,7 +346,7 @@ int LfsOpendir(struct Dir *dir, const char *dirName)
     return LOS_OK;
 
 errout:
-    return LOS_NOK;
+    return (int)LOS_NOK;
 }
 
 int LfsReaddir(struct Dir *dir, struct dirent *dent)
@@ -265,12 +357,12 @@ int LfsReaddir(struct Dir *dir, struct dirent *dent)
     if ((dir == NULL) || (dir->dMp == NULL) || (dir->dMp->mData == NULL) ||
         (dent == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (dir->dData == NULL) {
         errno = EBADF;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfs_t *lfs = (lfs_t *)dir->dMp->mData;
@@ -278,7 +370,7 @@ int LfsReaddir(struct Dir *dir, struct dirent *dent)
 
     ret = lfs_dir_read(lfs, dirInfo, &lfsInfo);
     if (ret == TRUE) {
-        pthread_mutex_lock(&g_FslocalMutex);
+        pthread_mutex_lock(&g_fsLocalMutex);
         (void)strncpy_s(dent->d_name, sizeof(dent->d_name), lfsInfo.name, strlen(lfsInfo.name) + 1);
         if (lfsInfo.type == LFS_TYPE_DIR) {
             dent->d_type = DT_DIR;
@@ -287,7 +379,7 @@ int LfsReaddir(struct Dir *dir, struct dirent *dent)
         }
 
         dent->d_reclen = lfsInfo.size;
-        pthread_mutex_unlock(&g_FslocalMutex);
+        pthread_mutex_unlock(&g_fsLocalMutex);
 
         return LOS_OK;
     }
@@ -296,7 +388,7 @@ int LfsReaddir(struct Dir *dir, struct dirent *dent)
         errno = LittlefsErrno(ret);
     }
 
-    return LOS_NOK;
+    return (int)LOS_NOK;
 }
 
 int LfsClosedir(struct Dir *dir)
@@ -305,12 +397,12 @@ int LfsClosedir(struct Dir *dir)
 
     if ((dir == NULL) || (dir->dMp == NULL) || (dir->dMp->mData == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (dir->dData == NULL) {
         errno = EBADF;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfs_t *lfs = (lfs_t *)dir->dMp->mData;
@@ -319,7 +411,7 @@ int LfsClosedir(struct Dir *dir)
     ret = lfs_dir_close(lfs, dirInfo);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     free(dirInfo);
@@ -336,13 +428,13 @@ int LfsOpen(struct File *file, const char *pathName, int openFlag)
     if ((pathName == NULL) || (file == NULL) || (file->fMp == NULL) ||
         (file->fMp->mData == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfsHandle = (lfs_file_t *)malloc(sizeof(lfs_file_t));
     if (lfsHandle == NULL) {
         errno = ENOMEM;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     int lfsOpenFlag = ConvertFlagToLfsOpenFlag(openFlag);
@@ -368,25 +460,25 @@ int LfsRead(struct File *file, char *buf, size_t len)
 
     if (buf == NULL) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if ((file == NULL) || (file->fData == NULL)) {
         errno = EBADF;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfsHandle = (lfs_file_t *)file->fData;
     mp = file->fMp;
     if ((mp == NULL) || (mp->mData == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     ret = lfs_file_read((lfs_t *)mp->mData, lfsHandle, buf, len);
     if (ret < 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
     return ret;
 }
@@ -399,25 +491,25 @@ int LfsWrite(struct File *file, const char *buf, size_t len)
 
     if (buf == NULL) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if ((file == NULL) || (file->fData == NULL)) {
         errno = EBADF;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfsHandle = (lfs_file_t *)file->fData;
     mp = file->fMp;
     if ((mp == NULL) || (mp->mData == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     ret = lfs_file_write((lfs_t *)mp->mData, lfsHandle, buf, len);
     if (ret < 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
     return ret;
 }
@@ -430,20 +522,20 @@ off_t LfsSeek(struct File *file, off_t offset, int whence)
 
     if ((file == NULL) || (file->fData == NULL)) {
         errno = EBADF;
-        return LOS_NOK;
+        return (off_t)LOS_NOK;
     }
 
     lfsHandle = (lfs_file_t *)file->fData;
     mp = file->fMp;
     if ((mp == NULL) || (mp->mData == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (off_t)LOS_NOK;
     }
 
     ret = (off_t)lfs_file_seek((lfs_t *)mp->mData, lfsHandle, offset, whence);
     if (ret < 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (off_t)LOS_NOK;
     }
 
     return ret;
@@ -451,29 +543,29 @@ off_t LfsSeek(struct File *file, off_t offset, int whence)
 
 int LfsClose(struct File *file)
 {
-    INT32 ret;
+    int ret;
     struct MountPoint *mp = NULL;
     lfs_file_t *lfsHandle = NULL;
 
     if ((file == NULL) || (file->fData == NULL)) {
         errno = EBADF;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     lfsHandle = (lfs_file_t *)file->fData;
     mp = file->fMp;
     if ((mp == NULL) || (mp->mData == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
-    pthread_mutex_lock(&g_FslocalMutex);
+    pthread_mutex_lock(&g_fsLocalMutex);
     ret = lfs_file_close((lfs_t *)mp->mData, lfsHandle);
-    pthread_mutex_unlock(&g_FslocalMutex);
+    pthread_mutex_unlock(&g_fsLocalMutex);
 
     if (ret != 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     free(file->fData);
@@ -487,18 +579,18 @@ int LfsRename(struct MountPoint *mp, const char *oldName, const char *newName)
 
     if ((mp == NULL) || (oldName == NULL) || (newName == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (mp->mData == NULL) {
         errno = ENOENT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     ret = lfs_rename((lfs_t *)mp->mData, oldName, newName);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     return ret;
@@ -511,12 +603,12 @@ int LfsStat(struct MountPoint *mp, const char *path, struct stat *buf)
 
     if ((mp == NULL) || (path == NULL) || (buf == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if (mp->mData == NULL) {
         errno = ENOENT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     ret = lfs_stat((lfs_t *)mp->mData, path, &info);
@@ -529,7 +621,7 @@ int LfsStat(struct MountPoint *mp, const char *path, struct stat *buf)
         }
     } else {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
     }
 
     return ret;
@@ -542,19 +634,36 @@ int LfsSync(struct File *file)
 
     if ((file == NULL) || (file->fData == NULL)) {
         errno = EBADF;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     if ((file->fMp == NULL) || (file->fMp->mData == NULL)) {
         errno = EFAULT;
-        return LOS_NOK;
+        return (int)LOS_NOK;
     }
 
     mp = file->fMp;
     ret = lfs_file_sync((lfs_t *)mp->mData, (lfs_file_t *)file->fData);
     if (ret != 0) {
         errno = LittlefsErrno(ret);
-        ret = LOS_NOK;
+        ret = (int)LOS_NOK;
+    }
+    return ret;
+}
+
+int LfsFormat(const char *partName, void *privData)
+{
+    int ret;
+    lfs_t lfs = {0};
+
+    (void)partName;
+
+    LfsConfigAdapter((struct PartitionCfg *)privData, &g_lfsCfg);
+
+    ret = lfs_format(&lfs, &g_lfsCfg);
+    if (ret != 0) {
+        errno = LittlefsErrno(ret);
+        ret = (int)LOS_NOK;
     }
     return ret;
 }
@@ -587,7 +696,7 @@ static struct FileOps g_lfsFops = {
 
 static struct FsManagement g_lfsMgt = {
     .fdisk = NULL,
-    .format = NULL,
+    .format = LfsFormat,
 };
 
 void LfsInit(void)

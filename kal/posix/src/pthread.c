@@ -36,6 +36,7 @@
 #include <securec.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "los_config.h"
 #include "los_task.h"
 #include "los_debug.h"
@@ -45,7 +46,7 @@
 #define PTHREAD_NAMELEN 16
 #define PTHREAD_KEY_UNUSED 0
 #define PTHREAD_KEY_USED   1
-#define PTHREAD_TASK_INVAILD 0
+#define PTHREAD_TASK_INVALID 0
 
 typedef void (*PthreadKeyDtor)(void *);
 typedef struct {
@@ -399,7 +400,7 @@ STATIC UINT32 DoPthreadCancel(LosTaskCB *task)
     LOS_TaskLock();
     pthreadData = (PthreadData *)(UINTPTR)task->arg;
     pthreadData->canceled = 0;
-    if ((task->taskStatus == PTHREAD_TASK_INVAILD) || (LOS_TaskSuspend(task->taskID) != LOS_OK)) {
+    if ((task->taskStatus == PTHREAD_TASK_INVALID) || (LOS_TaskSuspend(task->taskID) != LOS_OK)) {
         ret = LOS_NOK;
         goto OUT;
     }
@@ -504,6 +505,8 @@ int pthread_detach(pthread_t thread)
 void pthread_exit(void *retVal)
 {
     UINT32 intSave;
+    LosTaskCB *tcb = NULL;
+    PthreadData *pthreadData = NULL;
 
     pthread_t thread = pthread_self();
     if (!IsPthread(thread)) {
@@ -511,9 +514,9 @@ void pthread_exit(void *retVal)
         goto EXIT;
     }
 
-    LosTaskCB *tcb = OS_TCB_FROM_TID((UINT32)thread);
+    tcb = OS_TCB_FROM_TID((UINT32)thread);
     tcb->joinRetval = (UINTPTR)retVal;
-    PthreadData *pthreadData = (PthreadData *)(UINTPTR)tcb->arg;
+    pthreadData = (PthreadData *)(UINTPTR)tcb->arg;
     if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL) != 0) {
         PRINT_ERR("%s: %d failed\n", __FUNCTION__, __LINE__);
     }

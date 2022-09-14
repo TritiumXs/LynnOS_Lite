@@ -350,6 +350,14 @@ extern "C" {
 #define LOSCFG_BASE_IPC_QUEUE_LIMIT                         6
 #endif
 
+/**
+ * @ingroup los_config
+ * Maximum supported number of static queues rather than the number of usable queues
+ */
+#ifndef LOSCFG_BASE_IPC_STATIC_QUEUE_LIMIT
+#define LOSCFG_BASE_IPC_STATIC_QUEUE_LIMIT                  3
+#endif
+
 
 /* =============================================================================
                                        Software timer module configuration
@@ -452,7 +460,7 @@ extern UINT8 *m_aucSysMem0;
 
 /**
  * @ingroup los_config
- * Configuration module tailoring of more mempry pool checking
+ * Configuration module tailoring of more memory pool checking
  */
 #ifndef LOSCFG_MEM_MUL_POOL
 #define LOSCFG_MEM_MUL_POOL                                 1
@@ -653,6 +661,22 @@ extern UINT8 *m_aucSysMem0;
  */
 #ifndef LOSCFG_KERNEL_SIGNAL
 #define LOSCFG_KERNEL_SIGNAL                          0
+#endif
+
+/**
+ * @ingroup los_config
+ * Configuration item to enable kernel power module.
+ */
+#ifndef LOSCFG_KERNEL_PM
+#define LOSCFG_KERNEL_PM                              0
+#endif
+
+/**
+ * @ingroup los_config
+ * Configuration item to enable kernel power module in idle task.
+ */
+#ifndef LOSCFG_KERNEL_PM_IDLE
+#define LOSCFG_KERNEL_PM_IDLE                         0
 #endif
 
 #ifdef __cplusplus
