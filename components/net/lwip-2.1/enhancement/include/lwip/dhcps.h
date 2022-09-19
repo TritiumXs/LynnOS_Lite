@@ -29,22 +29,43 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LWIP_API_SHELL_H
-#define LWIP_API_SHELL_H
+#ifndef LWIP_HDR_DHCPS_H
+#define LWIP_HDR_DHCPS_H
 
-#include "arch/cc.h"
 #include "lwip/opt.h"
+#include "lwip/prot/dhcp.h"
+#if LWIP_DHCPS /* don't build if not configured for use in lwipopts.h */
+
+#include "lwip/netif.h"
+#include "lwip/udp.h"
 
 #if defined (__cplusplus) && __cplusplus
 extern "C" {
 #endif
 
-u32_t lwip_ifconfig(int argc, const char **argv);
-u32_t OsShellPing(int argc, const char **argv);
-#define LWIP_STATIC static
-LWIP_STATIC int OsPingFunc(u32_t *parg);
+
+#ifndef LWIP_DHCPS_MAX_LEASE
+#define LWIP_DHCPS_MAX_LEASE 30
+#endif
+
+#ifndef LWIP_DHCPS_LEASE_TIME
+#define LWIP_DHCPS_LEASE_TIME  ~0
+#endif
+
+/* Offer time in seconds */
+#ifndef LWIP_DHCPS_OFFER_TIME
+#define LWIP_DHCPS_OFFER_TIME 300
+#endif
+
+#ifndef LWIP_DHCPS_DECLINE_TIME
+#define LWIP_DHCPS_DECLINE_TIME 500
+#endif
+
+err_t dhcps_start(struct netif *netif, const char *start_ip, u16_t ip_num);
+void dhcps_stop(struct netif *netif);
 
 #if defined (__cplusplus) && __cplusplus
 }
 #endif
-#endif /* LWIP_HDR_API_SHELL_H */
+#endif /* LWIP_DHCPS */
+#endif /* LWIP_HDR_DHCPS_H */
