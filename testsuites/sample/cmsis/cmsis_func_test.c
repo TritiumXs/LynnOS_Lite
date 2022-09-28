@@ -449,6 +449,55 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis002, Function | MediumTest | Level1)
     return LOS_OK;
 };
 
+void callback(void* arg)
+    while(1) {
+    }
+
+    return 0;
+}
+
+LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsisTimer001, Function | MediumTest | Level1)
+{
+    osTimerId_t  time_id;
+    osStatus_t status;
+    uint32_t timerDelay;
+    const char* timerGetName;
+    uint32_t timerIsRunning;
+    osStatus_t timerStop;
+    osStatus_t timerDelete;
+
+    time_id = osTimerNew (callback, osTimerOnce, NULL, NULL);
+    ICUNIT_ASSERT_NOT_EQUAL(time_id, NULL, time_id);
+
+    timerDelay = 1U;
+
+    status = osTimerStart(time_id, timerDelay);
+    ICUNIT_ASSERT_EQUAL(status, osOK, status);
+
+    timerGetName = osTimerGetName(time_id);
+    ICUNIT_GOTO_EQUAL(timerGetName, osOK, timerGetName, EXIT1);
+
+    timerIsRunning = osTimerIsRunning(time_id);
+    ICUNIT_GOTO_EQUAL(timerIsRunning, 1, timerIsRunning, EXIT1);
+
+    timerStop = osTimerStop(time_id);
+    ICUNIT_GOTO_EQUAL(timerStop, osOK, timerStop, EXIT1);
+
+    timerIsRunning = osTimerIsRunning(time_id);
+    ICUNIT_GOTO_EQUAL(timerIsRunning, 0, timerIsRunning, EXIT1);
+
+    timerDelete = osTimerDelete(time_id);
+    ICUNIT_ASSERT_EQUAL(timerDelete, osOK, timerDelete);
+
+    return LOS_OK;
+
+EXIT1:
+    timerDelete = osTimerDelete(time_id);
+    ICUNIT_ASSERT_EQUAL(timerDelete, osOK, timerDelete);
+
+    return LOS_OK;
+};
+
 
 void CmsisFuncTestSuite(void)
 {
@@ -465,5 +514,7 @@ void CmsisFuncTestSuite(void)
 #endif
 
     ADD_TEST_CASE(TestCmsis007);
+
+    ADD_TEST_CASE(TestCmsisTimer001);
 }
 
