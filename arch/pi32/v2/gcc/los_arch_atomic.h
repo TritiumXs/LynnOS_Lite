@@ -33,12 +33,205 @@
 #define _LOS_ARCH_ATOMIC_H
 
 #include "los_compiler.h"
+#include "los_interrupt.h"
 
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
 #endif /* ifdef __cplusplus */
 #endif /* __cplusplus */
+
+STATIC INLINE INT32 ArchAtomicRead(const Atomic *v)
+{
+    INT32 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE VOID ArchAtomicSet(Atomic *v, INT32 setVal)
+{
+    INT32 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v = setVal;
+    LOS_IntRestore(intSave);
+
+}
+
+STATIC INLINE INT32 ArchAtomicAdd(Atomic *v, INT32 addVal)
+{
+    INT32 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v += addVal;
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE INT32 ArchAtomicSub(Atomic *v, INT32 subVal)
+{
+    INT32 val;
+    UINT32 intSave;
+    intSave = LOS_IntLock();
+    *v -= subVal;
+    val = *v;
+
+    LOS_IntRestore(intSave);
+    return val;
+}
+
+STATIC INLINE VOID ArchAtomicInc(Atomic *v)
+{
+    (VOID)ArchAtomicAdd(v, 1);
+}
+
+STATIC INLINE VOID ArchAtomicDec(Atomic *v)
+{
+    (VOID)ArchAtomicSub(v, 1);
+}
+
+STATIC INLINE INT32 ArchAtomicIncRet(Atomic *v)
+{
+    return ArchAtomicAdd(v, 1);
+}
+
+STATIC INLINE INT32 ArchAtomicDecRet(Atomic *v)
+{
+    return ArchAtomicSub(v, 1);
+}
+
+STATIC INLINE INT32 ArchAtomicXchg32bits(volatile INT32 *v, INT32 val)
+{
+    INT32 prevVal = 0;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    prevVal = *v;
+    *v = val;
+    LOS_IntRestore(intSave);
+
+    return prevVal;
+}
+
+STATIC INLINE BOOL ArchAtomicCmpXchg32bits(volatile INT32 *v, INT32 val, INT32 oldVal)
+{
+    INT32 prevVal = 0;
+
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    prevVal = *v;
+    if (prevVal == oldVal) {
+        *v = val;
+    }
+    LOS_IntRestore(intSave);
+
+    return prevVal != oldVal;
+}
+
+STATIC INLINE INT64 ArchAtomic64Read(const Atomic64 *v)
+{
+    INT64 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE VOID ArchAtomic64Set(Atomic64 *v, INT64 setVal)
+{
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v = setVal;
+    LOS_IntRestore(intSave);
+}
+
+STATIC INLINE INT64 ArchAtomic64Add(Atomic64 *v, INT64 addVal)
+{
+    INT64 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v += addVal;
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE INT64 ArchAtomic64Sub(Atomic64 *v, INT64 subVal)
+{
+    INT64 val;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    *v -= subVal;
+    val = *v;
+    LOS_IntRestore(intSave);
+
+    return val;
+}
+
+STATIC INLINE VOID ArchAtomic64Inc(Atomic64 *v)
+{
+    (VOID)ArchAtomic64Add(v, 1);
+}
+
+STATIC INLINE INT64 ArchAtomic64IncRet(Atomic64 *v)
+{
+    return ArchAtomic64Add(v, 1);
+}
+
+STATIC INLINE VOID ArchAtomic64Dec(Atomic64 *v)
+{
+    (VOID)ArchAtomic64Sub(v, 1);
+}
+
+STATIC INLINE INT64 ArchAtomic64DecRet(Atomic64 *v)
+{
+    return ArchAtomic64Sub(v, 1);
+}
+
+STATIC INLINE INT64 ArchAtomicXchg64bits(Atomic64 *v, INT64 val)
+{
+    INT64 prevVal;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    prevVal = *v;
+    *v = val;
+    LOS_IntRestore(intSave);
+
+    return prevVal;
+}
+
+STATIC INLINE BOOL ArchAtomicCmpXchg64bits(Atomic64 *v, INT64 val, INT64 oldVal)
+{
+    INT64 prevVal;
+    UINT32 intSave;
+
+    intSave = LOS_IntLock();
+    prevVal = *v;
+    if (prevVal == oldVal) {
+        *v = val;
+    }
+    LOS_IntRestore(intSave);
+
+    return prevVal != oldVal;
+}
 
 #ifdef __cplusplus
 #if __cplusplus

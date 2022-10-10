@@ -30,7 +30,7 @@ extern "C" {
 
 LITE_OS_SEC_TEXT_INIT VOID ArchInit(VOID)
 {
-    ArchHwiInit();
+	HalHwiInit();
 }
 
 LITE_OS_SEC_TEXT_MINOR VOID ArchSysExit(VOID)

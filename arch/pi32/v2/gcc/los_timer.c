@@ -46,7 +46,7 @@ STATIC ArchTickTimer g_archTickTimer = {
     .tickHandler = NULL,
 };
 
-__attribute__((interrupt(""))) static void tickISR(void)
+static void tickISR(void)
 {
     TICK_CON |= TICK_CLEAR_PENDIND;
     jiffies++;
@@ -124,7 +124,9 @@ VOID Wfi(VOID)
 }
 
 VOID Dsb(VOID)
-{
+{	
+	clr_wdt();
+	asm volatile("idle");
 }
 
 UINT32 ArchEnterSleep(VOID)

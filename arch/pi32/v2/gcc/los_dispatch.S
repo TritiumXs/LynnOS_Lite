@@ -52,23 +52,6 @@ ArchIntRestore:
 ArchPendSV:
 // 发生中断的时候，GIE0 是为 0，表示中断关闭
     cli
-    lockset
-    csync
-    csync
-    csync
-    csync
-    csync
-
-
-
-
-
-    [--sp] = {r15-r0}
-    [--sp] = {psr,rets,reti}
-    call sp_ovf_unen
-    {psr,rets,reti} = [sp++]
-    {r15-r0} = [sp++]
-
     sp = usp
     [--sp] = {r15-r0}
     [--sp] = {psr,rets,reti}
@@ -88,7 +71,7 @@ ArchPendSV:
     call ArchTaskSwitch
 
 // 如果无需切换任务，则返回
-    if (r0 == 0) goto 1f
+    ; if (r0 == 0) goto 1f
 
 // load new task
     r0 = g_losTask
@@ -106,13 +89,6 @@ ArchPendSV:
     usp = sp
     sp = ssp
 
-    [--sp] = {r15-r0}
-    [--sp] = {psr,rets,reti}
-    call sp_ovf_en
-    {psr,rets,reti} = [sp++]
-    {r15-r0} = [sp++]
-
-    lockclr
     sti
     rti
 
