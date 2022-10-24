@@ -74,7 +74,7 @@ WEAK int littlefs_block_read(const struct lfs_config *c, lfs_block_t block,
     }
     addr += startaddr;
 
-    return (g_partitionCfg.readFunc)((int)c->context, &addr, dst, size);
+    return (g_partitionCfg.readFunc)((int)c->context, addr, dst, size);
 }
 
 WEAK int littlefs_block_write(const struct lfs_config *c, lfs_block_t block,
@@ -88,7 +88,7 @@ WEAK int littlefs_block_write(const struct lfs_config *c, lfs_block_t block,
 
     addr += startaddr;
 
-    return (g_partitionCfg.writeFunc)((int)c->context, &addr, dst, size);
+    return (g_partitionCfg.writeFunc)((int)c->context, addr, dst, size);
 }
 
 WEAK int littlefs_block_erase(const struct lfs_config *c, lfs_block_t block)

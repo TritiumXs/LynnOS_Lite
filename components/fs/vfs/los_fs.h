@@ -89,9 +89,9 @@ int OsIoctl(int fd, int req, va_list ap);
 
 struct PartitionCfg {
     /* partition low-level read func */
-    int  (*readFunc)(int partition, UINT32 *offset, void *buf, UINT32 size);
+    int  (*readFunc)(int partition, UINT32 offset, void *buf, UINT32 size);
     /* partition low-level write func */
-    int  (*writeFunc)(int partition, UINT32 *offset, const void *buf, UINT32 size);
+    int  (*writeFunc)(int partition, UINT32 offset, const void *buf, UINT32 size);
     /* partition low-level erase func */
     int  (*eraseFunc)(int partition, UINT32 offset, UINT32 size);
 
