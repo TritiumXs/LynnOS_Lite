@@ -34,7 +34,7 @@ config("include") {
   include_dirs = [ "include" ]
 
   if (defined(LOSCFG_KERNEL_TEST_FULL)) {
-    defines += [ "LOS_KERNEL_TEST_FULL=1" ]
+    defines += [ "LOS_KERNEL_TEST_FULL = 1" ]
   }
 }
 
@@ -54,7 +54,6 @@ group("testsuites") {
   deps = [
     ":test_init",
     "sample/cmsis:test_cmsis",
-    "sample/kernel/atomic:test_atomic",
     "sample/kernel/event:test_event",
     "sample/kernel/hwi:test_hwi",
     "sample/kernel/mem:test_mem",
@@ -66,6 +65,7 @@ group("testsuites") {
     "sample/kernel/task:test_task",
     "sample/posix:test_posix",
     "unittest/posix:posix_test",
+    "//kernel/liteos_m/sample/kernel/atomic:test_atomic",
   ]
   if (defined(LOSCFG_DYNLINK)) {
     deps += [ "sample/kernel/dynlink:test_dynlink" ]
