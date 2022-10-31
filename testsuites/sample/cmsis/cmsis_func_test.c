@@ -496,7 +496,56 @@ EXIT1:
     return LOS_OK;
 };
 
+/**
+ * @tc.name: TestCmsisEvent001
+ * @tc.desc: Event Flags test
+ * @tc.type: FUNC
+ * @tc.require: issueI5VSKU
+ */
+LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsisEvent001, Function | MediumTest | Level1)
+{
+    osEventFlagsId_t ef_id;
+    osStatus_t status;
+    uint32_t ret;
+    const char *getName = NULL;
 
+    ef_id = osEventFlagsNew(NULL);
+    ICUNIT_ASSERT_NOT_EQUAL(ef_id, NULL, ef_id);
+
+    void Thread_EventSender(void *argument) {
+    ret = osEventFlagsSet(ef_id, 0x00000001U);
+    ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
+    osThreadYield();
+}
+
+    void Thread_EventReceiver(void *argument) {
+    ret = osEventFlagsWait(ef_id, 0x00000001U, osFlagsWaitAny, 50U);
+    ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
+    }
+    
+    ret = osEventFlagsGet(ef_id);
+    ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
+
+    getName = osEventFlagsGetName(ef_id);
+    ICUNIT_ASSERT_EQUAL(getName, NULL, getName);
+
+    ret = osEventFlagsClear (ef_id, 0x00000001U);
+    ICUNIT_GOTO_EQUAL(ret, osOK, ret, EXIT1);
+
+    ret = osEventFlagsGet(ef_id);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+
+    status = osEventFlagsDelete(ef_id);
+    ICUNIT_ASSERT_EQUAL(status, osOK, status);
+
+    return LOS_OK;
+
+EXIT1:
+    status = osEventFlagsDelete(ef_id);
+    ICUNIT_ASSERT_EQUAL(status, osOK, status);
+
+    return LOS_OK;
+};
 void CmsisFuncTestSuite(void)
 {
     PRINTF("***********************BEGIN CMSIS TEST**********************\n");
@@ -514,5 +563,7 @@ void CmsisFuncTestSuite(void)
     ADD_TEST_CASE(TestCmsis007);
 
     ADD_TEST_CASE(TestCmsisTimer001);
+
+    ADD_TEST_CASE(TestCmsisEvent001);
 }
 
