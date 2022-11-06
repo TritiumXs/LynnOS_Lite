@@ -28,44 +28,68 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
 
+static pthread_mutex_t g_mutex1, g_mutex2;
+
+/* pthread_mutex_init 1-1.c
+ * Test that pthread_mutex_init()
+ *   initializes a mutex referenced by 'mutex' with attributes specified
+ *   by 'attr'.  If 'attr' is NULL, the default mutex attributes are used.
+ *   The effect shall be the same as passing the address of a default
+ *   mutex attributes.
+
+ * NOTE: There is no direct way to judge if two mutexes have the same effect,
+ *       thus this test does not cover the statement in the last sentence.
+ *
+ */
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
+    pthread_mutexattr_t mta;
     int rc;
 
-    rc = pthread_condattr_init(&condattr);
+    /* Initialize a mutex attributes object */
+    rc = pthread_mutexattr_init(&mta);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond1, &condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    /* Initialize mutex1 with the default mutex attributes */
+    rc = pthread_mutex_init(&g_mutex1, &mta);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT1);
 
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    /* Initialize mutex2 with NULL attributes */
+    rc = pthread_mutex_init(&g_mutex2, NULL);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT2);
 
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    rc = pthread_mutexattr_destroy(&mta);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT1);
+
+    rc = pthread_mutex_destroy(&g_mutex1);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT2);
+
+    rc = pthread_mutex_destroy(&g_mutex2);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT3);
 
     return LOS_OK;
-EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
+
+EXIT1:
+    pthread_mutexattr_destroy(&mta);
+
+EXIT2:
+    pthread_mutex_destroy(&g_mutex1);
+
+EXIT3:
+    pthread_mutex_destroy(&g_mutex2);
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux007
+ * @tc.desc: Test interface pthread_mutexattr_init
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux007(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux007", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

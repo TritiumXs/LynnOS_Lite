@@ -28,44 +28,41 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+/* pthread_mutexattr_init  3-1.c
+ * Test that pthread_mutexattr_init()
+ *   Upon successful completion, pthread_mutexattr_init() shall return a value of 0.
+
+ * Steps:
+ * 1.  Initialize a pthread_mutexattr_t object with pthread_mutexattr_init()
+ * 2.  ENOMEM is the only uwErr it returns, so if it doesn't return that uwErr,
+ *     the return number should be 0.
+ */
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
+    pthread_mutexattr_t *mta = NULL;
     int rc;
 
-    rc = pthread_condattr_init(&condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
-
-    rc = pthread_cond_init(&cond1, &condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
-
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    rc = pthread_mutexattr_init(mta);
+    ICUNIT_GOTO_EQUAL(rc, EINVAL, rc, EXIT);
 
     return LOS_OK;
+
 EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
+    pthread_mutexattr_destroy(mta);
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux002
+ * @tc.desc: Test interface pthread_mutexattr_init
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux002(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux002", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

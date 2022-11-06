@@ -28,44 +28,61 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
+    pthread_mutexattr_t mta;
+    pthread_mutex_t mutex1 = TEST_MUTEX_INIT;
+    pthread_mutex_t mutex2 = TEST_MUTEX_INIT;
     int rc;
 
-    rc = pthread_condattr_init(&condattr);
+    /* Initialize a mutex attributes object */
+    rc = pthread_mutexattr_init(&mta);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond1, &condattr);
+    /* Initialize mutex1 with the default mutex attributes */
+    rc = pthread_mutex_init(&mutex1, &mta);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT3);
+
+    /* Initialize mutex2 with NULL attributes */
+    rc = pthread_mutex_init(&mutex2, NULL);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT2);
+
+    /* Destroy the mutex attributes object */
+    rc = pthread_mutexattr_destroy(&mta);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT1);
+
+    /* Destroy mutex1 */
+    rc = pthread_mutex_destroy(&mutex1);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT1);
+
+    /* Destroy mutex2 */
+    rc = pthread_mutex_destroy(&mutex2);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
-
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
 
     return LOS_OK;
-EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
+
+EXIT1:
+    pthread_mutex_destroy(&mutex2);
+
+EXIT2:
+    pthread_mutex_destroy(&mutex1);
+
+EXIT3:
+    pthread_mutexattr_destroy(&mta);
+
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux044
+ * @tc.desc: Test interface pthread_mutexattr_destroy
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5YAEX
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux044(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux044", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

@@ -28,44 +28,57 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+/* pthread_mutexattr_destroy 2-1.c
+ * Test pthread_mutexattr_destroy()
+ * A destroyed 'attr' attributes object can be reinitialized using
+ * pthread_mutexattr_init(); the results of otherwise referencing the
+ * object after it has been destroyed are undefined.
+ *
+ * Steps:
+ * 1.  Initialize a pthread_mutexattr_t object using pthread_mutexattr_init()
+ * 2.  Destroy that initialized attribute using pthread_mutexattr_destroy()
+ * 3.  Initialize the pthread_mutexattr_t object again. This should not result
+ * in any uwErr.
+ *
+ */
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
+    pthread_mutexattr_t mta;
     int rc;
 
-    rc = pthread_condattr_init(&condattr);
+    /* Initialize a mutex attributes object */
+    rc = pthread_mutexattr_init(&mta);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond1, &condattr);
+    /* Destroy the mutex attributes object */
+    rc = pthread_mutexattr_destroy(&mta);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+
+    /* Initialize the mutex attributes object again.  This shouldn't result in an uwErr. */
+    rc = pthread_mutexattr_init(&mta);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
+    rc = pthread_mutexattr_destroy(&mta);
     ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
 
     return LOS_OK;
+
 EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
+    pthread_mutexattr_destroy(&mta);
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux004
+ * @tc.desc: Test interface pthread_mutexattr_destroy
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux004(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux004", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

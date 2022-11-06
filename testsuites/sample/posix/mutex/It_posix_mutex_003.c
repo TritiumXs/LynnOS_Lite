@@ -28,44 +28,44 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+/*    pthread_mutexattr_destroy 1-1.c
+ * Test that pthread_mutexattr_destroy()
+ * shall destroy a mutex attributes object.
+ *
+ * Steps:
+ * 1.  Initialize a pthread_mutexattr_t object using pthread_mutexattr_init()
+ * 2.  Destroy the attributes object using pthread_mutexattr_destroy()
+ *
+ */
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
+    pthread_mutexattr_t mta;
     int rc;
 
-    rc = pthread_condattr_init(&condattr);
+    rc = pthread_mutexattr_init(&mta);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond1, &condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
-
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
+    rc = pthread_mutexattr_destroy(&mta);
     ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
 
     return LOS_OK;
+
 EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
+    pthread_mutexattr_destroy(&mta);
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux003
+ * @tc.desc: Test interface pthread_mutexattr_destroy
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux003(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux003", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

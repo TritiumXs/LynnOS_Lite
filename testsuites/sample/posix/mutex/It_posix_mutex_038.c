@@ -28,44 +28,75 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+#define THREAD_NUM 6
+#define LOOPS 3
+
+static pthread_mutex_t g_mutex040 = PTHREAD_MUTEX_INITIALIZER;
+static g_value;
+
+static void *TaskF01(void *parm)
+{
+    int i, tmp;
+    int rc;
+
+    /* Loopd M times to acquire the mutex, increase the value,
+       and then release the mutex. */
+
+    for (i = 0; i < LOOPS; ++i) {
+        rc = pthread_mutex_lock(&g_mutex040);
+        if (rc != 0) {
+            return (void *)(LOS_NOK);
+        }
+
+        tmp = g_value + 1; 
+        usleep(1000); // 1000, delay the increasement operation.
+        g_value = tmp;
+
+        rc = pthread_mutex_unlock(&g_mutex040);
+        if (rc != 0) {
+            return (void *)(LOS_NOK);
+        }
+        sleep(1);
+    }
+
+    return (void *)(LOS_OK);
+}
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
-    int rc;
+    int i, rc;
+    pthread_t threads[THREAD_NUM];
 
-    rc = pthread_condattr_init(&condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    g_value = 0;
+    /* Create threads */
+    for (i = 0; i < THREAD_NUM; ++i) {
+        rc = pthread_create(&threads[i], NULL, TaskF01, NULL);
+        ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    }
 
-    rc = pthread_cond_init(&cond1, &condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    /* Wait to join all threads */
+    for (i = 0; i < THREAD_NUM; ++i) {
+        rc = pthread_join(threads[i], NULL);
+        ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    }
+    pthread_mutex_destroy(&g_mutex040);
 
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    /* Check if the final value is as expected */
+    ICUNIT_ASSERT_EQUAL(g_value, (THREAD_NUM) * LOOPS, LOS_NOK);
 
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    return LOS_OK;
-EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux038
+ * @tc.desc: Test interface pthread_mutex_lock
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5YAEX
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux038(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux038", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

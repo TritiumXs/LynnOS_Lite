@@ -28,44 +28,49 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+/* pthread_mutex_trylock 3-1.c
+ * Test that pthread_mutex_trylock()
+ * Upon successful completion, it shall return a 0
+ *
+ */
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
     int rc;
+    pthread_mutex_t mutex = TEST_MUTEX_INIT;
 
-    rc = pthread_condattr_init(&condattr);
+    /* Initialize a mutex object with the default mutex attributes */
+    rc = pthread_mutex_init(&mutex, NULL);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond1, &condattr);
+    /* Try to lock the mutex using pthread_mutex_trylock() */
+    rc = pthread_mutex_trylock(&mutex);
+    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+
+    rc = pthread_mutex_unlock(&mutex);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    rc = pthread_mutex_destroy(&mutex);
+    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
     return LOS_OK;
+
 EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
-    return LOS_OK;
+    (void)pthread_mutex_destroy(&mutex);
+
+    return LOS_NOK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux026
+ * @tc.desc: Test interface pthread_mutex_unlock
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux026(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux026", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

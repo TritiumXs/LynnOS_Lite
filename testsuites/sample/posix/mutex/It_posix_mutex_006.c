@@ -28,44 +28,39 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
 
+/* pthread_mutexattr_destroy 4-1.c
+ * Test pthread_mutexattr_destroy()
+ * If it fails, an uwErr number shall be returned to indicate the uwErr:
+ * [EINVAL]  The value specified by 'attr' is invalid
+ *
+ * Steps:
+ * Try to destroy a NULL mutex attributes object using pthread_mutexattr_destroy().
+ * If it returns EINVAL, the test passes.
+ *
+ */
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
+    pthread_mutexattr_t *mta = NULL;
     int rc;
 
-    rc = pthread_condattr_init(&condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    /* Try to destroy a NULL mutex attributes object using pthread_mutexattr_destroy()
+     * It should return EINVAL */
+    rc = pthread_mutexattr_destroy(mta);
+    ICUNIT_ASSERT_EQUAL(rc, EINVAL, rc);
 
-    rc = pthread_cond_init(&cond1, &condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
-
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    return LOS_OK;
-EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux006
+ * @tc.desc: Test interface pthread_mutexattr_destroy
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux006(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux006", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

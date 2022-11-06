@@ -28,44 +28,60 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+/* pthread_mutex_unlock 1-1.c
+ * Test that pthread_mutex_unlock()
+ *   shall release the mutex object 'mutex'.
+
+ * Steps:
+ *   -- initialize a mutex object
+ *   -- Get the mutex using pthread_mutex_lock()
+ *   -- Release the mutex using pthread_mutex_unlock()
+ *   -- Try to get the mutex using pthread_mutex_trylock()
+ *   -- Release the mutex using pthread_mutex_unlock()
+ *
+ */
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
     int rc;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-    rc = pthread_condattr_init(&condattr);
+    /* Get the mutex using pthread_mutex_lock() */
+    rc = pthread_mutex_lock(&mutex);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond1, &condattr);
+    /* Release the mutex using pthread_mutex_unlock() */
+    rc = pthread_mutex_unlock(&mutex);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    /* Get the mutex using pthread_mutex_trylock() */
+    rc = pthread_mutex_trylock(&mutex);
+    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
+    /* Release the mutex using pthread_mutex_unlock() */
+    rc = pthread_mutex_unlock(&mutex);
+    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+
+    rc = pthread_mutex_destroy(&mutex);
     ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
 
     return LOS_OK;
+
 EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
+    pthread_mutex_destroy(&mutex);
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux020
+ * @tc.desc: Test interface pthread_mutex_trylock
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux020(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux020", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

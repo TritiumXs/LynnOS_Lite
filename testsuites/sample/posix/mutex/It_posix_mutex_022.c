@@ -28,44 +28,72 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+static pthread_mutex_t g_mutex042;
+
+static void *TaskF01(void *arg)
+{
+    int ret;
+    ret = pthread_mutex_unlock(&g_mutex042);
+    ICUNIT_TRACK_EQUAL(ret, EINVAL, ret);
+
+    return NULL;
+}
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
-    int rc;
+    int ret;
+    pthread_mutexattr_t ma;
+    pthread_t th;
 
-    rc = pthread_condattr_init(&condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    ret = pthread_mutexattr_init(&ma);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    rc = pthread_cond_init(&cond1, &condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    ret = pthread_mutex_init(&g_mutex042, &ma);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    ret = pthread_mutex_lock(&g_mutex042);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    /* destroy the mutex attribute object */
+    ret = pthread_mutexattr_destroy(&ma);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
+    ret = pthread_create(&th, NULL, TaskF01, NULL);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+
+    /* Let the thread terminate */
+    ret = pthread_join(th, NULL);
+    ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT1);
+
+    /* We can clean everything and exit */
+    ret = pthread_mutex_unlock(&g_mutex042);
+    ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT2);
+
+    ret = pthread_mutex_destroy(&g_mutex042);
+    ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT3);
+    
     return LOS_OK;
-EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
-    return LOS_OK;
+
+EXIT1:
+    pthread_mutex_unlock(&g_mutex042);
+
+EXIT2:
+    pthread_mutex_destroy(&g_mutex042);
+
+EXIT3:
+    return LOS_NOK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux022
+ * @tc.desc: Test interface pthread_mutex_unlock
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux022(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux022", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

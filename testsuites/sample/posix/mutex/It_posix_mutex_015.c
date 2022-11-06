@@ -28,44 +28,52 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+/* pthread_mutex_destroy 4-2.c
+ * Test that when a pthread_mutex_destroy is called on a
+ *  locked mutex, it fails and returns EBUSY
+
+ * Steps:
+ * 1. Create a mutex
+ * 2. Lock the mutex
+ * 3. Try to destroy the mutex
+ * 4. Check that this may fail with EBUSY
+ */
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
     int rc;
 
-    rc = pthread_condattr_init(&condattr);
+    /* Lock the mutex */
+    rc = pthread_mutex_lock(&mutex);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond1, &condattr);
+    /* Try to destroy the locked mutex */
+    rc = pthread_mutex_destroy(&mutex);
+    ICUNIT_GOTO_EQUAL(rc, EBUSY, rc, EXIT);
+
+    rc = pthread_mutex_unlock(&mutex);
     ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    rc = pthread_mutex_destroy(&mutex);
+    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
 
     return LOS_OK;
+
 EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
-    return LOS_OK;
+    return LOS_NOK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux015
+ * @tc.desc: Test interface pthread_mutex_lock
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5WZI6
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux015(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux015", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }

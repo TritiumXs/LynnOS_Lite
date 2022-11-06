@@ -28,44 +28,76 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "It_posix_pthread.h"
+#include "It_posix_mutex.h"
+
+static pthread_mutex_t g_mutex046;
+static UINT32 g_nID;
+
+static void *TaskF01(void *arg)
+{
+    int ret;
+    ret = pthread_mutex_trylock(&g_mutex046);
+    ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
+
+    g_nID = OsCurrTaskGet()->taskID;
+    LOS_TaskSuspend(OsCurrTaskGet()->taskID);
+
+    ret = pthread_mutex_unlock(&g_mutex046);
+    ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
+
+EXIT:
+    return NULL;
+}
 
 static UINT32 Testcase(VOID)
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t cond1;
-    pthread_cond_t cond2;
-    int rc;
+    int ret;
+    pthread_t newTh;
+    pthread_attr_t attr;
 
-    rc = pthread_condattr_init(&condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    ret = pthread_mutex_init(&g_mutex046, NULL);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    rc = pthread_cond_init(&cond1, &condattr);
-    ICUNIT_ASSERT_EQUAL(rc, 0, rc);
+    ret = pthread_mutex_trylock(&g_mutex046);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    rc = pthread_cond_init(&cond2, NULL);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    ret = pthread_mutex_trylock(&g_mutex046);
+    ICUNIT_ASSERT_EQUAL(ret, EBUSY, ret);
 
-    rc = pthread_cond_destroy(&cond1);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
-    rc = pthread_cond_destroy(&cond2);
-    ICUNIT_GOTO_EQUAL(rc, 0, rc, EXIT);
+    ret = pthread_mutex_unlock(&g_mutex046);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    return LOS_OK;
-EXIT:
-    (void)pthread_cond_destroy(&cond1);
-    (void)pthread_cond_destroy(&cond2);
+    ret = PosixPthreadInit(&attr, MUTEX_TEST_HIGH_PRIO);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+
+    ret = pthread_create(&newTh, &attr, TaskF01, NULL);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+
+    ret = pthread_mutex_unlock(&g_mutex046);
+    ICUNIT_ASSERT_EQUAL(ret, EINVAL, ret);
+
+    LOS_TaskResume(g_nID);
+
+    ret = pthread_mutex_unlock(&g_mutex046);
+    ICUNIT_ASSERT_NOT_EQUAL(ret, 0, ret);
+
+    ret = pthread_mutex_destroy(&g_mutex046);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+
+    ret = pthread_join(newTh, NULL);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+
     return LOS_OK;
 }
 
 /**
- * @tc.name: ItPosixPthread006
- * @tc.desc: Test interface pthread_cond_init
+ * @tc.name: ItPosixMux045
+ * @tc.desc: Test interface pthread_mutex_trylock
  * @tc.type: FUNC
- * @tc.require: issueI5TIRQ
+ * @tc.require: issueI5YAEX
  */
 
-VOID ItPosixPthread006(VOID)
+VOID ItPosixMux045(void)
 {
-    TEST_ADD_CASE("ItPosixPthread006", Testcase, TEST_POSIX, TEST_PTHREAD, TEST_LEVEL2, TEST_FUNCTION);
+    TEST_ADD_CASE("ItPosixMux045", Testcase, TEST_POSIX, TEST_MUX, TEST_LEVEL2, TEST_FUNCTION);
 }
