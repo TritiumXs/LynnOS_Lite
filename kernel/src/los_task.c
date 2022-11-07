@@ -302,6 +302,20 @@ LITE_OS_SEC_TEXT_MINOR UINT32 OsGetAllTskCpupInfo(CPUP_INFO_S **cpuLessOneSec,
 
     return LOS_OK;
 }
+
+LITE_OS_SEC_TEXT_MINOR VOID OsGetBaseCoreTskCpupInfo(LosTaskCB   taskCB,
+                                                     CPUP_INFO_S **cpuLessOneSec,
+                                                     CPUP_INFO_S **cpuTenSec,
+                                                     CPUP_INFO_S **cpuOneSec)
+{
+    PRINTK("%6u.%-2u%7u.%-2u%6u.%-2u ",
+        cpuLessOneSec[taskCB->taskID].uwUsage / LOS_CPUP_PRECISION_MULT,
+        cpuLessOneSec[taskCB->taskID].uwUsage % LOS_CPUP_PRECISION_MULT,
+        cpuTenSec[taskCB->taskID].uwUsage / LOS_CPUP_PRECISION_MULT,
+        cpuTenSec[taskCB->taskID].uwUsage % LOS_CPUP_PRECISION_MULT,
+        cpuOneSec[taskCB->taskID].uwUsage / LOS_CPUP_PRECISION_MULT,
+        cpuOneSec[taskCB->taskID].uwUsage % LOS_CPUP_PRECISION_MULT);
+}
 #endif
 
 LITE_OS_SEC_TEXT_MINOR VOID OsPrintAllTskInfoHeader(VOID)
@@ -342,6 +356,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 OsGetAllTskInfo(VOID)
     LosTaskCB    *taskCB = (LosTaskCB *)NULL;
     UINT32       loopNum;
     UINT32       semID;
+    LOS_TaskLock();
 #if (LOSCFG_BASE_CORE_CPUP == 1)
     CPUP_INFO_S *cpuLessOneSec = (CPUP_INFO_S *)NULL;
     CPUP_INFO_S *cpuTenSec = (CPUP_INFO_S *)NULL;
@@ -355,6 +370,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 OsGetAllTskInfo(VOID)
 
 #if (LOSCFG_BASE_CORE_CPUP == 1)
     if (OsGetAllTskCpupInfo(&cpuLessOneSec, &cpuTenSec, &cpuOneSec) != LOS_OK) {
+        LOS_TaskUnlock();
         return OS_ERROR;
     }
 #endif
@@ -377,13 +393,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 OsGetAllTskInfo(VOID)
 #endif
 
 #if (LOSCFG_BASE_CORE_CPUP == 1)
-        PRINTK("%6u.%-2u%7u.%-2u%6u.%-2u ",
-               cpuLessOneSec[taskCB->taskID].uwUsage / LOS_CPUP_PRECISION_MULT,
-               cpuLessOneSec[taskCB->taskID].uwUsage % LOS_CPUP_PRECISION_MULT,
-               cpuTenSec[taskCB->taskID].uwUsage / LOS_CPUP_PRECISION_MULT,
-               cpuTenSec[taskCB->taskID].uwUsage % LOS_CPUP_PRECISION_MULT,
-               cpuOneSec[taskCB->taskID].uwUsage / LOS_CPUP_PRECISION_MULT,
-               cpuOneSec[taskCB->taskID].uwUsage % LOS_CPUP_PRECISION_MULT);
+        OsGetBaseCoreTskCpupInfo(&taskCB, &cpuLessOneSec, &cpuTenSec, &cpuOneSec);
 #endif /* LOSCFG_BASE_CORE_CPUP */
         PRINTK("%#10x %-32s\n", (UINT32)(UINTPTR)taskCB->taskEntry, taskCB->taskName);
     }
@@ -393,6 +403,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 OsGetAllTskInfo(VOID)
     (VOID)LOS_MemFree((VOID *)OS_SYS_MEM_ADDR, cpuTenSec);
     (VOID)LOS_MemFree((VOID *)OS_SYS_MEM_ADDR, cpuOneSec);
 #endif
+    LOS_TaskUnlock();
 #endif
     return LOS_OK;
 }
