@@ -46,5 +46,18 @@
 
 #define INVALID_FD (-1)
 #define INVALID_DEVICE_ADDR ((uint32_t)-1)
+#ifndef VFS_OK
+#define VFS_OK  0
+#endif
+#ifndef VFS_ERROR
+#define VFS_ERROR (-1)
+#endif
+struct FileOpInfo{
+    const struct FileOps *fsVops;
+    int useFlag;
+    char *dirName;
+    lfs_t lfsInfo;
+};
+int SetDefaultMountPath(int pathNameIndex, const char* target);
 void LfsInit(void);
 #endif /* _LFS_ADAPTER_H_ */

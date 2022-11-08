@@ -44,6 +44,9 @@ static pthread_mutex_t g_fsLocalMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static struct PartitionCfg g_partitionCfg;
 static struct DeviceDesc *g_lfsDevice = NULL;
+static pthread_mutex_t g_FslocalMutex = PTHREAD_MUTEX_INITIALIZER;
+struct FileOpInfo g_fsOp[LOSCFG_LFS_MAX_MOUNT_SIZE] = {0};
+static const char *g_littlefsMntName[LOSCFG_LFS_MAX_MOUNT_SIZE] = {"/a"};
 
 static uint32_t LfsGetStartAddr(int partition)
 {
@@ -62,6 +65,102 @@ static uint32_t LfsGetStartAddr(int partition)
     }
 
     return (uint32_t)g_lfsDevice->dAddrArray[partition];
+}
+
+int GetFirstLevelPathLen(const char *pathName)
+{
+    int len = 1;
+    for (int i = 1; i < strlen(pathName) + 1; i++) {
+        if (pathName[i] == '/') {
+            break;
+        }
+        len++;
+    }
+
+    return len;
+}
+
+BOOL CheckPathIsMounted(const char *pathName, struct FileOpInfo **fileOpInfo)
+{
+    char tmpName[LITTLEFS_MAX_LFN_LEN] = {0};
+    int len = GetFirstLevelPathLen(pathName);
+
+    pthread_mutex_lock(&g_FslocalMutex);
+    for (int i = 0; i < LOSCFG_LFS_MAX_MOUNT_SIZE; i++) {
+        if (g_fsOp[i].useFlag == 1) {
+            (void)strncpy_s(tmpName, LITTLEFS_MAX_LFN_LEN, pathName, len);
+            if (strcmp(tmpName, g_fsOp[i].dirName) == 0) {
+                *fileOpInfo = &(g_fsOp[i]);
+                pthread_mutex_unlock(&g_FslocalMutex);
+                return TRUE;
+            }
+        }
+    }
+    pthread_mutex_unlock(&g_FslocalMutex);
+    return FALSE;
+}
+
+struct FileOpInfo *AllocMountRes(const char* target, const struct FileOps *fileOps)
+{
+    pthread_mutex_lock(&g_FslocalMutex);
+    for (int i = 0; i < LOSCFG_LFS_MAX_MOUNT_SIZE; i++) {
+        if (g_fsOp[i].useFlag == 0 && strcmp(target, g_littlefsMntName[i]) == 0) {
+            g_fsOp[i].useFlag = 1;
+            g_fsOp[i].fsVops = fileOps;
+            g_fsOp[i].dirName = strdup(target);
+            pthread_mutex_unlock(&g_FslocalMutex);
+            return &(g_fsOp[i]);
+        }
+    }
+
+    pthread_mutex_unlock(&g_FslocalMutex);
+    return NULL;
+}
+
+int SetDefaultMountPath(int pathNameIndex, const char* target)
+{
+    if (pathNameIndex >= LOSCFG_LFS_MAX_MOUNT_SIZE) {
+        return VFS_ERROR;
+    }
+
+    pthread_mutex_lock(&g_FslocalMutex);
+    g_littlefsMntName[pathNameIndex] = strdup(target);
+    pthread_mutex_unlock(&g_FslocalMutex);
+    return VFS_OK;
+}
+
+struct FileOpInfo *GetMountRes(const char *target, int *mountIndex)
+{
+    pthread_mutex_lock(&g_FslocalMutex);
+    for (int i = 0; i < LOSCFG_LFS_MAX_MOUNT_SIZE; i++) {
+        if (g_fsOp[i].useFlag == 1) {
+            if (g_fsOp[i].dirName && strcmp(target, g_fsOp[i].dirName) == 0) {
+                *mountIndex = i;
+                pthread_mutex_unlock(&g_FslocalMutex);
+                return &(g_fsOp[i]);
+            }
+        }
+    }
+
+    pthread_mutex_unlock(&g_FslocalMutex);
+    return NULL;
+}
+
+int FreeMountResByIndex(int mountIndex)
+{
+    if (mountIndex < 0 || mountIndex >= LOSCFG_LFS_MAX_MOUNT_SIZE) {
+        return VFS_ERROR;
+    }
+
+    pthread_mutex_lock(&g_FslocalMutex);
+    if (g_fsOp[mountIndex].useFlag == 1 && g_fsOp[mountIndex].dirName != NULL) {
+        g_fsOp[mountIndex].useFlag = 0;
+        free(g_fsOp[mountIndex].dirName);
+        g_fsOp[mountIndex].dirName = NULL;
+    }
+    pthread_mutex_unlock(&g_FslocalMutex);
+
+    return VFS_OK;
 }
 
 WEAK int littlefs_block_read(const struct lfs_config *c, lfs_block_t block,
@@ -170,72 +269,6 @@ void LfsConfigAdapter(struct PartitionCfg *pCfg, struct lfs_config *lfsCfg)
     g_partitionCfg.readFunc = pCfg->readFunc;
     g_partitionCfg.writeFunc = pCfg->writeFunc;
     g_partitionCfg.eraseFunc = pCfg->eraseFunc;
-}
-
-int LfsMount(struct MountPoint *mp, unsigned long mountflags, const void *data)
-{
-    int ret;
-    lfs_t *mountHdl = NULL;
-    struct lfs_config *cfg = NULL;
-
-    if ((mp == NULL) || (mp->mPath == NULL) || (data == NULL)) {
-        errno = EFAULT;
-        ret = (int)LOS_NOK;
-        goto errout;
-    }
-
-    mountHdl = (lfs_t *)malloc(sizeof(lfs_t) + sizeof(struct lfs_config));
-    if (mountHdl == NULL) {
-        errno = ENODEV;
-        ret = (int)LOS_NOK;
-        goto errout;
-    }
-    (void)memset_s(mountHdl, sizeof(lfs_t) + sizeof(struct lfs_config), 0, sizeof(lfs_t) + sizeof(struct lfs_config));
-    mp->mData = (void *)mountHdl;
-    cfg = (void *)((UINTPTR)mountHdl + sizeof(lfs_t));
-
-    LfsConfigAdapter((struct PartitionCfg *)data, cfg);
-
-    ret = lfs_mount((lfs_t *)mp->mData, cfg);
-    if (ret != 0) {
-        ret = lfs_format((lfs_t *)mp->mData, cfg);
-        if (ret == 0) {
-            ret = lfs_mount((lfs_t *)mp->mData, cfg);
-        }
-    }
-    if (ret != 0) {
-        free(mountHdl);
-        errno = LittlefsErrno(ret);
-        ret = (int)LOS_NOK;
-    }
-
-errout:
-    return ret;
-}
-
-int LfsUmount(struct MountPoint *mp)
-{
-    int ret;
-
-    if (mp == NULL) {
-        errno = EFAULT;
-        return (int)LOS_NOK;
-    }
-
-    if (mp->mData == NULL) {
-        errno = ENOENT;
-        return (int)LOS_NOK;
-    }
-
-    ret = lfs_unmount((lfs_t *)mp->mData);
-    if (ret != 0) {
-        errno = LittlefsErrno(ret);
-        ret = (int)LOS_NOK;
-    }
-
-    free(mp->mData);
-    mp->mData = NULL;
-    return ret;
 }
 
 int LfsUnlink(struct MountPoint *mp, const char *fileName)
@@ -670,13 +703,6 @@ int LfsFormat(const char *partName, void *privData)
     return ret;
 }
 
-static struct MountOps g_lfsMnt = {
-    .mount = LfsMount,
-    .umount = LfsUmount,
-    .umount2 = NULL,
-    .statfs = NULL,
-};
-
 static struct FileOps g_lfsFops = {
     .open = LfsOpen,
     .close = LfsClose,
@@ -694,6 +720,95 @@ static struct FileOps g_lfsFops = {
     .readdir = LfsReaddir,
     .closedir = LfsClosedir,
     .mkdir = LfsMkdir,
+};
+
+int LfsMount(struct MountPoint *mp, unsigned long mountflags, const void *data)
+{
+    int ret;
+    lfs_t *mountHdl = NULL;
+    struct lfs_config *cfg = NULL;
+    struct FileOpInfo *fileOpInfo = NULL;
+
+    if ((mp == NULL) || (mp->mPath == NULL) || (data == NULL)) {
+        errno = EFAULT;
+        ret = (int)LOS_NOK;
+        goto errout;
+    }
+
+    mountHdl = (lfs_t *)malloc(sizeof(lfs_t) + sizeof(struct lfs_config));
+    if (mountHdl == NULL) {
+        errno = ENODEV;
+        ret = (int)LOS_NOK;
+        goto errout;
+    }
+    (void)memset_s(mountHdl, sizeof(lfs_t) + sizeof(struct lfs_config), 0, sizeof(lfs_t) + sizeof(struct lfs_config));
+    mp->mData = (void *)mountHdl;
+    cfg = (void *)((UINTPTR)mountHdl + sizeof(lfs_t));
+
+    LfsConfigAdapter((struct PartitionCfg *)data, cfg);
+    // select free mount resource
+    fileOpInfo = AllocMountRes(mp->mPath, &g_lfsFops);
+    if (fileOpInfo == NULL) {
+        errno = ENODEV;
+        ret = VFS_ERROR;
+        goto errout;
+    }
+
+    ret = lfs_mount((lfs_t *)mp->mData, cfg);
+    if (ret != 0) {
+        ret = lfs_format((lfs_t *)mp->mData, cfg);
+        if (ret == 0) {
+            ret = lfs_mount((lfs_t *)mp->mData, cfg);
+        }
+    }
+    if (ret != 0) {
+        free(mountHdl);
+        errno = LittlefsErrno(ret);
+        ret = (int)LOS_NOK;
+    }
+
+errout:
+    return ret;
+}
+
+int LfsUmount(struct MountPoint *mp)
+{
+    int ret;
+    int mountIndex = -1;
+    struct FileOpInfo *fileOpInfo = NULL;
+
+    if (mp == NULL) {
+        errno = EFAULT;
+        return (int)LOS_NOK;
+    }
+
+    if (mp->mData == NULL) {
+        errno = ENOENT;
+        return (int)LOS_NOK;
+    }
+    fileOpInfo = GetMountRes(mp->mPath, &mountIndex);
+    if (fileOpInfo == NULL) {
+        errno = ENOENT;
+        return VFS_ERROR;
+    }
+
+    ret = lfs_unmount((lfs_t *)mp->mData);
+    if (ret != 0) {
+        errno = LittlefsErrno(ret);
+        ret = (int)LOS_NOK;
+    }
+    (void)FreeMountResByIndex(mountIndex);
+
+    free(mp->mData);
+    mp->mData = NULL;
+    return ret;
+}
+
+static struct MountOps g_lfsMnt = {
+    .mount = LfsMount,
+    .umount = LfsUmount,
+    .umount2 = NULL,
+    .statfs = NULL,
 };
 
 static struct FsManagement g_lfsMgt = {
