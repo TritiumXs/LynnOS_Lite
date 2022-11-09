@@ -44,8 +44,7 @@
  * @param        : module name is utilsFile
  * @param        : test suit name is PosixStringFuncTestSuite
  */
-LITE_TEST_SUIT(Posix, Posixstring, PosixStringFuncTestSuite);
-
+LITE_TEST_SUIT(Posix, Posixstring, PosixStringFuncTestSuite); 
 
 /* *
  * @tc.setup     : setup for all testcases
