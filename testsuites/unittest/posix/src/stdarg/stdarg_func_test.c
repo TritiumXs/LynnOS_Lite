@@ -39,7 +39,7 @@
 
 #define RET_OK 1
 #define MAX_ARG_NUM 2
-#define MAX_STRING_LEN 6
+#define MAX_STRING_LEN 3
 /* *
  * @tc.desc      : register a test suite, this suite is used to test basic flow and interface dependency
  * @param        : subsystem name is utils
