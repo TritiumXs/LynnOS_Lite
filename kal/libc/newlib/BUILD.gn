@@ -35,6 +35,7 @@ kernel_module(module_name) {
   sources = [
     "porting/src/fs.c",
     "porting/src/malloc.c",
+    "porting/src/network/h_errno.c",
     "porting/src/network/htonl.c",
     "porting/src/network/htons.c",
     "porting/src/network/ntohl.c",
