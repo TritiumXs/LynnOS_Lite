@@ -45,7 +45,6 @@
  */
 LITE_TEST_SUIT(Posix, PosixMemory, PosixMemFuncTestSuite);
 
-
 /* *
  * @tc.setup     : setup for all testcases
  * @return       : setup result, TRUE is success, FALSE is fail
