@@ -148,6 +148,7 @@ int ftruncate(int fd, off_t length)
     return LOS_Ftruncate(fd, length);
 }
 
+#ifndef LWIP_SOCKET_FCNTL_FUNC
 int fcntl(int fd, int cmd, ...)
 {
     int ret;
@@ -158,6 +159,7 @@ int fcntl(int fd, int cmd, ...)
     va_end(vaList);
     return ret;
 }
+#endif
 
 int ioctl(int fd, int req, ...)
 {
@@ -259,10 +261,12 @@ int remove(const char *filename)
     return -1;
 }
 
+#ifndef LWIP_SOCKET_FCNTL_FUNC
 int fcntl(int fd, int cmd, ...)
 {
     return -1;
 }
+#endif
 
 int ioctl(int fd, int req, ...)
 {
