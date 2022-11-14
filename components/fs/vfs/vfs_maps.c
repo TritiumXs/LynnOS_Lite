@@ -86,3 +86,18 @@ int OsFsRegister(const char *fsType, struct MountOps *fsMops,
     VfsUnlock();
     return LOS_OK;
 }
+
+#if (LOSCFG_FS_VFS == 1)
+int LOS_FsRegister(const char *fsType, struct MountOps *fsMops,
+                   struct FileOps *fsFops, struct FsManagement *fsMgt)
+{
+    if (VfsFsMapGet(fsType) != NULL) {
+        PRINT_ERR("The type %s has been registered\n", fsType);
+        return (int)LOS_NOK;
+    }
+
+    return OsFsRegister(fsType, fsMops, fsFops, fsMgt);
+
+    return LOS_OK;
+}
+#endif

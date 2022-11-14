@@ -33,3 +33,11 @@ config FS_VFS
 
     help
       Answer Y to enable LiteOS support VFS.
+
+if FS_VFS
+config OTHER_FS_MAX_OPEN_FILES
+    int "Maximum number of open files"
+    default 0
+    help
+        This is a global maximum number of open files.
+endif # FS_VFS
