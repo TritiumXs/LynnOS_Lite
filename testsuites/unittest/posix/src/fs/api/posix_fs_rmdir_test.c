@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2022-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -28,39 +29,45 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "posix_test.h"
+#include "posix_fs_test.h"
 
-void ItSuitePosix(void)
+/* *
+ * @tc.number   SUB_KERNEL_FS_RMDIR_OK
+ * @tc.name     rmdir
+ * @tc.desc     [C- SOFTWARE -0200]
+ */
+LITE_TEST_CASE(PosixFsFuncTestSuite, testFsRmdirOK, Function | MediumTest | Level1)
 {
-    PRINTF("***********************BEGIN POSIX TEST**********************\n");
-//     PthreadFuncTestSuite();
-//     ItSuitePosixPthread();
-//     ItSuitePosixMutex();
-//     ItSuitePosixMqueue();
-//     PosixCtypeFuncTest();
-//     PosixIsdigitFuncTest();
-//     PosixIslowerFuncTest();
-//     PosixIsxdigitFuncTest();
-//     PosixTolowerFuncTest();
-//     PosixToupperFuncTest();
-//     PosixStrerrorTest();
-//     PosixMathFuncTest();
-//     PosixMqueueFuncTest();
-//     PosixStdargFuncTest();
-//     PosixStdlibAtoiFuncTest();
-//     PosixStdlibAtolFuncTest();
-//     PosixStdlibAtollFuncTest();
-//     PosixStdlibStrtolFuncTest();
-//     PosixStdlibStrtoulFuncTest();
-//     PosixStdlibStrtoullFuncTest();
-//     PosixStringMemTest03();
-//     PosixStringStrchrTest();
-//     PosixStringFuncTest02();
-//     PosixStringStrcasecmpFuncTest();
-//     PosixStringFuncTest03();
-// #if (LOS_KERNEL_TEST_FULL == 1)
-//     PosixSemaphoreFuncTest();
-//     PosixTimeFuncTest();
-// #endif
-    PosixFsFuncTest();
+    int32_t ret = 0;
+    char pathH[50] = { DIRH };
+
+    ret = mkdir(pathH, TEST_MODE_NORMAL);
+    ICUNIT_ASSERT_NOT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+    ret = rmdir(pathH);
+    ICUNIT_ASSERT_NOT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+    return POSIX_FS_NO_ERROR;
+}
+
+/* *
+ * @tc.number   SUB_KERNEL_FS_RMDIR_EINVAL
+ * @tc.name     rmdir
+ * @tc.desc     [C- SOFTWARE -0200]
+ */
+LITE_TEST_CASE(PosixFsFuncTestSuite, testFsRmdirEINVAL, Function | MediumTest | Level1)
+{
+    int32_t ret = 0;
+
+    ret = rmdir(NULL);
+    ICUNIT_ASSERT_EQUAL(errno, EINVAL, POSIX_FS_IS_ERROR);
+    ICUNIT_ASSERT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+    return POSIX_FS_NO_ERROR;
+}
+
+void posixFsRmdirTest(void)
+{
+    RUN_ONE_TESTCASE(testFsRmdirOK);
+    RUN_ONE_TESTCASE(testFsRmdirEINVAL);
 }

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2022-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -28,39 +29,56 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "posix_test.h"
+#include "posix_fs_test.h"
 
-void ItSuitePosix(void)
+/* *
+ * @tc.number   SUB_KERNEL_FS_CLOSEDIR_OK
+ * @tc.name     closedir
+ * @tc.desc     [C- SOFTWARE -0200]
+ */
+LITE_TEST_CASE(PosixFsFuncTestSuite, testFsClosedirOK, Function | MediumTest | Level1)
 {
-    PRINTF("***********************BEGIN POSIX TEST**********************\n");
-//     PthreadFuncTestSuite();
-//     ItSuitePosixPthread();
-//     ItSuitePosixMutex();
-//     ItSuitePosixMqueue();
-//     PosixCtypeFuncTest();
-//     PosixIsdigitFuncTest();
-//     PosixIslowerFuncTest();
-//     PosixIsxdigitFuncTest();
-//     PosixTolowerFuncTest();
-//     PosixToupperFuncTest();
-//     PosixStrerrorTest();
-//     PosixMathFuncTest();
-//     PosixMqueueFuncTest();
-//     PosixStdargFuncTest();
-//     PosixStdlibAtoiFuncTest();
-//     PosixStdlibAtolFuncTest();
-//     PosixStdlibAtollFuncTest();
-//     PosixStdlibStrtolFuncTest();
-//     PosixStdlibStrtoulFuncTest();
-//     PosixStdlibStrtoullFuncTest();
-//     PosixStringMemTest03();
-//     PosixStringStrchrTest();
-//     PosixStringFuncTest02();
-//     PosixStringStrcasecmpFuncTest();
-//     PosixStringFuncTest03();
-// #if (LOS_KERNEL_TEST_FULL == 1)
-//     PosixSemaphoreFuncTest();
-//     PosixTimeFuncTest();
-// #endif
-    PosixFsFuncTest();
+    int32_t ret = 0;
+    DIR *dir = NULL;
+
+    dir = opendir(TEST_ROOT);
+    ICUNIT_ASSERT_NOT_EQUAL(dir, NULL, dir);
+
+    ret = closedir(dir);
+    ICUNIT_ASSERT_NOT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+    return POSIX_FS_NO_ERROR;
+}
+
+/* *
+ * @tc.number   SUB_KERNEL_FS_CLOSEDIR_EBADF
+ * @tc.name     closedir
+ * @tc.desc     [C- SOFTWARE -0200]
+ */
+LITE_TEST_CASE(PosixFsFuncTestSuite, testFsClosedirEBADF, Function | MediumTest | Level1)
+{
+    int32_t ret = 0;
+    DIR *dir = NULL;
+
+    dir = opendir(TEST_ROOT);
+    ICUNIT_ASSERT_NOT_EQUAL(dir, NULL, dir);
+
+    DIR *dirBak = dir;
+    dir = NULL;
+    ret = closedir(dir);
+    dir = dirBak;
+    ICUNIT_ASSERT_EQUAL(errno, EBADF, POSIX_FS_IS_ERROR);
+    ICUNIT_GOTO_EQUAL(ret, POSIX_FS_IS_ERROR, ret, EXIT);
+
+    ret = closedir(dir);
+    ICUNIT_ASSERT_NOT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+EXIT:
+    return POSIX_FS_NO_ERROR;
+}
+
+void posixFsClosedirTest(void)
+{
+    RUN_ONE_TESTCASE(testFsClosedirOK);
+    RUN_ONE_TESTCASE(testFsClosedirEBADF);
 }
