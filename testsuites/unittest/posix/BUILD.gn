@@ -39,7 +39,6 @@ static_library("posix_test") {
     "src/ctype/tolower_test.c",
     "src/ctype/toupper_test.c",
     "src/errno/strerror_test.c",
-    "src/fs/posix_fs_func_test.c",
     "src/math/math_func_test.c",
     "src/mqueue/mqueue_func_test.c",
     "src/posix_test.c",
@@ -60,6 +59,12 @@ static_library("posix_test") {
     "src/string/strstr_test.c",
     "src/time/time_func_test_01.c",
   ]
+
+  if (defined(LOSCFG_SUPPORT_FATFS) || defined(LOSCFG_SUPPORT_LITTLEFS)) {
+    deps = [
+      "src/fs",
+    ]
+  }
 
   include_dirs = [
     "//test/xts/tools/hctest/include",

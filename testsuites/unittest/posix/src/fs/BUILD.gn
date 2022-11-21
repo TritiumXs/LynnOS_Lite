@@ -1,5 +1,5 @@
 # Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
-# Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
+# Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -27,59 +27,36 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import("//kernel/liteos_m/liteos.gni")
-
-config("include") {
-  defines = []
-  include_dirs = [ "include" ]
-
-  if (defined(LOSCFG_KERNEL_TEST_FULL)) {
-    defines += [ "LOS_KERNEL_TEST_FULL=1" ]
-  }
-}
-
-module_switch = defined(LOSCFG_TEST)
-kernel_module("test_init") {
+static_library("fs") {
   sources = [
-    "src/iCunit.c",
-    "src/osTest.c",
+    "posix_fs_func_test.c",
+    "api/posix_fs_open_test.c",           # open
+    "api/posix_fs_close_test.c",          # close
+    "api/posix_fs_opendir_test.c",        # opendir
+    "api/posix_fs_closedir_test.c",       # closedir
+    "api/posix_fs_read_test.c",           # read
+    "api/posix_fs_write_test.c",          # write
+    "api/posix_fs_readdir_test.c",        # readdir
+    "api/posix_fs_mkdir_test.c",          # mkdir
+    "api/posix_fs_rmdir_test.c",          # rmdir
+    "api/posix_fs_lseek_test.c",          # lseek
+    "api/posix_fs_unlink_test.c",         # unlink
+    "api/posix_fs_stat_test.c",           # stat
+    "api/posix_fs_fstat_test.c",          # fstat
+    "api/posix_fs_fsync_test.c",          # fsync
+    "api/posix_fs_rename_test.c",         # rename
+    "api/posix_fs_statfs_test.c",         # statfs
+    "api/posix_fs_ftruncate_test.c",      # ftruncate
+    "api/posix_fs_pread_test.c",          # pread
+    "api/posix_fs_pwrite_test.c",         # pwrite
+    "api/posix_fs_access_test.c",         # access
+    "pressure/posix_fs_stress_test.c",    # stress
+    "full/posix_fs_full_test.c"           # full
   ]
 
-  include_dirs = [ "unittest/posix/src" ]
-
-  configs += [ ":include" ]
-}
-
-group("testsuites") {
-  deps = [
-    ":test_init",
-    # "sample/cmsis:test_cmsis",
-    # "sample/kernel/atomic:test_atomic",
-    # "sample/kernel/event:test_event",
-    # "sample/kernel/hwi:test_hwi",
-    # "sample/kernel/mem:test_mem",
-    # "sample/kernel/mux:test_mux",
-    # "sample/kernel/power:test_pm",
-    # "sample/kernel/queue:test_queue",
-    # "sample/kernel/sem:test_sem",
-    # "sample/kernel/swtmr:test_swtmr",
-    # "sample/kernel/task:test_task",
-    # "sample/posix:test_posix",
-    "unittest/posix:posix_test",
+  include_dirs = [
+    ".",
+    "//kernel/liteos_m/testsuites/unittest/posix/src",
+    "//kernel/liteos_m/testsuites/include",
   ]
-  if (defined(LOSCFG_DYNLINK)) {
-    deps += [ "sample/kernel/dynlink:test_dynlink" ]
-  }
-  if (defined(LOSCFG_KERNEL_LMS)) {
-    deps += [ "sample/kernel/lms:test_lms" ]
-  }
-  if (defined(LOSCFG_KERNEL_LMK)) {
-    deps += [ "sample/kernel/lmk:test_lmk" ]
-  }
-  if (defined(LOSCFG_KERNEL_SIGNAL)) {
-    deps += [ "sample/kernel/signal:test_signal" ]
-  }
-  if (!module_switch) {
-    deps = []
-  }
 }

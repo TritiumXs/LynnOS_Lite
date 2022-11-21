@@ -236,14 +236,14 @@ VOID TestTaskEntry()
     PRINTF("\t\n --- Test Start --- \n\n");
     ICunitInit();
 
-    TestKernel();
+    // TestKernel();
 
 #if (LOS_POSIX_TEST == 1)
     ItSuitePosix();
 #endif
 
 #if (LOS_CMSIS_TEST == 1)
-    CmsisFuncTestSuite();
+    // CmsisFuncTestSuite();
 #endif
 
     /* The log is used for testing entrance guard, please do not make any changes. */
