@@ -279,7 +279,7 @@ errout:
     return (int)LOS_NOK;
 }
 
-static void CloseFdsInMp(struct MountPoint *mp)
+static void CloseFdsInMp(const struct MountPoint *mp)
 {
     for (int fd = 0; fd < NR_OPEN_DEFAULT; fd++) {
         struct File *f = FdToFile(fd);
