@@ -62,6 +62,10 @@ LITE_TEST_SUIT(Posix, PosixFs, PosixFsFuncTestSuite);
 #define TEST_ROOT            "/littlefs"
 #endif
 
+#ifndef TEST_ROOT
+#define TEST_ROOT "test"
+#endif
+
 #define TEST_FILE_PTAH_RIGHT    TEST_ROOT"/FILE0"   /* file path, to open/rd/close */
 #define FILE0                   "FILE0"             /* common file name used for testing  */
 #define FILE1                   TEST_ROOT"/FILE1"   /* common file under test root path name used for testing */

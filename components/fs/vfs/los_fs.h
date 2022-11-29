@@ -46,6 +46,7 @@
 #include "sys/uio.h"
 #include "unistd.h"
 #include <stdarg.h>
+#include "vfs_maps.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -151,6 +152,20 @@ int LOS_DiskPartition(const char *dev, const char *fsType, int *lengthArray, int
  * @return Return LOS_NOK if error. Return LOS_OK if success.
  */
 int LOS_PartitionFormat(const char *partName, char *fsType, void *data);
+
+/*
+ * @brief Fs Register, must be called after kernel init.
+ *
+ * @param fsType File system type, Don't register same type fs multiple times
+ * @param fsMops mount operation of the fs
+ * @param fsFops file operation of the fs
+ * @param fsMgt Management operation of the fs
+ *
+ * @return Return LOS_NOK if error. Return LOS_OK if success.
+ */
+int LOS_FsRegister(const char *fsType, struct MountOps *fsMops,
+                   struct FileOps *fsFops, struct FsManagement *fsMgt);
+
 
 #ifdef __cplusplus
 #if __cplusplus
