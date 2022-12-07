@@ -37,7 +37,11 @@
 #ifndef _LOS_MUX_H
 #define _LOS_MUX_H
 
+#include "los_config.h"
+
 #include "los_task.h"
+#include "los_spinlock.h"
+
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -112,7 +116,7 @@ extern "C" {
 *
 * Value: 0x02001d06
 *
-* Solution: Check whether the task scheduling is disabled, or set timeout to 0, which means that the
+* Solution: Check whether the task scheduling is disabled, or set uwtimeout to 0, which means that the
 * thread will not wait for the mutex to become available.
 */
 #define LOS_ERRNO_MUX_PEND_IN_LOCK  LOS_ERRNO_OS_ERROR(LOS_MOD_MUX, 0x06)
@@ -305,6 +309,7 @@ typedef struct {
     UINTPTR createInfo; /**< Return address of the caller */
 #endif
     UINT16 priority;     /**< Priority of the thread that is locking a mutex */
+    struct Spinlock lock;
 } LosMuxCB;
 
 /**

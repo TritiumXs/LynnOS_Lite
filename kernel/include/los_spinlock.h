@@ -50,6 +50,25 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
+#if (LOSCFG_SOC_COMPANY_ESPRESSIF == 0)
+#ifdef CONFIG_SPIRAM_WORKAROUND_NEED_VOLATILE_SPINLOCK
+#define NEED_VOLATILE_MUX volatile
+#else
+#define NEED_VOLATILE_MUX
+#endif /* CONFIG_SPIRAM_WORKAROUND_NEED_VOLATILE_SPINLOCK */
+
+#define SPINLOCK_FREE          0xB33FFFFF
+#define SPINLOCK_WAIT_FOREVER  (-1)
+#define SPINLOCK_NO_WAIT        0
+#define SPINLOCK_INITIALIZER   {.owner = SPINLOCK_FREE,.count = 0}
+#define CORE_ID_REGVAL_XOR_SWAP (0xCDCD ^ 0xABAB)
+
+typedef struct {
+    NEED_VOLATILE_MUX uint32_t owner;
+    NEED_VOLATILE_MUX uint32_t count;
+}spinlock_t;
+#endif /* LOSCFG_SOC_COMPANY_ESPRESSIF */
+
 /**
  * @brief Gets the spinlock, which blocks the current core until the spinlock is successfully acquired
  * 
@@ -58,8 +77,6 @@ extern "C" {
 STATIC INLINE VOID LOS_SpinLock(struct Spinlock *lock)
 {
     UINT32 intSave;
-
-    assert(lock);
 
     intSave = LOS_IntLock();
 
@@ -78,8 +95,6 @@ STATIC INLINE VOID LOS_SpinLock(struct Spinlock *lock)
 STATIC INLINE VOID LOS_SpinUnlock(struct Spinlock *lock)
 {
     UINT32 intSave;
-
-    assert(lock);
     
     intSave = LOS_IntLock();
 
@@ -98,8 +113,6 @@ STATIC INLINE VOID LOS_SpinUnlock(struct Spinlock *lock)
  */
 STATIC INLINE VOID LOS_SpinLockSave(struct Spinlock *lock, UINT32 *intSave)
 {
-    assert(lock);
-
     *intSave = LOS_IntLock();
 
 #if (LOSCFG_KERNEL_SMP == 1)
@@ -115,8 +128,6 @@ STATIC INLINE VOID LOS_SpinLockSave(struct Spinlock *lock, UINT32 *intSave)
  */
 STATIC INLINE VOID LOS_SpinUnlockRestore(struct Spinlock *lock, UINT32 intSave)
 {
-    assert(lock);
-
 #if (LOSCFG_KERNEL_SMP == 1)
     LOS_SpinUnlock(lock);
 #endif
@@ -131,8 +142,6 @@ STATIC INLINE VOID LOS_SpinUnlockRestore(struct Spinlock *lock, UINT32 intSave)
  */
 STATIC INLINE VOID LOS_SpinInit(struct Spinlock *lock)
 {
-    assert(lock);
-
 #if (LOSCFG_KERNEL_SMP == 1)
     lock->locked = LOS_SPINLOCK_FREE;
 #endif

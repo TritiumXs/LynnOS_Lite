@@ -36,12 +36,22 @@
 #include "los_interrupt.h"
 #include "los_memory.h"
 #include "los_sched.h"
-
+#include "los_spinlock.h"
 
 #if (LOSCFG_BASE_IPC_SEM == 1)
 
 LITE_OS_SEC_DATA_INIT LOS_DL_LIST g_unusedSemList;
 LITE_OS_SEC_BSS LosSemCB *g_allSem = NULL;
+
+STATIC VOID SemLock(LosSemCB *sem, UINT32 *intSave)
+{
+    LOS_SpinLockSave(&(sem->lock), intSave);
+}
+
+STATIC VOID SemUnlock(LosSemCB *sem, UINT32 intSave)
+{
+    LOS_SpinUnlockRestore(&(sem->lock), intSave);
+}
 
 /*****************************************************************************
  Function     : OsSemInit
@@ -100,10 +110,11 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsSemCreate(UINT16 count, UINT16 maxCount, UINT32 *
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_SEM_OVERFLOW);
     }
 
-    intSave = LOS_IntLock();
+    OsSchedLock(&intSave);
 
-    if (LOS_ListEmpty(&g_unusedSemList)) {
-        LOS_IntRestore(intSave);
+    if (LOS_ListEmpty(&g_unusedSemList))
+    {
+        OsSchedUnlock(intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_SEM_ALL_BUSY);
     }
 
@@ -114,9 +125,12 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsSemCreate(UINT16 count, UINT16 maxCount, UINT32 *
     semCreated->semStat = OS_SEM_USED;
     semCreated->maxSemCount = maxCount;
     LOS_ListInit(&semCreated->semList);
+    LOS_SpinInit(&(semCreated->lock));
     *semHandle = (UINT32)semCreated->semID;
-    LOS_IntRestore(intSave);
+
+    OsSchedUnlock(intSave);
     OsHookCall(LOS_HOOK_TYPE_SEM_CREATE, semCreated);
+
     return LOS_OK;
 
 ERR_HANDLER:
@@ -156,7 +170,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_BinarySemCreate(UINT16 count, UINT32 *semHandle
  *****************************************************************************/
 LITE_OS_SEC_TEXT_INIT UINT32 LOS_SemDelete(UINT32 semHandle)
 {
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     LosSemCB *semDeleted = NULL;
     UINT32 errNo;
     UINT32 errLine;
@@ -166,28 +180,40 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_SemDelete(UINT32 semHandle)
     }
 
     semDeleted = GET_SEM(semHandle);
-    intSave = LOS_IntLock();
-    if (semDeleted->semStat == OS_SEM_UNUSED) {
-        LOS_IntRestore(intSave);
+    
+    SemLock(semDeleted, &intSave);
+
+    if (semDeleted->semStat == OS_SEM_UNUSED)
+    {
+        SemUnlock(semDeleted, intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_SEM_INVALID);
     }
 
-    if (!LOS_ListEmpty(&semDeleted->semList)) {
-        LOS_IntRestore(intSave);
+    if (!LOS_ListEmpty(&semDeleted->semList))
+    {
+        SemUnlock(semDeleted, intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_SEM_PENDED);
     }
 
-    LOS_ListAdd(&g_unusedSemList, &semDeleted->semList);
     semDeleted->semStat = OS_SEM_UNUSED;
-    LOS_IntRestore(intSave);
+
+    OsSchedLock(&intSave1);
+    LOS_ListAdd(&g_unusedSemList, &semDeleted->semList);
+    OsSchedUnlock(intSave1);
+
+    SemUnlock(semDeleted, intSave);
+
     OsHookCall(LOS_HOOK_TYPE_SEM_DELETE, semDeleted);
     return LOS_OK;
+
 ERR_HANDLER:
     OS_RETURN_ERROR_P2(errLine, errNo);
 }
 
 STATIC_INLINE UINT32 OsSemValidCheck(LosSemCB *semPended)
 {
+    LosTask *losTask = OsTaskGet();
+
     if (semPended->semStat == OS_SEM_UNUSED) {
         return LOS_ERRNO_SEM_INVALID;
     }
@@ -197,12 +223,12 @@ STATIC_INLINE UINT32 OsSemValidCheck(LosSemCB *semPended)
         return LOS_ERRNO_SEM_PEND_INTERR;
     }
 
-    if (g_losTaskLock) {
+    if (OsTaskIslock(ArchCurrCpuid())) {
         PRINT_ERR("!!!LOS_ERRNO_SEM_PEND_IN_LOCK!!!\n");
         return LOS_ERRNO_SEM_PEND_IN_LOCK;
     }
 
-    if (g_losTask.runTask->taskStatus & OS_TASK_FLAG_SYSTEM_TASK) {
+    if (OsTaskIsSystemTask(losTask->runTask)) {
         return LOS_ERRNO_SEM_PEND_IN_SYSTEM_TASK;
     }
     return LOS_OK;
@@ -218,29 +244,36 @@ STATIC_INLINE UINT32 OsSemValidCheck(LosSemCB *semPended)
  *****************************************************************************/
 LITE_OS_SEC_TEXT UINT32 LOS_SemPend(UINT32 semHandle, UINT32 timeout)
 {
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     LosSemCB *semPended = NULL;
     UINT32 retErr;
     LosTaskCB *runningTask = NULL;
+
+    LosTask *losTask = OsTaskGet();
 
     if (semHandle >= (UINT32)LOSCFG_BASE_IPC_SEM_LIMIT) {
         OS_RETURN_ERROR(LOS_ERRNO_SEM_INVALID);
     }
 
     semPended = GET_SEM(semHandle);
-    intSave = LOS_IntLock();
+    
+    SemLock(semPended, &intSave);
 
     retErr = OsSemValidCheck(semPended);
     if (retErr) {
         goto ERROR_SEM_PEND;
     }
 
-    runningTask = (LosTaskCB *)g_losTask.runTask;
+    runningTask = (LosTaskCB *)losTask->runTask;
 
-    if (semPended->semCount > 0) {
+    if (semPended->semCount > 0)
+    {
         semPended->semCount--;
-        LOS_IntRestore(intSave);
+        
+        SemUnlock(semPended, intSave);
+
         OsHookCall(LOS_HOOK_TYPE_SEM_PEND, semPended, runningTask, timeout);
+        
         return LOS_OK;
     }
 
@@ -250,23 +283,30 @@ LITE_OS_SEC_TEXT UINT32 LOS_SemPend(UINT32 semHandle, UINT32 timeout)
     }
 
     runningTask->taskSem = (VOID *)semPended;
+
+    OsSchedLock(&intSave1);
     OsSchedTaskWait(&semPended->semList, timeout);
-    LOS_IntRestore(intSave);
+    OsSchedUnlock(intSave1);
+
+    SemUnlock(semPended, intSave);
+
     OsHookCall(LOS_HOOK_TYPE_SEM_PEND, semPended, runningTask, timeout);
+
     LOS_Schedule();
 
-    intSave = LOS_IntLock();
-    if (runningTask->taskStatus & OS_TASK_STATUS_TIMEOUT) {
-        runningTask->taskStatus &= (~OS_TASK_STATUS_TIMEOUT);
+    OsSchedLock(&intSave1);
+    if (OsSchedTimeoutHandle(runningTask) == OS_TASK_STATUS_TIMEOUT)
+    {
         retErr = LOS_ERRNO_SEM_TIMEOUT;
-        goto ERROR_SEM_PEND;
+        OsSchedUnlock(intSave1);
+        OS_RETURN_ERROR(retErr);
     }
+    OsSchedUnlock(intSave1);
 
-    LOS_IntRestore(intSave);
     return LOS_OK;
 
 ERROR_SEM_PEND:
-    LOS_IntRestore(intSave);
+    SemUnlock(semPended, intSave);
     OS_RETURN_ERROR(retErr);
 }
 
@@ -279,36 +319,55 @@ ERROR_SEM_PEND:
  *****************************************************************************/
 LITE_OS_SEC_TEXT UINT32 LOS_SemPost(UINT32 semHandle)
 {
-    UINT32 intSave;
-    LosSemCB *semPosted = GET_SEM(semHandle);
+    UINT32 intSave, intSave1;
+    LosSemCB *semPosted = NULL;
     LosTaskCB *resumedTask = NULL;
 
     if (semHandle >= LOSCFG_BASE_IPC_SEM_LIMIT) {
         return LOS_ERRNO_SEM_INVALID;
     }
 
-    intSave = LOS_IntLock();
+    semPosted = GET_SEM(semHandle);
+
+    SemLock(semPosted, &intSave);
 
     if (semPosted->semStat == OS_SEM_UNUSED) {
-        LOS_IntRestore(intSave);
+        SemUnlock(semPosted, intSave);
         OS_RETURN_ERROR(LOS_ERRNO_SEM_INVALID);
     }
 
-    if (semPosted->maxSemCount == semPosted->semCount) {
-        LOS_IntRestore(intSave);
+    if (semPosted->maxSemCount == semPosted->semCount)
+    {
+        SemUnlock(semPosted, intSave);
         OS_RETURN_ERROR(LOS_ERRNO_SEM_OVERFLOW);
     }
-    if (!LOS_ListEmpty(&semPosted->semList)) {
+
+    if (!LOS_ListEmpty(&semPosted->semList))
+    {
         resumedTask = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&(semPosted->semList)));
         resumedTask->taskSem = NULL;
-        OsSchedTaskWake(resumedTask);
 
-        LOS_IntRestore(intSave);
+        OsSchedLock(&intSave1);
+        OsSchedTaskWake(resumedTask);
+        OsSchedUnlock(intSave1);
+
+        SemUnlock(semPosted, intSave);
+
         OsHookCall(LOS_HOOK_TYPE_SEM_POST, semPosted, resumedTask);
-        LOS_Schedule();
-    } else {
+
+        if (OS_SCHED_RQ_IS_RUNNING(resumedTask->schedRunqueueNum)) {
+            LOS_MpSchedule(CPUID_TO_AFFI_MASK(resumedTask->schedRunqueueNum));
+
+            if (resumedTask->schedRunqueueNum == ArchCurrCpuid()) {
+                LOS_Schedule();
+            }
+        }
+    }
+    else
+    {
         semPosted->semCount++;
-        LOS_IntRestore(intSave);
+        SemUnlock(semPosted, intSave);
+        
         OsHookCall(LOS_HOOK_TYPE_SEM_POST, semPosted, resumedTask);
     }
 
@@ -317,14 +376,19 @@ LITE_OS_SEC_TEXT UINT32 LOS_SemPost(UINT32 semHandle)
 
 LITE_OS_SEC_TEXT UINT32 LOS_SemGetValue(UINT32 semHandle, INT32 *currVal)
 {
-    LosSemCB *sem = GET_SEM(semHandle);
+    UINT32 intSave;
+    LosSemCB *sem = NULL;
 
     if (semHandle >= (UINT32)LOSCFG_BASE_IPC_SEM_LIMIT) {
         OS_RETURN_ERROR(LOS_ERRNO_SEM_INVALID);
     }
 
+    sem = GET_SEM(semHandle);
+
+    SemLock(sem, &intSave);
     *currVal = sem->semCount;
+    SemUnlock(sem, intSave);
+
     return 0;
 }
-
 #endif /* (LOSCFG_BASE_IPC_SEM == 1) */

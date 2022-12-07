@@ -37,17 +37,80 @@
 #include "los_tick.h"
 #include "los_sortlink.h"
 
+#include "los_core.h"
+#include "los_spinlock.h"
+
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
+#define OS_PRIORITY_QUEUE_NUM       (32)
+
 #define OS_SCHED_MINI_PERIOD       (g_sysClock / LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI)
 #define OS_SCHED_MAX_RESPONSE_TIME OS_SORT_LINK_UINT64_MAX
 
 extern UINT32 g_taskScheduled;
 typedef BOOL (*SchedScan)(VOID);
+
+typedef enum {
+    SCHED_FLAG_UP = 0,
+    SCHED_FLAG_RUN,
+} SCHED_FLAG;
+
+#define OS_MP_CPU_ALL           LOSCFG_KERNEL_CPU_MASK
+
+#define BIT(nr)                 (1UL << (nr))
+#define LOS_MP_IPI_SCHEDULE     BIT(0)
+
+typedef struct {
+    SortLinkAttribute *taskSortLinkList;						/* The timeout task queue.If the task is in a timeout state, it will be added to the queue, and after the timeout is triggered, the task will be woken up for scheduling */
+	struct Spinlock   sortLinkLock;
+    LOS_DL_LIST 	  priQueueList[OS_PRIORITY_QUEUE_NUM];		/* Priority queue */
+    struct Spinlock   priQueueLock;
+    UINT16            taskNum;
+    UINT16            tickIntLock;                              /* Tick interrupts the lock flag */
+	UINT32 			  queueBitmap;								/* Priority bitmap */
+	UINT64            responseTime; 							/* Response time for current CPU tick interrupts */
+	UINT32            responseID;   							/* The response ID of the current CPU tick interrupt */
+	UINT32            idleTaskID;   							/* idle task id */
+    UINT32            swtmrTaskID;                              /* software timer task id */
+	UINT32            taskLockCnt;  							/* task lock status */
+	UINT32            schedFlag;    							/* The scheduling status of the current scheduling queue */
+} SchedRunqueue;
+
+extern SchedRunqueue g_schedRunqueue[LOSCFG_KERNEL_CORE_NUM];
+
+// Gets the SchedRunqueue structure for the specified core
+STATIC INLINE SchedRunqueue *OsGetRunQueue(INT32 cpuid)
+{
+	return &(g_schedRunqueue[cpuid]);
+}
+
+// Gets the SchedRunqueue structure for the current core
+STATIC INLINE SchedRunqueue *OsGetCurrRunQueue(VOID)
+{
+	return OsGetRunQueue(ArchCurrCpuid());
+}
+
+// set rq status to SCHED_FLAG_RUN
+#define OS_SCHED_RQ_RUN(cpuid) do { \
+    g_schedRunqueue[cpuid].schedFlag = SCHED_FLAG_RUN; \
+} while (0)
+
+// set current rq status to SCHED_FLAG_RUN
+#define OS_SCHED_CURR_RQ_RUN() do { \
+    g_schedRunqueue[ArchCurrCpuid()].schedFlag = SCHED_FLAG_RUN; \
+} while (0)
+
+// check rq status is SCHED_FLAG_RUN or not
+#define OS_SCHED_RQ_IS_RUNNING(cpuid) \
+    (g_schedRunqueue[cpuid].schedFlag == SCHED_FLAG_RUN)
+
+// check current rq status is SCHED_FLAG_RUN or not
+#define OS_SCHED_CURR_RQ_IS_RUNNING() \
+    (g_schedRunqueue[ArchCurrCpuid()].schedFlag == SCHED_FLAG_RUN)
 
 VOID OsSchedResetSchedResponseTime(UINT64 responseTime);
 
@@ -78,6 +141,8 @@ VOID OsSchedTaskExit(LosTaskCB *taskCB);
 VOID OsSchedSuspend(LosTaskCB *taskCB);
 
 BOOL OsSchedResume(LosTaskCB *taskCB);
+
+VOID OsSchedTaskReady(LosTaskCB *taskCB);
 
 VOID OsSchedTick(VOID);
 
@@ -154,6 +219,40 @@ extern VOID LOS_SchedTickHandler(VOID);
  * @see
  */
 extern VOID LOS_Schedule(VOID);
+
+extern VOID LOS_MpSchedule(UINT32 target);
+
+// check the task id is idle task or not
+// extern BOOL OsIsIdleTask(UINT32 taskid);
+
+VOID OsRunQueueRegisterIdleTask(INT32 cpuid, UINT32 taskid);
+
+// check the task id is swtmr task or not
+extern BOOL OsIsSWTmrTask(UINT32 taskid);
+
+VOID OsRunQueueRegisterSWTmrTask(INT32 cpuid, UINT32 taskid);
+
+// get current core idle task id
+STATIC INLINE UINT32 OsGetIdleTaskID(INT32 cpuid)
+{
+    SchedRunqueue *rq = OsGetRunQueue(cpuid);
+    return rq->idleTaskID;
+}
+
+// get current core idle task id
+STATIC INLINE UINT32 OsGetCurrIdleTaskID(VOID)
+{
+    return OsGetIdleTaskID(ArchCurrCpuid());
+}
+
+#define OS_SCHED_INVALID_RUNQUEUE_NUM   ((UINT32)-1)
+INT32 OsSchedSelectRunQueue(UINT32 cpuAffiMask);
+
+extern VOID OsSchedLock(UINT32 *intSave);
+
+extern VOID OsSchedUnlock(UINT32 intSave);
+
+extern UINT32 OsSchedTimeoutHandle(LosTaskCB *taskCB);
 
 #ifdef __cplusplus
 #if __cplusplus

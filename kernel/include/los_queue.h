@@ -37,8 +37,10 @@
 #ifndef _LOS_QUEUE_H
 #define _LOS_QUEUE_H
 
-#include "los_list.h"
 #include "los_config.h"
+#include "los_list.h"
+
+#include "los_spinlock.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -822,6 +824,7 @@ typedef struct {
     LOS_DL_LIST readWriteList[OS_READWRITE_LEN]; /**< Pointer to the linked list to be read or written,
                                                       0:readlist, 1:writelist */
     LOS_DL_LIST memList; /**< Pointer to the memory linked list */
+    struct Spinlock lock; /**< Spinlock struct */
 } LosQueueCB;
 
 

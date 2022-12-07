@@ -663,6 +663,12 @@ extern UINT8 *m_aucSysMem0;
 #define LOSCFG_KERNEL_SIGNAL                          0
 #endif
 
+#ifndef LOSCFG_KERNEL_CORE_NUM
+#define LOSCFG_KERNEL_CORE_NUM                        1
+#endif
+
+#define LOSCFG_KERNEL_CPU_MASK                          ((1 << LOSCFG_KERNEL_CORE_NUM) - 1)
+
 /**
  * @ingroup los_config
  * Configuration item to enable kernel power module.

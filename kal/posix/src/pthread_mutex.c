@@ -218,6 +218,7 @@ STATIC UINT32 MuxPendForPosix(pthread_mutex_t *mutex, UINT32 timeout)
     UINT32 retErr;
     LosTaskCB *runningTask = NULL;
     UINT32 muxHandle = mutex->handle;
+    LosTask *losTask = OsTaskGet();
 
     muxPended = GET_MUX(muxHandle);
     intSave = LOS_IntLock();
@@ -227,7 +228,7 @@ STATIC UINT32 MuxPendForPosix(pthread_mutex_t *mutex, UINT32 timeout)
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);
     }
 
-    runningTask = (LosTaskCB *)g_losTask.runTask;
+    runningTask = (LosTaskCB *)losTask->runTask;
     if (muxPended->muxCount == 0) {
         muxPended->muxCount++;
         muxPended->owner = runningTask;
@@ -259,6 +260,9 @@ STATIC UINT32 MuxPendForPosix(pthread_mutex_t *mutex, UINT32 timeout)
 
     LOS_IntRestore(intSave);
     OsHookCall(LOS_HOOK_TYPE_MUX_PEND, muxPended, timeout);
+
+    LOS_MpSchedule(OS_MP_CPU_ALL);
+
     LOS_Schedule();
 
     intSave = LOS_IntLock();
@@ -280,6 +284,7 @@ STATIC UINT32 MuxPostForPosix(pthread_mutex_t *mutex)
     LosTaskCB *resumedTask = NULL;
     LosTaskCB *runningTask = NULL;
     UINT32 muxHandle = mutex->handle;
+    LosTask *losTask = OsTaskGet();
 
     muxPosted = GET_MUX(muxHandle);
     intSave = LOS_IntLock();
@@ -289,7 +294,7 @@ STATIC UINT32 MuxPostForPosix(pthread_mutex_t *mutex)
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);
     }
 
-    runningTask = (LosTaskCB *)g_losTask.runTask;
+    runningTask = (LosTaskCB *)losTask->runTask;
     if ((muxPosted->muxCount == 0) || (muxPosted->owner != runningTask)) {
         LOS_IntRestore(intSave);
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);

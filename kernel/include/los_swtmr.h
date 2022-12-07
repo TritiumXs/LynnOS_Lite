@@ -283,6 +283,7 @@ typedef struct tagSwTmrCtrl {
     SWTMR_PROC_FUNC     pfnHandler;     /* Callback function that handles software timer timeout */
     SortLinkList        stSortList;
     UINT64              startTime;
+    INT32               cpuid;
 } SWTMR_CTRL_S;
 
 

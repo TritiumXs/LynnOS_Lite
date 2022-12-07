@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -42,10 +42,10 @@
 
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
 
-LITE_OS_SEC_BSS UINT32            g_swtmrHandlerQueue;           /* Software Timer timeout queue ID */
+LITE_OS_SEC_BSS UINT32            g_swtmrHandlerQueue[LOSCFG_KERNEL_CORE_NUM] = {0};           /* Software Timer timeout queue ID */
 LITE_OS_SEC_BSS SWTMR_CTRL_S      *g_swtmrCBArray = NULL;        /* first address in Timer memory space */
 LITE_OS_SEC_BSS SWTMR_CTRL_S      *g_swtmrFreeList = NULL;       /* Free list of Software Timer */
-LITE_OS_SEC_BSS SortLinkAttribute *g_swtmrSortLinkList = NULL;       /* The software timer count list */
+LITE_OS_SEC_BSS SortLinkAttribute *g_swtmrSortLinkList[LOSCFG_KERNEL_CORE_NUM] = {NULL};       /* The software timer count list */
 
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
 typedef struct SwtmrAlignDataStr {
@@ -78,10 +78,11 @@ LITE_OS_SEC_TEXT VOID OsSwtmrTask(VOID)
     UINT32 readSize;
     UINT32 ret;
     UINT64 tick;
+    INT32 cpuid = ArchCurrCpuid();
 
     for (;;) {
         readSize = sizeof(SwtmrHandlerItem);
-        ret = LOS_QueueReadCopy(g_swtmrHandlerQueue, &swtmrHandle, &readSize, LOS_WAIT_FOREVER);
+        ret = LOS_QueueReadCopy(g_swtmrHandlerQueue[cpuid], &swtmrHandle, &readSize, LOS_WAIT_FOREVER);
         if ((ret == LOS_OK) && (readSize == sizeof(SwtmrHandlerItem))) {
             if ((swtmrHandle.handler == NULL) || (swtmrHandle.swtmrID >= OS_SWTMR_MAX_TIMERID)) {
                 continue;
@@ -101,6 +102,7 @@ LITE_OS_SEC_TEXT VOID OsSwtmrTask(VOID)
             tick = LOS_TickCountGet();
             swtmrHandle.handler(swtmrHandle.arg);
             tick = LOS_TickCountGet() - tick;
+
             if (tick >= SWTMR_MAX_RUNNING_TICKS) {
                 PRINT_WARN("timer_handler(%p) cost too many ms(%d)\n",
                            swtmrHandle.handler,
@@ -119,8 +121,10 @@ Return      : LOS_OK on success or error code on failure
 *****************************************************************************/
 LITE_OS_SEC_TEXT_INIT UINT32 OsSwtmrTaskCreate(VOID)
 {
+    UINT32 i;
     UINT32 ret;
     TSK_INIT_PARAM_S swtmrTask;
+    UINT32 swtmrTaskID;
 
     // Ignore the return code when matching CSEC rule 6.6(4).
     (VOID)memset_s(&swtmrTask, sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S));
@@ -129,10 +133,18 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsSwtmrTaskCreate(VOID)
     swtmrTask.uwStackSize     = LOSCFG_BASE_CORE_TSK_SWTMR_STACK_SIZE;
     swtmrTask.pcName          = "Swt_Task";
     swtmrTask.usTaskPrio      = 0;
-    ret = LOS_TaskCreate(&g_swtmrTaskID, &swtmrTask);
-    if (ret == LOS_OK) {
-        OS_TCB_FROM_TID(g_swtmrTaskID)->taskStatus |= OS_TASK_FLAG_SYSTEM_TASK;
+
+    for (i = 0; i < LOSCFG_KERNEL_CORE_NUM; i++) {
+        swtmrTask.usCpuAffiMask = CPUID_TO_AFFI_MASK(i);// 空闲任务绑定到当前核心上运行
+        ret = LOS_TaskCreate(&swtmrTaskID, &swtmrTask);
+        if (ret == LOS_OK) {
+            OS_TCB_FROM_TID(swtmrTaskID)->taskStatus |= OS_TASK_FLAG_SYSTEM_TASK;
+
+            // 注册软件定时ID
+            OsRunQueueRegisterSWTmrTask(i, swtmrTaskID);
+        }
     }
+
     return ret;
 }
 
@@ -140,8 +152,8 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsSwtmrTaskCreate(VOID)
 STATIC UINT64 OsSwtmrCalcStartTime(UINT64 currTime, SWTMR_CTRL_S *swtmr, const SWTMR_CTRL_S *alignSwtmr)
 {
     UINT64 usedTime, startTime;
-    UINT64 alignEnd = OS_SYS_TICK_TO_CYCLE(alignSwtmr->uwInterval);
-    UINT64 swtmrTime = OS_SYS_TICK_TO_CYCLE(swtmr->uwInterval);
+    UINT64 alignEnd = (UINT64)alignSwtmr->uwInterval * OS_CYCLE_PER_TICK;
+    UINT64 swtmrTime = (UINT64)swtmr->uwInterval * OS_CYCLE_PER_TICK;
     UINT64 remainTime = OsSortLinkGetRemainTime(currTime, &alignSwtmr->stSortList);
     if (remainTime == 0) {
         startTime = GET_SORTLIST_VALUE(&alignSwtmr->stSortList);
@@ -159,7 +171,7 @@ UINT64 OsSwtmrFindAlignPos(UINT64 currTime, SWTMR_CTRL_S *swtmr)
     SWTMR_CTRL_S *maxInLittle = (SWTMR_CTRL_S *)NULL;
     UINT32 minInLargeVal = OS_NULL_INT;
     UINT32 maxInLittleVal = OS_NULL_INT;
-    LOS_DL_LIST *listHead = &g_swtmrSortLinkList->sortLink;
+    LOS_DL_LIST *listHead = &g_swtmrSortLinkList[ArchCurrCpuid()]->sortLink;
     SwtmrAlignData swtmrAlgInfo = g_swtmrAlignID[swtmr->usTimerID % LOSCFG_BASE_CORE_SWTMR_LIMIT];
     LOS_DL_LIST *listObject = listHead->pstNext;
 
@@ -228,6 +240,7 @@ Return      : None
 LITE_OS_SEC_TEXT VOID OsSwtmrStart(UINT64 currTime, SWTMR_CTRL_S *swtmr)
 {
     swtmr->ucState = OS_SWTMR_STATUS_TICKING;
+    SortLinkAttribute *sortLinkHead = NULL;
 
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     if ((g_swtmrAlignID[swtmr->usTimerID % LOSCFG_BASE_CORE_SWTMR_LIMIT].canAlign == 1) &&
@@ -236,7 +249,12 @@ LITE_OS_SEC_TEXT VOID OsSwtmrStart(UINT64 currTime, SWTMR_CTRL_S *swtmr)
         swtmr->startTime = OsSwtmrFindAlignPos(currTime, swtmr);
     }
 #endif
-    OsAdd2SortLink(&swtmr->stSortList, swtmr->startTime, swtmr->uwInterval, OS_SORT_LINK_SWTMR);
+
+    // 获取软件定时器对应的排序链表
+    sortLinkHead = g_swtmrSortLinkList[swtmr->cpuid];
+
+    // add to current core sort list
+    OsAdd2SortLink(&swtmr->stSortList, swtmr->startTime, swtmr->uwInterval, sortLinkHead);
     OsSchedUpdateExpireTime();
 }
 
@@ -255,7 +273,7 @@ STATIC VOID OsSwtmrDelete(SWTMR_CTRL_S *swtmr)
         swtmr->usTimerID %= LOSCFG_BASE_CORE_SWTMR_LIMIT;
     }
 
-    /* insert to free list */
+    /* insert to free list(head) */
     swtmr->pstNext = g_swtmrFreeList;
     g_swtmrFreeList = swtmr;
     swtmr->ucState = OS_SWTMR_STATUS_UNUSED;
@@ -279,15 +297,21 @@ LITE_OS_SEC_TEXT VOID OsSwtmrStop(SWTMR_CTRL_S *swtmr)
 #endif
 }
 
+/*
+    OsSwtmrTimeoutHandle
+        检测到某个软件定时器已经超时
+        通过队列通知软件定时器任务执行回调函数
+*/
 STATIC VOID OsSwtmrTimeoutHandle(UINT64 currTime, SWTMR_CTRL_S *swtmr)
 {
     SwtmrHandlerItem swtmrHandler;
+    INT32 cpuid = ArchCurrCpuid();
 
     swtmrHandler.handler = swtmr->pfnHandler;
     swtmrHandler.arg = swtmr->uwArg;
     swtmrHandler.swtmrID = swtmr->usTimerID;
 
-    (VOID)LOS_QueueWriteCopy(g_swtmrHandlerQueue, &swtmrHandler, sizeof(SwtmrHandlerItem), LOS_NO_WAIT);
+    (VOID)LOS_QueueWriteCopy(g_swtmrHandlerQueue[cpuid], &swtmrHandler, sizeof(SwtmrHandlerItem), LOS_NO_WAIT);
     if (swtmr->ucMode == LOS_SWTMR_MODE_PERIOD) {
         swtmr->ucOverrun++;
         OsSwtmrStart(currTime, swtmr);
@@ -296,25 +320,39 @@ STATIC VOID OsSwtmrTimeoutHandle(UINT64 currTime, SWTMR_CTRL_S *swtmr)
     }
 }
 
+/* 
+    OsSwtmrScan
+        检查是否有软件定时器超时 
+*/
 STATIC BOOL OsSwtmrScan(VOID)
 {
     BOOL needSchedule = FALSE;
-    LOS_DL_LIST *listObject = &g_swtmrSortLinkList->sortLink;
 
+    // 获取当前核心对应的链表
+    LOS_DL_LIST *listObject = &g_swtmrSortLinkList[ArchCurrCpuid()]->sortLink;
+
+    // 队列为空, 不需要调度
     if (LOS_ListEmpty(listObject)) {
         return needSchedule;
     }
 
+    // 开始遍历, 获取排在第一的元素
     SortLinkList *sortList = LOS_DL_LIST_ENTRY(listObject->pstNext, SortLinkList, sortLinkNode);
     UINT64 currTime = OsGetCurrSchedTimeCycle();
+
+    // 触发时间小于当前时间 -> 已经超时了
     while (sortList->responseTime <= currTime) {
         SWTMR_CTRL_S *swtmr = LOS_DL_LIST_ENTRY(sortList, SWTMR_CTRL_S, stSortList);
         swtmr->startTime = GET_SORTLIST_VALUE(sortList);
 
+        // 出队列
         OsDeleteNodeSortLink(sortList);
         OsHookCall(LOS_HOOK_TYPE_SWTMR_EXPIRED, swtmr);
+
+        // 处理任务并判断是否要重新启动任务
         OsSwtmrTimeoutHandle(currTime, swtmr);
 
+        // 有软件定时器回调任务需要处理, 需要进行一次调度
         needSchedule = TRUE;
         if (LOS_ListEmpty(listObject)) {
             break;
@@ -326,9 +364,15 @@ STATIC BOOL OsSwtmrScan(VOID)
     return needSchedule;
 }
 
+/*
+    OsSwtmrResponseTimeReset
+        遍历当前核心上的软件定时器链表
+        将所有软件定时的起始时间改为 startTime
+        重新计算所有软件定时器的超时时间
+*/
 LITE_OS_SEC_TEXT VOID OsSwtmrResponseTimeReset(UINT64 startTime)
 {
-    LOS_DL_LIST *listHead = &g_swtmrSortLinkList->sortLink;
+    LOS_DL_LIST *listHead = &g_swtmrSortLinkList[ArchCurrCpuid()]->sortLink;
     LOS_DL_LIST *listNext = listHead->pstNext;
 
     while (listNext != listHead) {
@@ -354,19 +398,23 @@ Return      : Count of the Timer list
 LITE_OS_SEC_TEXT UINT32 OsSwtmrGetNextTimeout(VOID)
 {
     UINT32 intSave = LOS_IntLock();
-    UINT64 time = OsSortLinkGetNextExpireTime(g_swtmrSortLinkList);
+    UINT64 time = OsSortLinkGetNextExpireTime(g_swtmrSortLinkList[ArchCurrCpuid()]);
     LOS_IntRestore(intSave);
-    time = OS_SYS_CYCLE_TO_TICK(time);
+    time = time / OS_CYCLE_PER_TICK;
     if (time > OS_NULL_INT) {
         time = OS_NULL_INT;
     }
     return time;
 }
 
+/*
+    OsSwtmrTimeGet
+        获取某个软件定时器的超时时间
+*/
 LITE_OS_SEC_TEXT UINT32 OsSwtmrTimeGet(const SWTMR_CTRL_S *swtmr)
 {
     UINT64 time = OsSortLinkGetTargetExpireTime(OsGetCurrSchedTimeCycle(), &swtmr->stSortList);
-    time = OS_SYS_CYCLE_TO_TICK(time);
+    time = time / OS_CYCLE_PER_TICK;
     if (time > OS_NULL_INT) {
         time = OS_NULL_INT;
     }
@@ -385,6 +433,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsSwtmrInit(VOID)
     UINT32 size;
     UINT16 index;
     UINT32 ret;
+    UINT32 i;
 
 #if (LOSCFG_BASE_CORE_SWTMR_ALIGN == 1)
     // Ignore the return code when matching CSEC rule 6.6(1).
@@ -410,29 +459,36 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsSwtmrInit(VOID)
         temp = swtmr;
     }
 
-    ret = LOS_QueueCreate((CHAR *)NULL, OS_SWTMR_HANDLE_QUEUE_SIZE,
-                          &g_swtmrHandlerQueue, 0, sizeof(SwtmrHandlerItem));
-    if (ret != LOS_OK) {
-        (VOID)LOS_MemFree(m_aucSysMem0, swtmr);
-        return LOS_ERRNO_SWTMR_QUEUE_CREATE_FAILED;
+    // init queue for each swtmr task
+    for (i = 0; i < LOSCFG_KERNEL_CORE_NUM; i++) {
+        ret = LOS_QueueCreate((CHAR *)NULL, OS_SWTMR_HANDLE_QUEUE_SIZE,
+                            &g_swtmrHandlerQueue[i], 0, sizeof(SwtmrHandlerItem));
+        if (ret != LOS_OK) {
+            (VOID)LOS_MemFree(m_aucSysMem0, swtmr);
+            return LOS_ERRNO_SWTMR_QUEUE_CREATE_FAILED;
+        }
     }
 
+    // create swtmr task for each core
     ret = OsSwtmrTaskCreate();
     if (ret != LOS_OK) {
         (VOID)LOS_MemFree(m_aucSysMem0, swtmr);
         return LOS_ERRNO_SWTMR_TASK_CREATE_FAILED;
     }
 
-    g_swtmrSortLinkList = OsGetSortLinkAttribute(OS_SORT_LINK_SWTMR);
-    if (g_swtmrSortLinkList == NULL) {
-        (VOID)LOS_MemFree(m_aucSysMem0, swtmr);
-        return LOS_NOK;
-    }
+    // init sortlist for each core
+    for (i = 0; i < LOSCFG_KERNEL_CORE_NUM; i++) {
+        g_swtmrSortLinkList[i] = OsGetSortLinkAttribute(OS_SORT_LINK_SWTMR, i);
+        if (g_swtmrSortLinkList[i] == NULL) {
+            (VOID)LOS_MemFree(m_aucSysMem0, swtmr);
+            return LOS_NOK;
+        }
 
-    ret = OsSortLinkInit(g_swtmrSortLinkList);
-    if (ret != LOS_OK) {
-        (VOID)LOS_MemFree(m_aucSysMem0, swtmr);
-        return LOS_NOK;
+        ret = OsSortLinkInit(g_swtmrSortLinkList[i]);
+        if (ret != LOS_OK) {
+            (VOID)LOS_MemFree(m_aucSysMem0, swtmr);
+            return LOS_NOK;
+        }
     }
 
     ret = OsSchedSwtmrScanRegister((SchedScan)OsSwtmrScan);
@@ -501,6 +557,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_SwtmrCreate(UINT32 interval,
     }
 #endif
 
+    // 从 free list 中取出一个空闲的软件定时器控制块
     intSave = LOS_IntLock();
     if (g_swtmrFreeList == NULL) {
         LOS_IntRestore(intSave);
@@ -510,6 +567,8 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_SwtmrCreate(UINT32 interval,
     swtmr = g_swtmrFreeList;
     g_swtmrFreeList = swtmr->pstNext;
     LOS_IntRestore(intSave);
+
+    // 配置软件定时器控制块参数
     swtmr->pfnHandler    = handler;
     swtmr->ucMode        = mode;
     swtmr->uwInterval    = interval;
@@ -521,6 +580,10 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_SwtmrCreate(UINT32 interval,
 #endif
     swtmr->ucState       = OS_SWTMR_STATUS_CREATED;
     swtmr->ucOverrun     = 0;
+
+    // 获取当前核心的编号, 新建的这个软件定时器绑定到这个核心上运行
+    swtmr->cpuid         = ArchCurrCpuid();
+
     *swtmrId = swtmr->usTimerID;
     SET_SORTLIST_VALUE(&swtmr->stSortList, OS_SORT_LINK_INVALID_TIME);
     OsHookCall(LOS_HOOK_TYPE_SWTMR_CREATE, swtmr);

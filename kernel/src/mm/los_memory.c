@@ -43,6 +43,7 @@
 #if (LOSCFG_KERNEL_LMK == 1)
 #include "los_lmk.h"
 #endif
+#include "los_spinlock.h"
 
 /* Used to cut non-essential functions. */
 #define OS_MEM_EXPAND_ENABLE    0
@@ -114,14 +115,16 @@ struct OsMemUsedNodeHead {
 /* The memory pool support no lock. */
 #define OS_MEM_POOL_UNLOCK_ENABLE   0x02
 
+STATIC struct Spinlock g_memLock = LOS_SPINLOCK_INITIALIZER;
+
 #define MEM_LOCK(pool, state)       do {                    \
     if (!((pool)->info.attr & OS_MEM_POOL_UNLOCK_ENABLE)) { \
-        (state) = LOS_IntLock();                            \
+        LOS_SpinLockSave(&g_memLock, &state);                 \
     }                                                       \
 } while (0);
 #define MEM_UNLOCK(pool, state)     do {                    \
     if (!((pool)->info.attr & OS_MEM_POOL_UNLOCK_ENABLE)) { \
-        LOS_IntRestore(state);                              \
+        LOS_SpinUnlockRestore(&g_memLock, state);             \
     }                                                       \
 } while (0);
 

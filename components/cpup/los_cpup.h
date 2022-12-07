@@ -131,6 +131,7 @@ extern "C" {
  */
 typedef struct {
     UINT32 cpupID;                                        /**< Task ID */
+    UINT16 cpuID;                                         /**< CPU ID */
     UINT16 status;                                        /**< Task status */
     UINT64 allTime;                                       /**< Total running time */
     UINT64 startTime;                                     /**< Time before a task is invoked */
