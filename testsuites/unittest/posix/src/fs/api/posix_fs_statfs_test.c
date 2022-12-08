@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2022-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -28,39 +29,51 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "posix_test.h"
+#include "posix_fs_test.h"
 
-void ItSuitePosix(void)
+LITE_TEST_CASE(PosixFsFuncTestSuite, testFsStatfsOK, Function | MediumTest | Level1)
 {
-    PRINTF("***********************BEGIN POSIX TEST**********************\n");
-//     PthreadFuncTestSuite();
-//     ItSuitePosixPthread();
-//     ItSuitePosixMutex();
-//     ItSuitePosixMqueue();
-//     PosixCtypeFuncTest();
-//     PosixIsdigitFuncTest();
-//     PosixIslowerFuncTest();
-//     PosixIsxdigitFuncTest();
-//     PosixTolowerFuncTest();
-//     PosixToupperFuncTest();
-//     PosixStrerrorTest();
-//     PosixMathFuncTest();
-//     PosixMqueueFuncTest();
-//     PosixStdargFuncTest();
-//     PosixStdlibAtoiFuncTest();
-//     PosixStdlibAtolFuncTest();
-//     PosixStdlibAtollFuncTest();
-//     PosixStdlibStrtolFuncTest();
-//     PosixStdlibStrtoulFuncTest();
-//     PosixStdlibStrtoullFuncTest();
-//     PosixStringMemTest03();
-//     PosixStringStrchrTest();
-//     PosixStringFuncTest02();
-//     PosixStringStrcasecmpFuncTest();
-//     PosixStringFuncTest03();
-// #if (LOS_KERNEL_TEST_FULL == 1)
-//     PosixSemaphoreFuncTest();
-//     PosixTimeFuncTest();
-// #endif
-    PosixFsFuncTest();
+    int32_t ret = 0;
+    struct statfs buf = { 0 };
+
+    ret = statfs(TEST_ROOT, &buf);
+    ICUNIT_ASSERT_NOT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+    return POSIX_FS_NO_ERROR;
+}
+
+LITE_TEST_CASE(PosixFsFuncTestSuite, testFsStatfsEINVAL, Function | MediumTest | Level1)
+{
+    int32_t ret = 0;
+    struct statfs buf = { 0 };
+
+    ret = statfs(NULL, &buf);
+    ICUNIT_ASSERT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+    ret = statfs(TEST_ROOT, NULL);
+    ICUNIT_ASSERT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+    return POSIX_FS_NO_ERROR;
+}
+
+LITE_TEST_CASE(PosixFsFuncTestSuite, testFsStatfsENOENT, Function | MediumTest | Level1)
+{
+    int32_t ret = 0;
+    struct statfs buf = { 0 };
+
+    struct MountPoint *mountBak = g_mountPoints;
+    g_mountPoints = NULL;
+    ret = statfs(TEST_ROOT, &buf);
+    g_mountPoints = mountBak;
+
+    ICUNIT_ASSERT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
+
+    return POSIX_FS_NO_ERROR;
+}
+
+void posixFsStatfsTest(void)
+{
+    RUN_ONE_TESTCASE(testFsStatfsOK);
+    RUN_ONE_TESTCASE(testFsStatfsEINVAL);
+    RUN_ONE_TESTCASE(testFsStatfsENOENT);
 }

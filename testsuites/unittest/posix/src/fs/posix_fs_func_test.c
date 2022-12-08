@@ -33,18 +33,7 @@
 #define __NEED_mode_t
 #endif
 
-#include <securec.h>
-#include <stdio.h>
-#include <libgen.h>
-#include "ohos_types.h"
-#include "posix_test.h"
-#include "los_config.h"
-#include "kernel_test.h"
-#include "log.h"
-#include <fcntl.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "posix_fs_test.h"
 
 /* *
  * @tc.desc      : register a test suite, this suite is used to test basic flow and interface dependency
@@ -53,31 +42,6 @@
  * @param        : test suit name is PosixFsFuncTestSuite
  */
 LITE_TEST_SUIT(Posix, PosixFs, PosixFsFuncTestSuite);
-
-#if (LOSCFG_SUPPORT_FATFS == 1)
-#define TEST_ROOT            "system"
-#endif
-
-#if (LOSCFG_SUPPORT_LITTLEFS == 1)
-#define TEST_ROOT            "/littlefs"
-#endif
-
-#define TEST_FILE_PTAH_RIGHT    TEST_ROOT"/FILE0"   /* file path, to open/rd/close */
-#define FILE0                   "FILE0"             /* common file name used for testing  */
-#define FILE1                   TEST_ROOT"/FILE1"   /* common file under test root path name used for testing */
-#define FILE2                   TEST_ROOT"/FILE2"   /* common file under test root path name used for testing */
-#define DIRA                    TEST_ROOT"/a"       /* common file under test root path name used for testing */
-#define FILE_IN_DIRA            TEST_ROOT"/a/FILE0" /* common file under test root path name used for testing */
-#define DIRAB                   TEST_ROOT"/a/b"     /* common file under test root path name used for testing */
-#define DIRAC                   TEST_ROOT"/a/c"     /* common file under test root path name used for testing */
-
-#define TEST_BUF_SIZE           40                  /* 40, common data for test, no special meaning */
-#define TEST_SEEK_SIZE          10                  /* 10, common data for test, no special meaning */
-#define TEST_RW_SIZE            20                  /* 20, common data for test, no special meaning */
-#define TEST_LOOPUP_TIME        20                  /* 100, common data for test, no special meaning */
-
-#define TEST_MODE_NORMAL        0666
-#define TEST_MODE_HIGH          0777
 
 /* *
  * @tc.setup     : setup for all testcases
@@ -2015,94 +1979,119 @@ RUN_TEST_SUITE(PosixFsFuncTestSuite);
 void PosixFsFuncTest()
 {
     LOG("begin PosixFsFuncTest....\r\n");
-    RUN_ONE_TESTCASE(testFsFopenFclose001);
-    RUN_ONE_TESTCASE(testFsFopenFclose002);
-    RUN_ONE_TESTCASE(testFsFopenFclose003);
-    RUN_ONE_TESTCASE(testFsFopenFclose004);
-    RUN_ONE_TESTCASE(testFsFopenFclose005);
-    RUN_ONE_TESTCASE(testFsFopenFclose006);
-    RUN_ONE_TESTCASE(testFsFopenFclose007);
-    RUN_ONE_TESTCASE(testFsFopenFclose008);
-    RUN_ONE_TESTCASE(testFsFopenFclose009);
-    RUN_ONE_TESTCASE(testFsFopenFclose010);
-    RUN_ONE_TESTCASE(testFsFopenFclose011);
-    RUN_ONE_TESTCASE(testFsFdopen001);
-    RUN_ONE_TESTCASE(testFsFdopen002);
-    RUN_ONE_TESTCASE(testFsFdopen003);
-    RUN_ONE_TESTCASE(testFsFtellFseek001);
-    RUN_ONE_TESTCASE(testFsFtellFseek002);
-    RUN_ONE_TESTCASE(testFsFtellFseek003);
-    RUN_ONE_TESTCASE(testFsFtellFseek004);
-    RUN_ONE_TESTCASE(testFsFtellFseek005);
-    RUN_ONE_TESTCASE(testFsFtellFseek009);
-    RUN_ONE_TESTCASE(testFsFtellFseek011);
-    RUN_ONE_TESTCASE(testFsFtellFseek012);
-    RUN_ONE_TESTCASE(testFsFtellFseek014);
-    RUN_ONE_TESTCASE(testFsFtellFseek015);
-    RUN_ONE_TESTCASE(testFsFtellFseek016);
-    RUN_ONE_TESTCASE(testFsFputs001);
-    RUN_ONE_TESTCASE(testFsFputs002);
-    RUN_ONE_TESTCASE(testFsFputs003);
-    RUN_ONE_TESTCASE(testFsFputs004);
-    RUN_ONE_TESTCASE(testFsFputs005);
-    RUN_ONE_TESTCASE(testFsFreadFwrite001);
-    RUN_ONE_TESTCASE(testFsFreadFwrite002);
-    RUN_ONE_TESTCASE(testFsFreadFwrite003);
-    RUN_ONE_TESTCASE(testFsFreadFwrite004);
-    RUN_ONE_TESTCASE(testFsFreadFwrite005);
-    RUN_ONE_TESTCASE(testFsFreadFwrite006);
-    RUN_ONE_TESTCASE(testFsFreadFwrite007);
-    RUN_ONE_TESTCASE(testFsFreadFwrite008);
-    RUN_ONE_TESTCASE(testFsFreadFwrite009);
-    RUN_ONE_TESTCASE(testFsOpendir001);
-    RUN_ONE_TESTCASE(testFsOpendir002);
-    RUN_ONE_TESTCASE(testFsOpendir003);
-    RUN_ONE_TESTCASE(testFsReaddir001);
-    RUN_ONE_TESTCASE(testFsReaddir002);
-    RUN_ONE_TESTCASE(testFsReaddir003);
-    RUN_ONE_TESTCASE(testFsRemove001);
-    RUN_ONE_TESTCASE(testFsRemove002);
-    RUN_ONE_TESTCASE(testFsRemove003);
-    RUN_ONE_TESTCASE(testFsRemove004);
-    RUN_ONE_TESTCASE(testFsRmdir001);
-    RUN_ONE_TESTCASE(testFsRmdir002);
-    RUN_ONE_TESTCASE(testFsRmdir003);
-    RUN_ONE_TESTCASE(testFsRmdir004);
-    RUN_ONE_TESTCASE(testFsUnlink001);
-    RUN_ONE_TESTCASE(testFsUnlink002);
-    RUN_ONE_TESTCASE(testFsRename001);
-    RUN_ONE_TESTCASE(testFsRename002);
-    RUN_ONE_TESTCASE(testFsRename003);
-    RUN_ONE_TESTCASE(testFsStat001);
-    RUN_ONE_TESTCASE(testFsStat002);
-    RUN_ONE_TESTCASE(testFsStat003);
-    RUN_ONE_TESTCASE(testFsOpen001);
-    RUN_ONE_TESTCASE(testFsOpen002);
-    RUN_ONE_TESTCASE(testFsOpen003);
-    RUN_ONE_TESTCASE(testFsOpen004);
-    RUN_ONE_TESTCASE(testFsOpen005);
-    RUN_ONE_TESTCASE(testFsClose001);
-    RUN_ONE_TESTCASE(testFsWrite001);
-    RUN_ONE_TESTCASE(testFsWrite002);
-    RUN_ONE_TESTCASE(testFsWrite003);
+//     RUN_ONE_TESTCASE(testFsFopenFclose001);
+//     RUN_ONE_TESTCASE(testFsFopenFclose002);
+//     RUN_ONE_TESTCASE(testFsFopenFclose003);
+//     RUN_ONE_TESTCASE(testFsFopenFclose004);
+//     RUN_ONE_TESTCASE(testFsFopenFclose005);
+//     RUN_ONE_TESTCASE(testFsFopenFclose006);
+//     RUN_ONE_TESTCASE(testFsFopenFclose007);
+//     RUN_ONE_TESTCASE(testFsFopenFclose008);
+//     RUN_ONE_TESTCASE(testFsFopenFclose009);
+//     RUN_ONE_TESTCASE(testFsFopenFclose010);
+//     RUN_ONE_TESTCASE(testFsFopenFclose011);
+//     RUN_ONE_TESTCASE(testFsFdopen001);
+//     RUN_ONE_TESTCASE(testFsFdopen002);
+//     RUN_ONE_TESTCASE(testFsFdopen003);
+//     RUN_ONE_TESTCASE(testFsFtellFseek001);
+//     RUN_ONE_TESTCASE(testFsFtellFseek002);
+//     RUN_ONE_TESTCASE(testFsFtellFseek003);
+//     RUN_ONE_TESTCASE(testFsFtellFseek004);
+//     RUN_ONE_TESTCASE(testFsFtellFseek005);
+//     RUN_ONE_TESTCASE(testFsFtellFseek009);
+//     RUN_ONE_TESTCASE(testFsFtellFseek011);
+//     RUN_ONE_TESTCASE(testFsFtellFseek012);
+//     RUN_ONE_TESTCASE(testFsFtellFseek014);
+//     RUN_ONE_TESTCASE(testFsFtellFseek015);
+//     RUN_ONE_TESTCASE(testFsFtellFseek016);
+//     RUN_ONE_TESTCASE(testFsFputs001);
+//     RUN_ONE_TESTCASE(testFsFputs002);
+//     RUN_ONE_TESTCASE(testFsFputs003);
+//     RUN_ONE_TESTCASE(testFsFputs004);
+//     RUN_ONE_TESTCASE(testFsFputs005);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite001);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite002);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite003);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite004);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite005);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite006);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite007);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite008);
+//     RUN_ONE_TESTCASE(testFsFreadFwrite009);
+//     RUN_ONE_TESTCASE(testFsOpendir001);
+//     RUN_ONE_TESTCASE(testFsOpendir002);
+//     RUN_ONE_TESTCASE(testFsOpendir003);
+//     RUN_ONE_TESTCASE(testFsReaddir001);
+//     RUN_ONE_TESTCASE(testFsReaddir002);
+//     RUN_ONE_TESTCASE(testFsReaddir003);
+//     RUN_ONE_TESTCASE(testFsRemove001);
+//     RUN_ONE_TESTCASE(testFsRemove002);
+//     RUN_ONE_TESTCASE(testFsRemove003);
+//     RUN_ONE_TESTCASE(testFsRemove004);
+//     RUN_ONE_TESTCASE(testFsRmdir001);
+//     RUN_ONE_TESTCASE(testFsRmdir002);
+//     RUN_ONE_TESTCASE(testFsRmdir003);
+//     RUN_ONE_TESTCASE(testFsRmdir004);
+//     RUN_ONE_TESTCASE(testFsUnlink001);
+//     RUN_ONE_TESTCASE(testFsUnlink002);
+//     RUN_ONE_TESTCASE(testFsRename001);
+//     RUN_ONE_TESTCASE(testFsRename002);
+//     RUN_ONE_TESTCASE(testFsRename003);
+//     RUN_ONE_TESTCASE(testFsStat001);
+//     RUN_ONE_TESTCASE(testFsStat002);
+//     RUN_ONE_TESTCASE(testFsStat003);
+//     RUN_ONE_TESTCASE(testFsOpen001);
+//     RUN_ONE_TESTCASE(testFsOpen002);
+//     RUN_ONE_TESTCASE(testFsOpen003);
+//     RUN_ONE_TESTCASE(testFsOpen004);
+//     RUN_ONE_TESTCASE(testFsOpen005);
+//     RUN_ONE_TESTCASE(testFsClose001);
+//     RUN_ONE_TESTCASE(testFsWrite001);
+//     RUN_ONE_TESTCASE(testFsWrite002);
+//     RUN_ONE_TESTCASE(testFsWrite003);
 
-#if (LOSCFG_SUPPORT_LITTLEFS == 1)
-    RUN_ONE_TESTCASE(testFsFtellFseek006);
-    RUN_ONE_TESTCASE(testFsFtellFseek007);
-    RUN_ONE_TESTCASE(testFsFtellFseek008);
-    RUN_ONE_TESTCASE(testFsFtellFseek013);
-#endif
+// #if (LOSCFG_SUPPORT_LITTLEFS == 1)
+//     RUN_ONE_TESTCASE(testFsFtellFseek006);
+//     RUN_ONE_TESTCASE(testFsFtellFseek007);
+//     RUN_ONE_TESTCASE(testFsFtellFseek008);
+//     RUN_ONE_TESTCASE(testFsFtellFseek013);
+// #endif
 
-#if (LOSCFG_LIBC_MUSL == 1)
-    RUN_ONE_TESTCASE(testFsFdopen004);
-    RUN_ONE_TESTCASE(testFsFtellFseek010);
-    RUN_ONE_TESTCASE(testFsDirname001);
-    RUN_ONE_TESTCASE(testFsDirname002);
-    RUN_ONE_TESTCASE(testFsDirname003);
-    RUN_ONE_TESTCASE(testFsDirname004);
-    RUN_ONE_TESTCASE(testFsFcntl001);
-    RUN_ONE_TESTCASE(testFsFcntl002);
-#endif
+// #if (LOSCFG_LIBC_MUSL == 1)
+//     RUN_ONE_TESTCASE(testFsFdopen004);
+//     RUN_ONE_TESTCASE(testFsFtellFseek010);
+//     RUN_ONE_TESTCASE(testFsDirname001);
+//     RUN_ONE_TESTCASE(testFsDirname002);
+//     RUN_ONE_TESTCASE(testFsDirname003);
+//     RUN_ONE_TESTCASE(testFsDirname004);
+//     RUN_ONE_TESTCASE(testFsFcntl001);
+//     RUN_ONE_TESTCASE(testFsFcntl002);
+// #endif
+
+    posixFsOpenTest();
+    posixFsCloseTest();
+    posixFsOpendirTest();
+    posixFsClosedirTest();
+    posixFsReadTest();
+    posixFsWriteTest();
+    posixFsReaddirTest();
+    posixFsMkdirTest();
+    posixFsRmdirTest();
+    posixFsLseekTest();
+    posixFsUnlinkTest();
+    posixFsStatTest();
+    posixFsFstatTest();
+    posixFsFsyncTest();
+    posixFsRenameTest();
+    posixFsStatfsTest();
+    posixFsFtruncateTest();
+    posixFsPreadTest();
+    posixFsPwriteTest();
+    posixFsAccessTest();
+
+    posixFsFullTest();
+
+    posixFsStressTest();
 
     return;
 }
