@@ -37,7 +37,6 @@ kernel_module(module_name) {
     "los_exc.S",
     "los_interrupt.c",
     "los_timer.c",
-    "reset_vector.S",
   ]
   configs += [ "$LITEOSTOPDIR:warn_config" ]
 }
