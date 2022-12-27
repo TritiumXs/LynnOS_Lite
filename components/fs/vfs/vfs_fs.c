@@ -211,7 +211,7 @@ static size_t GetCanonicalPath(const char *cwd, const char *path, char *buf, siz
 }
 #endif
 
-static inline int VfsPathCheck(const char *path, bool isFile)
+static inline int VfsPathCheck(const char *path, BOOL isFile)
 {
     size_t len;
     if ((path == NULL) || (path[0] == '\0')) {
