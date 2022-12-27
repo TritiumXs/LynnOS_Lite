@@ -34,6 +34,7 @@ module_name = get_path_info(rebase_path("."), "name")
 kernel_module(module_name) {
   sources = [
     "porting/src/malloc.c",
+    "porting/src/network/h_errno.c",
     "porting/src/network/htonl.c",
     "porting/src/network/htons.c",
     "porting/src/network/ntohl.c",
