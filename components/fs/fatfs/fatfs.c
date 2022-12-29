@@ -536,11 +536,6 @@ int FatfsUnlink(struct MountPoint *mp, const char *path)
         return (int)LOS_NOK;
     }
 
-    if (!mp->mWriteEnable) {
-        errno = EACCES;
-        return (int)LOS_NOK;
-    }
-
     ret = FsChangeDrive(path);
     if (ret != (int)LOS_OK) {
         PRINT_ERR("FAT unlink ChangeDrive err 0x%x!\r\n", ret);
@@ -627,11 +622,6 @@ int FatfsMkdir(struct MountPoint *mp, const char *path)
 
     if (path == NULL) {
         errno = EFAULT;
-        return (int)LOS_NOK;
-    }
-
-    if (!mp->mWriteEnable) {
-        errno = EACCES;
         return (int)LOS_NOK;
     }
 
@@ -755,11 +745,6 @@ int FatfsRmdir(struct MountPoint *mp, const char *path)
         return (int)LOS_NOK;
     }
 
-    if (!mp->mWriteEnable) {
-        errno = EACCES;
-        return (int)LOS_NOK;
-    }
-
     ret = FsChangeDrive(path);
     if (ret != (int)LOS_OK) {
         PRINT_ERR("FAT rmdir ChangeDrive err 0x%x!\r\n", ret);
@@ -784,11 +769,6 @@ int FatfsRename(struct MountPoint *mp, const char *oldName, const char *newName)
 
     if ((oldName == NULL) || (newName == NULL)) {
         errno = EFAULT;
-        return (int)LOS_NOK;
-    }
-
-    if (!mp->mWriteEnable) {
-        errno = EACCES;
         return (int)LOS_NOK;
     }
 
