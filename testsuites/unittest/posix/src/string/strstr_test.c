@@ -46,25 +46,6 @@
 LITE_TEST_SUIT(Posix, Posixtimer, PosixStringStrStrTest);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringStrStrTestSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringStrStrTestTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number    : TEST_STRING_STRSTR_001
  * @tc.name      : find the first occurrence of sub-string in a string
  * @tc.desc      : [C- SOFTWARE -0200]
