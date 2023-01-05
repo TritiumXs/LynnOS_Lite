@@ -718,7 +718,7 @@ int FatfsStat(struct MountPoint *mp, const char *path, struct stat *buf)
 
     res = f_stat(path, &fileInfo);
     if (res != FR_OK) {
-        PRINT_ERR("FAT stat err 0x%x!\r\n", res);
+        if (res != FR_NO_FILE && res != FR_NO_PATH)	PRINT_ERR("FAT stat err 0x%x!\r\n", res);
         errno = FatfsErrno(res);
         ret = (int)LOS_NOK;
         goto OUT;
@@ -894,7 +894,7 @@ int FatfsReaddir(struct Dir *dir, struct dirent *dent)
     res = f_readdir(dp, &fileInfo);
     /* if res not ok or fname is NULL , return NULL */
     if ((res != FR_OK) || (fileInfo.fname[0] == 0x0)) {
-        PRINT_ERR("FAT readdir err 0x%x!\r\n", res);
+        if (res != FR_OK) PRINT_ERR("FAT readdir err 0x%x!\r\n", res);
         errno = FatfsErrno(res);
         FsUnlock();
         return (int)LOS_NOK;

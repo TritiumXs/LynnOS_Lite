@@ -46,7 +46,7 @@
 #include "rtc_time_hook.h"
 
 #define DELAYTIMER_MAX 0x7FFFFFFFF
-
+#undef __USE_NEWLIB__
 /* accumulative time delta from discontinuous modify */
 STATIC struct timespec g_accDeltaFromSet;
 
