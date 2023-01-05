@@ -47,25 +47,6 @@
 LITE_TEST_SUIT(Posix, Posixtimer, PosixStringStrchrTest);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringStrchrTestSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringStrchrTestTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number    : TEST_STRING_STRCHR_001
  * @tc.name      : find the first occurrence of a character in a string
  * @tc.desc      : [C- SOFTWARE -0200]

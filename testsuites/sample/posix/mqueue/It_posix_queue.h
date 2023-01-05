@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <osTest.h>
 #include "pthread.h"
+#include "unistd.h"
 
 #define MAXMSG5 5
 #define MSGLEN 10
@@ -60,14 +61,10 @@
 #define MQUEUE_MAX_NUM_TEST (LOSCFG_BASE_IPC_QUEUE_CONFIG - QUEUE_EXISTED_NUM)
 #define MQ_MAX_MSG_NUM 16
 #define MQ_MAX_MSG_LEN 64
-#define HWI_NUM_TEST 1
-#define HWI_NUM_TEST1 2
 
 #if (LOSCFG_LIBC_NEWLIB == 1)
 #define MQ_PRIO_MAX 1
 #endif
-
-#define LOSCFG_BASE_IPC_QUEUE_CONFIG 1024
 
 #define LOS_AtomicInc(a) (++*(a))
 #define MqueueTaskDelay(tick) (usleep((tick) * 10000))
@@ -104,6 +101,7 @@ extern VOID ItSuitePosixMqueue(VOID);
 extern UINT32 PosixPthreadInit(pthread_attr_t *attr, int pri);
 extern UINT32 PosixPthreadDestroy(pthread_attr_t *attr, pthread_t thread);
 extern VOID TestAssertWaitDelay(UINT32 *testCount, UINT32 flag);
+extern VOID TestExtraTaskDelay(UINT32 tick);
 
 VOID ItPosixQueue001(VOID);
 VOID ItPosixQueue002(VOID);
