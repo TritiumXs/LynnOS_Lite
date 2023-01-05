@@ -49,25 +49,6 @@
  */
 LITE_TEST_SUIT(Posix, PosixSemaphore, PosixSemaphoreFuncTestSuite);
 
-/* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixSemaphoreFuncTestSuiteSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixSemaphoreFuncTestSuiteTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
 // get cur-time plus ms
 struct timespec GetDelayedTime(unsigned int ms)
 {

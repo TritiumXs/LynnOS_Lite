@@ -46,25 +46,6 @@
 LITE_TEST_SUIT(Posix, Posixtimer, PosixCTypeIsxdigitTest);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixCTypeIsxdigitTestSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixCTypeIsxdigitTestTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number    : TEST_CTYPE_ISXDIGIT_001
  * @tc.name      : Checks whether a parameter is a hexadecimal digit
  * @tc.desc      : [C- SOFTWARE -0200]

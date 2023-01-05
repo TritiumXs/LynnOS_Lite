@@ -48,26 +48,6 @@
  */
 LITE_TEST_SUIT(Posix, Posixtimer, PosixStdargFuncTestSuite);
 
-/* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStdargFuncTestSuiteSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStdargFuncTestSuiteTearDown(void)
-{
-    printf("==== [ Stdarg TEST ] ====\n\n");
-    return TRUE;
-}
-
-
 int VaFunc(int argsNum, ...)
 {
     va_list vaP1;

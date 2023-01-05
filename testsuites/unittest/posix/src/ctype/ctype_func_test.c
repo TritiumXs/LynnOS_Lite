@@ -48,25 +48,6 @@
 LITE_TEST_SUIT(Posix, Posixctype, PosixCtypeFuncTestSuite);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixCtypeFuncTestSuiteSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixCtypeFuncTestSuiteTearDown(void)
-{
-    printf("==== [ Ctype TEST ] ====\n\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number TEST_CTYPE_ISALNUM_001
  * @tc.name   ctype_isalnum test with not exist pid
  * @tc.desc   [C- SOFTWARE -0200]

@@ -46,26 +46,6 @@
  */
 LITE_TEST_SUIT(Posix, Posixstring, PosixStringFuncTestSuite);
 
-
-/* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringFuncTestSuiteSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringFuncTestSuiteTearDown(void)
-{
-    printf("+Hello this is a String  function test+\n");
-    return TRUE;
-}
-
 /* *
  * @tc.number    : SUB_KERNEL_POSIX_STRING_OPERATION_001
  * @tc.name      : Memony operation for strcmp test

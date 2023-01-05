@@ -46,25 +46,6 @@
 LITE_TEST_SUIT(Posix, Posixtimer, PosixCTypeIsdigitTest);
 
 /**
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixCTypeIsdigitTestSetUp(void)
-{
-    return TRUE;
-}
-
-/**
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixCTypeIsdigitTestTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/**
  * @tc.number    : TEST_CTYPE_ISDIGIT_001
  * @tc.name      : Checks whether a parameter is a decimal digit (0-9)
  * @tc.desc      : [C- SOFTWARE -0200]

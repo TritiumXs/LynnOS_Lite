@@ -80,25 +80,6 @@ LITE_TEST_SUIT(Posix, PosixFs, PosixFsFuncTestSuite);
 #define TEST_MODE_HIGH          0777
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixFsFuncTestSuiteSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixFsFuncTestSuiteTearDown(void)
-{
-    printf("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number   SUB_KERNEL_FS_FOPEN_FCLOSE_001
  * @tc.name     fopen and fclose
  * @tc.desc     [C- SOFTWARE -0200]
