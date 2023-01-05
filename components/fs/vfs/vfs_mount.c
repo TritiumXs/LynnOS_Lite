@@ -357,6 +357,7 @@ static void CloseFdsInMp(const struct MountPoint *mp)
             (f->fFops != NULL) &&
             (f->fFops->close != NULL)) {
             (void)f->fFops->close(f);
+            VfsFilePut(f);
         }
     }
 }

@@ -37,6 +37,14 @@
 #include "vfs_mount.h"
 #include "vfs_operations.h"
 
+#define OS_FS_BITMAP_FS_SHIFT   5
+#define OS_FS_BITMAP_WORDS      ((NR_OPEN_DEFAULT >> OS_FS_BITMAP_FS_SHIFT) + 1)
+#define OS_FS_BITMAP_MASK       0x1FU
+#define OS_FS_ONEMAP_FULL       0xFFFFFFFF
+#define OS_FS_ONEMAP_BITS       32
+
+/* The bitmap is used to indicate whether the file is used, 1: used, 0: not used. */
+static UINT32 g_filesBitmap[OS_FS_BITMAP_WORDS] = {0};
 static struct File g_files[NR_OPEN_DEFAULT];
 
 int FileToFd(const struct File *file)
@@ -55,28 +63,38 @@ struct File *FdToFile(int fd)
     return &g_files[fd - MIN_START_FD];
 }
 
+/* Used to find the first bit of 0 in bitmap. */
+STATIC INLINE UINT16 GetFirstUnused(UINT32 bitmap)
+{
+    return CLZ(~bitmap);
+}
+
+STATIC INLINE VOID SetFreeFileBit(UINT32 index)
+{
+    g_filesBitmap[index >> OS_FS_BITMAP_FS_SHIFT] |= 1U << ((OS_FS_BITMAP_MASK - index) & OS_FS_BITMAP_MASK);
+}
+
+STATIC INLINE VOID ClearFreeFileBit(UINT32 index)
+{
+    g_filesBitmap[index >> OS_FS_BITMAP_FS_SHIFT] &= ~(1U << ((OS_FS_BITMAP_MASK - index) & OS_FS_BITMAP_MASK));
+}
+
 struct File *VfsFileGet(void)
 {
-    int i;
-    /* protected by g_fsMutex */
-    for (i = 0; i < NR_OPEN_DEFAULT; i++) {
-        if (g_files[i].fStatus == FILE_STATUS_NOT_USED) {
-            g_files[i].fStatus = FILE_STATUS_INITING;
-            return &g_files[i];
+    UINT32 index = 0;
+    UINT32 mask;
+
+    for (index = 0; index < NR_OPEN_DEFAULT; index += OS_FS_ONEMAP_BITS) {
+        mask = g_filesBitmap[index >> OS_FS_BITMAP_FS_SHIFT];
+        if (mask != OS_FS_ONEMAP_FULL) {
+            index = GetFirstUnused(mask) + index;
+            break;
         }
     }
 
-    return NULL;
-}
-
-struct File *VfsFileGetSpec(int fd)
-{
-    if ((fd < MIN_START_FD) || (fd >= CONFIG_NFILE_DESCRIPTORS)) {
-        return NULL;
-    }
-    if (g_files[fd - MIN_START_FD].fStatus == FILE_STATUS_NOT_USED) {
-        g_files[fd - MIN_START_FD].fStatus = FILE_STATUS_INITING;
-        return &g_files[fd - MIN_START_FD];
+    if (index < NR_OPEN_DEFAULT) {
+        SetFreeFileBit(index);
+        return &g_files[index];
     }
 
     return NULL;
@@ -95,4 +113,6 @@ void VfsFilePut(struct File *file)
     file->fOwner = -1;
     file->fullPath = NULL;
     file->fStatus = FILE_STATUS_NOT_USED;
+
+    ClearFreeFileBit(file - g_files);
 }
