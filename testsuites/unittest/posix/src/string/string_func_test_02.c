@@ -49,30 +49,6 @@
 LITE_TEST_SUIT(Posix, PosixStrings, PosixStringsFuncTestSuite);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringsFuncTestSuiteSetUp(void)
-{
-    LOG("+-------------------------------------------+\n");
-    LOG("+------PosixStringsFuncTestSuiteSetUp-------+\n");
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringsFuncTestSuiteTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    LOG("+-----PosixStringsFuncTestSuiteTearDown-----+\n");
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number SUB_KERNEL_IO_STRINGS_0100
  * @tc.name   strcasecmp basic function test
  * @tc.desc   [C- SOFTWARE -0200]
