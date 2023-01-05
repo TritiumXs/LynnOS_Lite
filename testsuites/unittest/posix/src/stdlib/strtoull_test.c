@@ -49,25 +49,6 @@
 LITE_TEST_SUIT(Posix, Posixtimer, PosixStdlibStrtoullTest);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStdlibStrtoullTestSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStdlibStrtoullTestTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number    : TEST_STDLIB_STRTOULL_001
  * @tc.name      : convert string by Strtoull
  * @tc.desc      : [C- SOFTWARE -0200]
