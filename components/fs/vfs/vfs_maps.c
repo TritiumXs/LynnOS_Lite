@@ -33,6 +33,7 @@
 #include "securec.h"
 #include "los_debug.h"
 #include "los_compiler.h"
+#include "los_fs.h"
 
 struct FsMap *g_fsMap = NULL;
 
@@ -40,49 +41,67 @@ struct FsMap *VfsFsMapGet(const char *fsType)
 {
     struct FsMap *curr = g_fsMap;
 
-    (void)VfsLock();
+    (void)LOS_FsLock();
     while (curr != NULL) {
         if ((curr->fsType != NULL) && (fsType != NULL) &&
             (strcmp(curr->fsType, fsType) == 0)) {
-            (void)VfsUnlock();
+            LOS_FsUnlock();
             return curr;
         }
         curr = curr->next;
     }
 
-    VfsUnlock();
+    LOS_FsUnlock();
     return NULL;
 }
 
-int OsFsRegister(const char *fsType, struct MountOps *fsMops,
-                 struct FileOps *fsFops, struct FsManagement *fsMgt)
+int OsFsRegister(const char *fsType, const struct MountOps *fsMops,
+                 const struct FileOps *fsFops, const struct FsManagement *fsMgt)
 {
+    size_t len;
     if ((fsMops == NULL) || (fsFops == NULL)) {
+        VFS_ERRNO_SET(EINVAL);
         return (int)LOS_NOK;
     }
 
-    struct FsMap *newfs = (struct FsMap *)malloc(sizeof(struct FsMap));
+    struct FsMap *newfs = (struct FsMap *)LOSCFG_FS_MALLOC_HOOK(sizeof(struct FsMap));
     if (newfs == NULL) {
         PRINT_ERR("Fs register malloc failed, fsType %s.\n", fsType);
+        VFS_ERRNO_SET(ENOMEM);
         return (int)LOS_NOK;
     }
     (void)memset_s(newfs, sizeof(struct FsMap), 0, sizeof(struct FsMap));
 
-    newfs->fsType = strdup(fsType);
+    len = strlen(fsType) + 1;
+    newfs->fsType = LOSCFG_FS_MALLOC_HOOK(len);
     if (newfs->fsType == NULL) {
-        free(newfs);
+        LOSCFG_FS_FREE_HOOK(newfs);
+        VFS_ERRNO_SET(ENOMEM);
         return (int)LOS_NOK;
     }
+    (void)strcpy_s((char *)newfs->fsType, len, fsType);
 
     newfs->fsMops = fsMops;
     newfs->fsFops = fsFops;
     newfs->fsMgt = fsMgt;
     newfs->fsRefs = 0;
 
-    (void)VfsLock();
+    (void)LOS_FsLock();
     newfs->next = g_fsMap;
     g_fsMap = newfs;
 
-    VfsUnlock();
+    LOS_FsUnlock();
     return LOS_OK;
+}
+
+int LOS_FsRegister(const char *fsType, const struct MountOps *fsMops,
+                   const struct FileOps *fsFops, const struct FsManagement *fsMgt)
+{
+    if (VfsFsMapGet(fsType) != NULL) {
+        PRINT_ERR("fsType has been registered or fsType error\n");
+        VFS_ERRNO_SET(EINVAL);
+        return (int)LOS_NOK;
+    }
+
+    return OsFsRegister(fsType, fsMops, fsFops, fsMgt);
 }

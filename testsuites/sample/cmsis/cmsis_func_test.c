@@ -91,7 +91,6 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis007, Function | MediumTest | Level1)
 {
     osMessageQueueId_t msgQueueId;
     osMessageQueueAttr_t attr = {0};
-    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     CHAR strbuff[] = "hello world";
     CHAR *name = NULL;
     INT32 ret;
@@ -101,30 +100,31 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis007, Function | MediumTest | Level1)
     msgQueueId = osMessageQueueNew(1, strlen(strbuff), &attr);
     ICUNIT_ASSERT_NOT_EQUAL(msgQueueId, NULL, msgQueueId);
 
-    name = osMessageQueueGetName(msgQueueId);
+    name = (CHAR *)osMessageQueueGetName(msgQueueId);
     ret = strcmp(name, "q1");
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
 
     ret = osMessageQueueDelete(msgQueueId);
     ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
 
-    name = osMessageQueueGetName(msgQueueId);
+    name = (CHAR *)osMessageQueueGetName(msgQueueId);
     ICUNIT_ASSERT_EQUAL(name, NULL, name);
 
 #if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
+    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     attr.mq_mem = staticBuff;
     attr.mq_size = STATCI_BUFF_SIZE;
     msgQueueId = osMessageQueueNew(1, STATCI_BUFF_SIZE, &attr);
     ICUNIT_ASSERT_NOT_EQUAL(msgQueueId, NULL, msgQueueId);
 
-    name = osMessageQueueGetName(msgQueueId);
+    name = (CHAR *)osMessageQueueGetName(msgQueueId);
     ret = strcmp(name, "q1");
     ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT);
 
     ret = osMessageQueueDelete(msgQueueId);
     ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
 
-    name = osMessageQueueGetName(msgQueueId);
+    name = (CHAR *)osMessageQueueGetName(msgQueueId);
     ICUNIT_ASSERT_EQUAL(name, NULL, name);
 #endif
 
@@ -155,13 +155,13 @@ static VOID CmsisQueueTestThread1(VOID)
     osStatus_t status;
 
     ret = osMessageQueuePut(g_msgQueueId1, &g_strbuff1, 0U, 0U);
-    ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
+    ICUNIT_ASSERT_EQUAL_VOID(ret, osOK, ret);
 
     status = osMessageQueueGet(g_msgQueueId2, &data, NULL, QUEUE_WAIT_TIMEOUT);
-    ICUNIT_ASSERT_EQUAL(status, osOK, status);
+    ICUNIT_ASSERT_EQUAL_VOID(status, osOK, status);
 
     ret = strcmp(data, "world");
-    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    ICUNIT_ASSERT_EQUAL_VOID(ret, 0, ret);
 }
 
 static VOID CmsisQueueTestThread2(VOID)
@@ -171,13 +171,13 @@ static VOID CmsisQueueTestThread2(VOID)
     osStatus_t status;
 
     status = osMessageQueueGet(g_msgQueueId1, &data, NULL, QUEUE_WAIT_TIMEOUT);
-    ICUNIT_ASSERT_EQUAL(status, osOK, status);
+    ICUNIT_ASSERT_EQUAL_VOID(status, osOK, status);
 
     ret = strcmp(data, "hello");
-    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    ICUNIT_ASSERT_EQUAL_VOID(ret, 0, ret);
 
     ret = osMessageQueuePut(g_msgQueueId2, &g_strbuff2, 0U, 0U);
-    ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
+    ICUNIT_ASSERT_EQUAL_VOID(ret, osOK, ret);
 }
 
 static INT32 ThreadReadWriteTest(VOID)
@@ -193,10 +193,10 @@ static INT32 ThreadReadWriteTest(VOID)
     g_msgQueueId2 = osMessageQueueNew(1, strlen(g_strbuff2), &attr);
     ICUNIT_ASSERT_NOT_EQUAL(g_msgQueueId2, NULL, g_msgQueueId2);
 
-    threadId1 = osThreadNew(CmsisQueueTestThread1, NULL, NULL);
+    threadId1 = osThreadNew((osThreadFunc_t)CmsisQueueTestThread1, NULL, NULL);
     ICUNIT_ASSERT_NOT_EQUAL(threadId1, NULL, threadId1);
 
-    threadId2 = osThreadNew(CmsisQueueTestThread2, NULL, NULL);
+    threadId2 = osThreadNew((osThreadFunc_t)CmsisQueueTestThread2, NULL, NULL);
     ICUNIT_ASSERT_NOT_EQUAL(threadId2, NULL, threadId2);
 
     osThreadJoin(threadId1);
@@ -239,8 +239,6 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis006, Function | MediumTest | Level1)
 LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis005, Function | MediumTest | Level1)
 {
     osMessageQueueId_t msgQueueId;
-    osMessageQueueAttr_t attr = {0};
-    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     CHAR strbuff[] = "hello world";
     CHAR data[STATCI_BUFF_SIZE] = {0};
     INT32 ret;
@@ -272,6 +270,8 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis005, Function | MediumTest | Level1)
 
 #if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
     /* static test */
+    osMessageQueueAttr_t attr = {0};
+    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     attr.mq_mem = staticBuff;
     attr.mq_size = STATCI_BUFF_SIZE;
     msgQueueId = osMessageQueueNew(1, STATCI_BUFF_SIZE, &attr);
@@ -311,8 +311,6 @@ EXIT:
 LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis004, Function | MediumTest | Level1)
 {
     osMessageQueueId_t msgQueueId;
-    osMessageQueueAttr_t attr = {0};
-    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     CHAR strbuff[] = "hello world";
     CHAR data[STATCI_BUFF_SIZE] = {0};
     INT32 ret;
@@ -335,6 +333,8 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis004, Function | MediumTest | Level1)
 
 #if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
     /* static test */
+    osMessageQueueAttr_t attr = {0};
+    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     attr.mq_mem = staticBuff;
     attr.mq_size = strlen(strbuff) + 1;
     msgQueueId = osMessageQueueNew(1, strlen(strbuff), &attr);
@@ -373,8 +373,6 @@ EXIT:
 LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis003, Function | MediumTest | Level1)
 {
     osMessageQueueId_t msgQueueId;
-    osMessageQueueAttr_t attr = {0};
-    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     CHAR strbuff[] = "hello world";
 
     /* dynmic test */
@@ -386,6 +384,8 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis003, Function | MediumTest | Level1)
 
 #if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
     /* static test */
+    osMessageQueueAttr_t attr = {0};
+    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     attr.mq_mem = staticBuff;
     attr.mq_size = STATCI_BUFF_SIZE;
     msgQueueId = osMessageQueueNew(0, strlen(strbuff), &attr);
@@ -417,8 +417,6 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis003, Function | MediumTest | Level1)
 LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis002, Function | MediumTest | Level1)
 {
     osMessageQueueId_t msgQueueId;
-    osMessageQueueAttr_t attr = {0};
-    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     CHAR strbuff[] = "hello world";
     INT32 ret;
 
@@ -434,6 +432,8 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis002, Function | MediumTest | Level1)
 
 #if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
     /* static test */
+    osMessageQueueAttr_t attr = {0};
+    CHAR staticBuff[STATCI_BUFF_SIZE] = {0};
     attr.mq_mem = staticBuff;
     attr.mq_size = STATCI_BUFF_SIZE;
     msgQueueId = osMessageQueueNew(1, STATCI_BUFF_SIZE, &attr);
@@ -445,6 +445,53 @@ LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsis002, Function | MediumTest | Level1)
     ret = osMessageQueueDelete(msgQueueId);
     ICUNIT_ASSERT_EQUAL(ret, osErrorParameter, ret);
 #endif
+
+    return LOS_OK;
+};
+
+static VOID timerCallback(void *arg)
+{
+    return;
+}
+
+/**
+ * @tc.name: TestCmsisTimer001
+ * @tc.desc: Timer Management test
+ * @tc.type: FUNC
+ * @tc.require: issueI5TQ0T
+ */
+LITE_TEST_CASE(CmsisFuncTestSuite, TestCmsisTimer001, Function | MediumTest | Level1)
+{
+    osTimerId_t time_id;
+    const char *timerGetName = NULL;
+    osStatus_t ret;
+
+    time_id = osTimerNew(timerCallback, osTimerOnce, NULL, NULL);
+    ICUNIT_ASSERT_NOT_EQUAL(time_id, NULL, time_id);
+
+    ret = osTimerStart(time_id, 100U); // 100, just for test
+    ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
+
+    timerGetName = osTimerGetName(time_id);
+    ICUNIT_GOTO_EQUAL(timerGetName, NULL, timerGetName, EXIT1);
+
+    ret = osTimerIsRunning(time_id);
+    ICUNIT_GOTO_EQUAL(ret, 1, ret, EXIT1);
+
+    ret = osTimerStop(time_id);
+    ICUNIT_GOTO_EQUAL(ret, osOK, ret, EXIT1);
+
+    ret = osTimerIsRunning(time_id);
+    ICUNIT_GOTO_EQUAL(ret, 0, ret, EXIT1);
+
+    ret = osTimerDelete(time_id);
+    ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
+
+    return LOS_OK;
+
+EXIT1:
+    ret = osTimerDelete(time_id);
+    ICUNIT_ASSERT_EQUAL(ret, osOK, ret);
 
     return LOS_OK;
 };
@@ -465,5 +512,7 @@ void CmsisFuncTestSuite(void)
 #endif
 
     ADD_TEST_CASE(TestCmsis007);
+
+    ADD_TEST_CASE(TestCmsisTimer001);
 }
 

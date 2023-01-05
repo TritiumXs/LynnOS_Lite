@@ -49,21 +49,17 @@
 
 #ifdef LOSCFG_FS_FAT
 #include "fatfs_conf.h"
-#define __FAT_NFILE FAT_MAX_OPEN_FILES
-#else
-#define __FAT_NFILE 0
 #endif
 
 #ifdef LOSCFG_FS_LITTLEFS
 #include "lfs_conf.h"
-#define __LFS_NFILE LOSCFG_LFS_MAX_OPEN_FILES
-#else
-#define __LFS_NFILE 0
 #endif
 
-#define CONFIG_NFILE_DESCRIPTORS    (__FAT_NFILE + __LFS_NFILE)
+#ifndef CONFIG_NFILE_DESCRIPTORS
+#define CONFIG_NFILE_DESCRIPTORS 256
+#endif
 
-#define NR_OPEN_DEFAULT CONFIG_NFILE_DESCRIPTORS
+#define NR_OPEN_DEFAULT (CONFIG_NFILE_DESCRIPTORS - MIN_START_FD)
 
 /* time configure */
 
@@ -87,5 +83,10 @@
 #define DEFAULT_FILE_MODE       0666
 
 #define MAX_DIRENT_NUM 14 // 14 means 4096 length buffer can store 14 dirent, see struct DIR
+
+/* max number of open directories */
+#ifndef LOSCFG_MAX_OPEN_DIRS
+#define LOSCFG_MAX_OPEN_DIRS 10
+#endif
 
 #endif

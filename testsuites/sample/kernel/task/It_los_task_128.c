@@ -32,9 +32,6 @@
 #include "osTest.h"
 #include "It_los_task.h"
 
-static UINT32 g_freeMem1 = 0;
-static UINT32 g_freeMem2 = 0;
-
 static UINT32 GetfreeMemSize(void *pool)
 {
     return LOS_MemPoolSizeGet(pool) - LOS_MemTotalUsedGet(pool);
@@ -55,7 +52,6 @@ static VOID TaskF01(VOID)
 static UINT32 TestCase(VOID)
 {
     UINT32 freeMem;
-    UINT32 freeMem1;
     UINT32 freeMem2;
     UINT32 ret;
     TSK_INIT_PARAM_S task1 = { 0 };

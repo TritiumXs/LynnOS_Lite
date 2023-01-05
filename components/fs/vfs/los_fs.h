@@ -38,6 +38,7 @@
 #define _LOS_FS_H_
 
 #include "los_config.h"
+#include "los_memory.h"
 #include "dirent.h"
 #include "sys/mount.h"
 #include "sys/statfs.h"
@@ -45,6 +46,7 @@
 #include "sys/uio.h"
 #include "unistd.h"
 #include <stdarg.h>
+#include "vfs_maps.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -52,40 +54,13 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-int LOS_Open(const char *path, int flags, ...);
-int LOS_Close(int fd);
-ssize_t LOS_Read(int fd, void *buff, size_t bytes);
-ssize_t LOS_Write(int fd, const void *buff, size_t bytes);
-off_t LOS_Lseek(int fd, off_t off, int whence);
-int LOS_Stat(const char *path, struct stat *stat);
-int LOS_Statfs(const char *path, struct statfs *buf);
-int LOS_Unlink(const char *path);
-int LOS_Rename(const char *oldpath, const char *newpath);
-int LOS_Fsync(int fd);
-DIR *LOS_Opendir(const char *path);
-struct dirent *LOS_Readdir(DIR *dir);
-int LOS_Closedir(DIR *dir);
-int LOS_Mkdir(const char *path, mode_t mode);
-int LOS_Rmdir(const char *path);
-int LOS_Lstat(const char *path, struct stat *buffer);
-int LOS_Fstat(int fd, struct stat *buf);
-int LOS_Fcntl(int fd, int cmd, ...);
-int LOS_Ioctl(int fd, int req, ...);
-ssize_t LOS_Readv(int fd, const struct iovec *iovBuf, int iovcnt);
-ssize_t LOS_Writev(int fd, const struct iovec *iovBuf, int iovcnt);
-ssize_t LOS_Pread(int fd, void *buff, size_t bytes, off_t off);
-ssize_t LOS_Pwrite(int fd, const void *buff, size_t bytes, off_t off);
-int LOS_Isatty(int fd);
-int LOS_Access(const char *path, int amode);
-int LOS_Ftruncate(int fd, off_t length);
-int LOS_FsUmount(const char *target);
-int LOS_FsUmount2(const char *target, int flag);
-int LOS_FsMount(const char *source, const char *target,
-                const char *fsType, unsigned long mountflags,
-                const void *data);
+#ifndef LOSCFG_FS_MALLOC_HOOK
+#define LOSCFG_FS_MALLOC_HOOK(size) LOS_MemAlloc((VOID *)OS_SYS_MEM_ADDR, size)
+#endif
 
-int OsFcntl(int fd, int cmd, va_list ap);
-int OsIoctl(int fd, int req, va_list ap);
+#ifndef LOSCFG_FS_FREE_HOOK
+#define LOSCFG_FS_FREE_HOOK(ptr) LOS_MemFree((VOID *)OS_SYS_MEM_ADDR, ptr)
+#endif
 
 struct PartitionCfg {
     /* partition low-level read func */
@@ -142,6 +117,39 @@ int LOS_DiskPartition(const char *dev, const char *fsType, int *lengthArray, int
  * @return Return LOS_NOK if error. Return LOS_OK if success.
  */
 int LOS_PartitionFormat(const char *partName, char *fsType, void *data);
+
+/*
+ * @brief new file system callbacks register.
+ * These callback functions are the adaptation layer implemented by the developer,
+ * used to interconnect the vfs with the new file system.
+ *
+ * LOS_FsRegister must be called after kernel initialization is complete.
+ *
+ * @param fsType file system type, don't register the same type fs more than once.
+ * @param fsMops mount operation of the fs.
+ * @param fsFops file operation of the fs.
+ * @param fsMgt management operation of the fs.
+ *
+ * @return Return LOS_OK if success.
+ *         Return LOS_NOK if error.
+ *         errno EINVAL: input errors, such as null pointers.
+ *         errno ENOMEM: memory may malloc failed.
+ *
+ */
+int LOS_FsRegister(const char *fsType, const struct MountOps *fsMops,
+                   const struct FileOps *fsFops, const struct FsManagement *fsMgt);
+
+/*
+ * @brief Lock the whole filesystem to forbid filesystem access.
+ *
+ * @return Return LOS_NOK if error. Return LOS_OK if seccess.
+ */
+int LOS_FsLock(void);
+
+/*
+ * @brief Unlock the whole filesystem to allow filesystem access.
+ */
+void LOS_FsUnlock(void);
 
 #ifdef __cplusplus
 #if __cplusplus

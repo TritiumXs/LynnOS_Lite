@@ -34,6 +34,8 @@
 #include "los_config.h"
 #include "kernel_test.h"
 #include "log.h"
+#include <string.h>
+#include <stdlib.h>
 
 
 #define EQUAL 0
@@ -78,19 +80,19 @@ static BOOL PosixStringsFuncTestSuiteTearDown(void)
 LITE_TEST_CASE(PosixStringsFuncTestSuite, testStrCaseCmp001, Function | MediumTest | Level1)
 {
     int ret = strcasecmp("", "");
-    TEST_ASSERT_EQUAL_INT(ret, EQUAL);
+    TEST_ASSERT_EQUAL_INT(EQUAL, ret);
 
     ret = strcasecmp("abcdefg", "abcdefg");
-    TEST_ASSERT_EQUAL_INT(ret, EQUAL);
+    TEST_ASSERT_EQUAL_INT(EQUAL, ret);
 
     ret = strcasecmp("abcdefg", "abcdEFg");
-    TEST_ASSERT_EQUAL_INT(ret, EQUAL);
+    TEST_ASSERT_EQUAL_INT(EQUAL, ret);
 
     ret = strcasecmp("abcdefg", "abcdEF");
-    TEST_ASSERT_NOT_EQUAL(ret, EQUAL);
+    TEST_ASSERT_NOT_EQUAL(EQUAL, ret);
 
     ret = strcasecmp("abcdef", "abcdEFg");
-    TEST_ASSERT_NOT_EQUAL(ret, EQUAL);
+    TEST_ASSERT_NOT_EQUAL(EQUAL, ret);
     return 0;
 };
 

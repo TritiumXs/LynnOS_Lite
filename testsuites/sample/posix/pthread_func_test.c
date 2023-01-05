@@ -31,7 +31,10 @@
 #include <securec.h>
 #include "osTest.h"
 #include "pthread.h"
+#include "time.h"
+#include <unistd.h>
 
+#undef TASK_PRIO_TEST
 #define TASK_PRIO_TEST           LOSCFG_BASE_CORE_TSK_DEFAULT_PRIO
 #define OS_TSK_TEST_STACK_SIZE   0x1000
 #define PTHREAD_TASK_DELAY       10
@@ -582,10 +585,10 @@ LITE_TEST_CASE(PthreadFuncTestSuite, TestPthread008, Function | MediumTest | Lev
     int result = 0;
     UINT32 ret;
 
-    ret = pthread_key_create(&g_pthreadKey1, pthreadKeyFree);
+    ret = pthread_key_create((pthread_key_t *)&g_pthreadKey1, pthreadKeyFree);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
-    ret = pthread_key_create(&g_pthreadKey2, pthreadKeyFree);
+    ret = pthread_key_create((pthread_key_t *)&g_pthreadKey2, pthreadKeyFree);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
     ret = pthread_attr_init(&attr);
@@ -657,7 +660,7 @@ LITE_TEST_CASE(PthreadFuncTestSuite, TestPthread009, Function | MediumTest | Lev
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
 
     for (i = 0; i < TEST_THREAD_COUNT; i++) {
-        ret = pthread_create(&thread[i], &attr, PthreadPrioFunc01, TEST_THREAD_COUNT - i);
+        ret = pthread_create(&thread[i], &attr, PthreadPrioFunc01, (void *)(TEST_THREAD_COUNT - i));
         ICUNIT_ASSERT_EQUAL(ret, 0, ret);
     }
 
@@ -677,7 +680,8 @@ LITE_TEST_CASE(PthreadFuncTestSuite, TestPthread009, Function | MediumTest | Lev
 static VOID PthreadOnceFunc01(void)
 {
     g_testCount++;
-    ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 1, g_testCount);
+    ICUNIT_TRACK_EQUAL(g_testCount, 1, g_testCount);
+    return;
 }
 
 /**
@@ -688,7 +692,6 @@ static VOID PthreadOnceFunc01(void)
 LITE_TEST_CASE(PthreadFuncTestSuite, TestPthread010, Function | MediumTest | Level1)
 {
     pthread_attr_t attr;
-    pthread_t thread[TEST_THREAD_COUNT];
     struct sched_param schedParam = { 0 };
     UINT32 ret;
     UINT32 i = 0;
@@ -741,7 +744,6 @@ LITE_TEST_CASE(PthreadFuncTestSuite, TestPthread011, Function | MediumTest | Lev
     pthread_t thread;
     struct sched_param schedParam = { 0 };
     UINT32 ret;
-    pthread_once_t onceControl = 0;
     g_testCount = 0;
     ret = pthread_attr_init(&attr);
     ICUNIT_ASSERT_EQUAL(ret, 0, ret);
@@ -802,7 +804,6 @@ LITE_TEST_CASE(PthreadFuncTestSuite, TestPthread012, Function | MediumTest | Lev
     pthread_t thread;
     struct sched_param schedParam = { 0 };
     UINT32 ret;
-    pthread_once_t onceControl = 0;
 
     g_testCount = 0;
     g_pthreadSem = 0;

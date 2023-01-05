@@ -39,8 +39,7 @@
 #include "vfs_maps.h"
 #include "vfs_mount.h"
 #include "securec.h"
-
-static pthread_mutex_t g_fsLocalMutex = PTHREAD_MUTEX_INITIALIZER;
+#include "los_fs.h"
 
 static struct PartitionCfg g_partitionCfg;
 static struct DeviceDesc *g_lfsDevice = NULL;
@@ -184,7 +183,13 @@ int LfsMount(struct MountPoint *mp, unsigned long mountflags, const void *data)
         goto errout;
     }
 
-    mountHdl = (lfs_t *)malloc(sizeof(lfs_t) + sizeof(struct lfs_config));
+    if (mountflags & MS_REMOUNT) {
+        errno = ENOSYS;
+        ret = (int)LOS_NOK;
+        goto errout;
+    }
+
+    mountHdl = (lfs_t *)LOSCFG_FS_MALLOC_HOOK(sizeof(lfs_t) + sizeof(struct lfs_config));
     if (mountHdl == NULL) {
         errno = ENODEV;
         ret = (int)LOS_NOK;
@@ -204,7 +209,7 @@ int LfsMount(struct MountPoint *mp, unsigned long mountflags, const void *data)
         }
     }
     if (ret != 0) {
-        free(mountHdl);
+        LOSCFG_FS_FREE_HOOK(mountHdl);
         errno = LittlefsErrno(ret);
         ret = (int)LOS_NOK;
     }
@@ -233,7 +238,7 @@ int LfsUmount(struct MountPoint *mp)
         ret = (int)LOS_NOK;
     }
 
-    free(mp->mData);
+    LOSCFG_FS_FREE_HOOK(mp->mData);
     mp->mData = NULL;
     return ret;
 }
@@ -327,7 +332,7 @@ int LfsOpendir(struct Dir *dir, const char *dirName)
     }
 
     lfs_t *lfs = (lfs_t *)dir->dMp->mData;
-    lfs_dir_t *dirInfo = (lfs_dir_t *)malloc(sizeof(lfs_dir_t));
+    lfs_dir_t *dirInfo = (lfs_dir_t *)LOSCFG_FS_MALLOC_HOOK(sizeof(lfs_dir_t));
     if (dirInfo == NULL) {
         errno = ENOMEM;
         return (int)LOS_NOK;
@@ -336,7 +341,7 @@ int LfsOpendir(struct Dir *dir, const char *dirName)
     (void)memset_s(dirInfo, sizeof(lfs_dir_t), 0, sizeof(lfs_dir_t));
     ret = lfs_dir_open(lfs, dirInfo, dirName);
     if (ret != 0) {
-        free(dirInfo);
+        LOSCFG_FS_FREE_HOOK(dirInfo);
         errno = LittlefsErrno(ret);
         goto errout;
     }
@@ -371,7 +376,6 @@ int LfsReaddir(struct Dir *dir, struct dirent *dent)
 
     ret = lfs_dir_read(lfs, dirInfo, &lfsInfo);
     if (ret == TRUE) {
-        pthread_mutex_lock(&g_fsLocalMutex);
         (void)strncpy_s(dent->d_name, sizeof(dent->d_name), lfsInfo.name, strlen(lfsInfo.name) + 1);
         if (lfsInfo.type == LFS_TYPE_DIR) {
             dent->d_type = DT_DIR;
@@ -380,7 +384,6 @@ int LfsReaddir(struct Dir *dir, struct dirent *dent)
         }
 
         dent->d_reclen = lfsInfo.size;
-        pthread_mutex_unlock(&g_fsLocalMutex);
 
         return LOS_OK;
     }
@@ -415,7 +418,7 @@ int LfsClosedir(struct Dir *dir)
         ret = (int)LOS_NOK;
     }
 
-    free(dirInfo);
+    LOSCFG_FS_FREE_HOOK(dirInfo);
     dir->dData = NULL;
 
     return ret;
@@ -432,7 +435,7 @@ int LfsOpen(struct File *file, const char *pathName, int openFlag)
         return (int)LOS_NOK;
     }
 
-    lfsHandle = (lfs_file_t *)malloc(sizeof(lfs_file_t));
+    lfsHandle = (lfs_file_t *)LOSCFG_FS_MALLOC_HOOK(sizeof(lfs_file_t));
     if (lfsHandle == NULL) {
         errno = ENOMEM;
         return (int)LOS_NOK;
@@ -441,7 +444,7 @@ int LfsOpen(struct File *file, const char *pathName, int openFlag)
     int lfsOpenFlag = ConvertFlagToLfsOpenFlag(openFlag);
     ret = lfs_file_open((lfs_t *)file->fMp->mData, lfsHandle, pathName, lfsOpenFlag);
     if (ret != 0) {
-        free(lfsHandle);
+        LOSCFG_FS_FREE_HOOK(lfsHandle);
         errno = LittlefsErrno(ret);
         goto errout;
     }
@@ -560,16 +563,13 @@ int LfsClose(struct File *file)
         return (int)LOS_NOK;
     }
 
-    pthread_mutex_lock(&g_fsLocalMutex);
     ret = lfs_file_close((lfs_t *)mp->mData, lfsHandle);
-    pthread_mutex_unlock(&g_fsLocalMutex);
-
     if (ret != 0) {
         errno = LittlefsErrno(ret);
         ret = (int)LOS_NOK;
     }
 
-    free(file->fData);
+    LOSCFG_FS_FREE_HOOK(file->fData);
     file->fData = NULL;
     return ret;
 }

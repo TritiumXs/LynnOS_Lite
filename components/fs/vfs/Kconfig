@@ -30,6 +30,23 @@
 config FS_VFS
     bool "Enable FS VFS"
     default y
+    select POSIX_FS_API
 
     help
       Answer Y to enable LiteOS support VFS.
+
+if FS_VFS
+config FS_LOCK_TIMEOUT
+    int "Filesystem global lock timeout value in tick. -1 for waiting forever"
+    default -1
+    help
+        The timeout value of getting filesystem lock in tick. -1 for waiting forever
+
+config FS_SUPPORT_MOUNT_TARGET_RECURSIVE
+    bool "Mount target can be recursive"
+    default n
+    depends on FS_VFS
+
+    help
+      Answer Y to enable LiteOS support VFS mount recursively. For example, "/system/bin".
+endif

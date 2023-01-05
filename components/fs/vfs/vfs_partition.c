@@ -77,6 +77,7 @@ struct DeviceDesc *getDeviceList(VOID)
 static int AddDevice(const char *dev, const char *fsType, int *lengthArray, int *addrArray,
                      int partNum)
 {
+    size_t len;
     struct DeviceDesc *prev = NULL;
     for (prev = g_deviceList; prev != NULL; prev = prev->dNext) {
         if (strcmp(prev->dDev, dev) == 0) {
@@ -90,21 +91,25 @@ static int AddDevice(const char *dev, const char *fsType, int *lengthArray, int 
         return (int)LOS_NOK;
     }
 
-    prev = (struct DeviceDesc *)malloc(sizeof(struct DeviceDesc));
+    prev = (struct DeviceDesc *)LOSCFG_FS_MALLOC_HOOK(sizeof(struct DeviceDesc));
     if (prev == NULL) {
         errno = -ENOMEM;
         return (int)LOS_NOK;
     }
-    prev->dDev = strdup(dev);
-    prev->dFsType  = strdup(fsType);
-    prev->dAddrArray = (int *)malloc(partNum * sizeof(int));
+    len = strlen(dev) + 1;
+    prev->dDev = LOSCFG_FS_MALLOC_HOOK(len);
+    len = strlen(fsType) + 1;
+    prev->dFsType = LOSCFG_FS_MALLOC_HOOK(len);
+    prev->dAddrArray = (int *)LOSCFG_FS_MALLOC_HOOK(partNum * sizeof(int));
     if (prev->dDev == NULL || prev->dFsType == NULL || prev->dAddrArray == NULL) {
         goto errout;
     }
+    (void)strcpy_s((char *)prev->dDev, len, dev);
+    (void)strcpy_s((char *)prev->dFsType, len, fsType);
     (void)memcpy_s(prev->dAddrArray, partNum * sizeof(int), addrArray, partNum * sizeof(int));
 
     if (lengthArray != NULL) {
-        prev->dLengthArray = (int *)malloc(partNum * sizeof(int));
+        prev->dLengthArray = (int *)LOSCFG_FS_MALLOC_HOOK(partNum * sizeof(int));
         if (prev->dLengthArray == NULL) {
             goto errout;
         }
@@ -117,19 +122,19 @@ static int AddDevice(const char *dev, const char *fsType, int *lengthArray, int 
     return LOS_OK;
 errout:
     if (prev->dDev != NULL) {
-        free((void *)prev->dDev);
+        LOSCFG_FS_FREE_HOOK((void *)prev->dDev);
     }
     if (prev->dFsType != NULL) {
-        free((void *)prev->dFsType);
+        LOSCFG_FS_FREE_HOOK((void *)prev->dFsType);
     }
     if (prev->dAddrArray != NULL) {
-        free((void *)prev->dAddrArray);
+        LOSCFG_FS_FREE_HOOK((void *)prev->dAddrArray);
     }
     if (prev->dLengthArray != NULL) {
-        free((void *)prev->dLengthArray);
+        LOSCFG_FS_FREE_HOOK((void *)prev->dLengthArray);
     }
 
-    free(prev);
+    LOSCFG_FS_FREE_HOOK(prev);
     errno = -ENOMEM;
     return (int)LOS_NOK;
 }
@@ -143,9 +148,7 @@ int LOS_DiskPartition(const char *dev, const char *fsType, int *lengthArray, int
     if ((fMap != NULL) && (fMap->fsMgt != NULL) &&
         (fMap->fsMgt->fdisk != NULL)) {
         ret = fMap->fsMgt->fdisk(dev, lengthArray, partNum);
-        if (ret == (int)LOS_NOK) {
-            return ret;
-        }
+        return ret;
     }
 
     ret = AddDevice(dev, fsType, lengthArray, addrArray, partNum);
@@ -160,8 +163,7 @@ int LOS_PartitionFormat(const char *partName, char *fsType, void *data)
        format is not allowed when the device has been mounted. */
     struct MountPoint *iter = NULL;
     LOS_MP_FOR_EACH_ENTRY(iter) {
-        if ((iter->mFs != NULL) && (iter->mFs->fsType != NULL) &&
-            strcmp(iter->mFs->fsType, fsType) == 0) {
+        if ((iter->mPath != NULL) && (strcmp(iter->mPath, partName) == 0)) {
             errno = EBUSY;
             return (int)LOS_NOK;
         }
