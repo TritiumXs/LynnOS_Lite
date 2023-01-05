@@ -75,24 +75,6 @@
  */
 LITE_TEST_SUIT(Posix, PosixTime, PosixTimeFuncTestSuite);
 
-/* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixTimeFuncTestSuiteSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixTimeFuncTestSuiteTearDown(void)
-{
-    return TRUE;
-}
-
 static int KeepRun(int msec)
 {
     struct timespec time1 = { 0, 0 };

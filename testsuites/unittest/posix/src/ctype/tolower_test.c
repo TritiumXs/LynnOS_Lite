@@ -46,25 +46,6 @@
 LITE_TEST_SUIT(Posix, Posixtimer, PosixCTypeTolowerTest);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixCTypeTolowerTestSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixCTypeTolowerTestTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number    : TEST_CTYPE_TOLOWER_001
  * @tc.name      : Converts an uppercase letter specified by c to its lowercase equivalent
  * @tc.desc      : [C- SOFTWARE -0200]

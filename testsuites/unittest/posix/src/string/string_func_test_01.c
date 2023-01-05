@@ -47,25 +47,6 @@
 LITE_TEST_SUIT(Posix, Posixtimer, PosixStringFuncTestSuite);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringFuncTestSuiteSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStringFuncTestSuiteTearDown(void)
-{
-    printf("==== [ String TEST ] ====\n\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number TEST_STRING_STRLEN_001
  * @tc.name   string_strlen error test with not exist pid
  * @tc.desc   [C- SOFTWARE -0200]

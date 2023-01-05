@@ -49,30 +49,6 @@
  */
 LITE_TEST_SUIT(Posix, PosixRegexTest, PosixRegexFuncTestSuite);
 
-/* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixRegexFuncTestSuiteSetUp(void)
-{
-    LOG("+-------------------------------------------+\n");
-    LOG("+--------PosixRegexFuncTestSuiteSetUp-------+\n");
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixRegexFuncTestSuiteTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    LOG("+-------PosixRegexFuncTestSuiteTearDown-----+\n");
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
 int TestRegex(int flag, const char *pattern, const char *buf, const int expectedStatus, const char *expectedRes)
 {
     regmatch_t pmatch[1];

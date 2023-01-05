@@ -47,25 +47,6 @@
 LITE_TEST_SUIT(Posix, Posixtimer, PosixStdlibAtolTest);
 
 /* *
- * @tc.setup     : setup for all testcases
- * @return       : setup result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStdlibAtolTestSetUp(void)
-{
-    return TRUE;
-}
-
-/* *
- * @tc.teardown  : teardown for all testcases
- * @return       : teardown result, TRUE is success, FALSE is fail
- */
-static BOOL PosixStdlibAtolTestTearDown(void)
-{
-    LOG("+-------------------------------------------+\n");
-    return TRUE;
-}
-
-/* *
  * @tc.number    : TEST_STDLIB_ATOL_001
  * @tc.name      : convert string to long integer
  * @tc.desc      : [C- SOFTWARE -0200]
