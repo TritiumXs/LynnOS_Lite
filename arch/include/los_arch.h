@@ -42,33 +42,37 @@ extern "C" {
 #endif /* __cplusplus */
 
 #if defined(__ICCARM__) || defined(__CC_ARM)
-STATIC INLINE UINTPTR ArchSpGet(VOID)
-{
-    UINTPTR sp;
-    __asm("mov %0, sp" : "=r" (sp));
-    return sp;
-}
+#define ARCH_SP_GET()                           \
+({                                              \
+    UINTPTR sp;                                 \
+    __asm("mov %0, sp" : "=r" (sp));            \
+    (sp);                                       \
+})
+#define ArchSpGet ARCH_SP_GET
 
-STATIC INLINE UINTPTR ArchPspGet(VOID)
-{
-    UINTPTR psp;
-    __asm("mrs %0, psp" : "=r" (psp));
-    return psp;
-}
+#define ARCH_PSP_GET()                          \
+({                                              \
+    UINTPTR psp;                                \
+    __asm("mrs %0, psp" : "=r" (psp));          \
+    (psp);                                      \
+})
+#define ArchPspGet ARCH_PSP_GET
 
-STATIC INLINE UINTPTR ArchMspGet(VOID)
-{
-    UINTPTR msp;
-    __asm("mrs %0, msp" : "=r" (msp));
-    return msp;
-}
+#define ARCH_MSP_GET()                          \
+({                                              \
+    UINTPTR msp;                                \
+    __asm("mrs %0, msp" : "=r" (msp));          \
+    (msp);                                      \
+})
+#define ArchMspGet ARCH_MSP_GET
 
-STATIC INLINE UINTPTR ArchLRGet(VOID)
-{
-    UINTPTR lr;
-    __asm("mov %0, lr" : "=r" (lr));
-    return lr;
-}
+#define ARCH_LR_GET()                           \
+({                                              \
+    unsigned int lr;                            \
+    __asm("mov %0, lr" : "=r" (lr));            \
+    (lr);                                       \
+})
+#define ArchLRGet ARCH_LR_GET
 #elif defined(__CLANG_ARM) || defined(__GNUC__)
 STATIC INLINE UINTPTR ArchSpGet(VOID)
 {
