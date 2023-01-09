@@ -41,10 +41,10 @@
 #define OS_TIMER_INT_MASK       7
 #define OS_TIMER_IRQ_NUM        8
 #define OS_TIMER_ENABLE         (1U << 0)
-#define OS_TIMER_32K_CLK_BIT    (1U << 21)
+#define OS_TIMER_32K_CLK_BIT    (1U << 20)
 #define OS_TIMER_CNT_READ_BIT   (1U << 0)
 
-#define OS_TIMER_REG_BASE           0x00802A40UL
+#define OS_TIMER_REG_BASE           0x00802A00UL
 #define OS_TIMER_CLK_PWD_ADDR       0x00802008UL
 #define OS_TIMER_PERIOD_REG_ADDR    (OS_TIMER_REG_BASE)
 #define OS_TIMER_CTL_REG_ADDR       (OS_TIMER_REG_BASE + 12)
