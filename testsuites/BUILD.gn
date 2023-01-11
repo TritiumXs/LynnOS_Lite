@@ -28,6 +28,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import("//kernel/liteos_m/liteos.gni")
+import("//kernel/liteos_m/config.gni")
 
 config("include") {
   defines = []
@@ -36,6 +37,8 @@ config("include") {
   if (defined(LOSCFG_KERNEL_TEST_FULL)) {
     defines += [ "LOS_KERNEL_TEST_FULL=1" ]
   }
+  cflags = warn_config_cflags
+  asmflags = warn_config_asmflags
 }
 
 module_switch = defined(LOSCFG_TEST)
