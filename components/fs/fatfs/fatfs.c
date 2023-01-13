@@ -295,6 +295,11 @@ int FatfsUmount(struct MountPoint *mp)
     }
 
     volId = GetPartIdByPartName(mp->mDev);
+    if ((volId < 0) || (volId >= MAX_PARTITION_NUM)) {
+        errno = EINVAL;
+        return (int)LOS_NOK;
+    }
+
     /* umount is not allowed when a file or directory is opened. */
     if (f_checkopenlock(volId) != FR_OK) {
         errno = EBUSY;
@@ -531,13 +536,10 @@ int FatfsUnlink(struct MountPoint *mp, const char *path)
     FRESULT res;
     int ret;
 
+    (void)mp;
+
     if (path == NULL) {
         errno = EFAULT;
-        return (int)LOS_NOK;
-    }
-
-    if (!mp->mWriteEnable) {
-        errno = EACCES;
         return (int)LOS_NOK;
     }
 
@@ -563,6 +565,8 @@ int FatfsStat(struct MountPoint *mp, const char *path, struct stat *buf)
     FRESULT res;
     FILINFO fileInfo = {0};
     int ret;
+
+    (void)mp;
 
     if ((path == NULL) || (buf == NULL)) {
         errno = EFAULT;
@@ -625,13 +629,10 @@ int FatfsMkdir(struct MountPoint *mp, const char *path)
     FRESULT res;
     int ret;
 
+    (void)mp;
+
     if (path == NULL) {
         errno = EFAULT;
-        return (int)LOS_NOK;
-    }
-
-    if (!mp->mWriteEnable) {
-        errno = EACCES;
         return (int)LOS_NOK;
     }
 
@@ -750,13 +751,10 @@ int FatfsRmdir(struct MountPoint *mp, const char *path)
     FRESULT res;
     int ret;
 
-    if ((path == NULL) || (mp == NULL)) {
-        errno = EFAULT;
-        return (int)LOS_NOK;
-    }
+    (void)mp;
 
-    if (!mp->mWriteEnable) {
-        errno = EACCES;
+    if (path == NULL) {
+        errno = EFAULT;
         return (int)LOS_NOK;
     }
 
@@ -782,13 +780,10 @@ int FatfsRename(struct MountPoint *mp, const char *oldName, const char *newName)
     FRESULT res;
     int ret;
 
+    (void)mp;
+
     if ((oldName == NULL) || (newName == NULL)) {
         errno = EFAULT;
-        return (int)LOS_NOK;
-    }
-
-    if (!mp->mWriteEnable) {
-        errno = EACCES;
         return (int)LOS_NOK;
     }
 
@@ -913,7 +908,7 @@ int FatfsFdisk(const char *dev, int *partTbl, int arrayNum)
     }
 
     pdrv = GetDevIdByDevName(dev);
-    if (pdrv < 0) {
+    if ((pdrv < 0) || (pdrv >= MAX_PARTITION_NUM)) {
         errno = EFAULT;
         return (int)LOS_NOK;
     }
