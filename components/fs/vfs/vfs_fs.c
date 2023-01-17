@@ -425,17 +425,25 @@ static ssize_t VfsWrite(int fd, const void *buff, size_t bytes)
         return ret;
     }
 
-    if ((file->fFlags & O_ACCMODE) == O_RDONLY) {
-        VFS_ERRNO_SET(EACCES);
-    } else if ((file->fFops != NULL) && (file->fFops->write != NULL)) {
-        ret = file->fFops->write(file, buff, bytes);
-    } else {
-        VFS_ERRNO_SET(ENOTSUP);
+    if (!file->fMp->mWriteEnable) {
+        VFS_ERRNO_SET(EROFS);
+        goto OUT;
     }
 
+    if ((file->fFlags & O_ACCMODE) == O_RDONLY) {
+        VFS_ERRNO_SET(EACCES);
+        goto OUT;
+    }
+
+    if ((file->fFops == NULL) && (file->fFops->write == NULL)) {
+        VFS_ERRNO_SET(ENOTSUP);
+        goto OUT;
+    }
+
+    ret = file->fFops->write(file, buff, bytes);
+OUT:
     /* else ret will be -1 */
     VfsDetachFile(file);
-
     return ret;
 }
 
@@ -775,6 +783,12 @@ int unlink(const char *path)
         return MapToPosixRet(ret);
     }
 
+    if (!mp->mWriteEnable) {
+        VFS_ERRNO_SET(EROFS);
+        LOS_FsUnlock();
+        return MapToPosixRet(ret);
+    }
+
     ret = mp->mFs->fsFops->unlink(mp, pathInMp);
 
     LOS_FsUnlock();
@@ -826,6 +840,12 @@ int rename(const char *oldpath, const char *newpath)
 
     if (mpOld != mpNew) {
         VFS_ERRNO_SET(EXDEV);
+        LOS_FsUnlock();
+        return MapToPosixRet(ret);
+    }
+
+    if (!mpOld->mWriteEnable) {
+        VFS_ERRNO_SET(EROFS);
         LOS_FsUnlock();
         return MapToPosixRet(ret);
     }
@@ -1017,6 +1037,12 @@ int mkdir(const char *path, mode_t mode)
         return MapToPosixRet(ret);
     }
 
+    if (!mp->mWriteEnable) {
+        VFS_ERRNO_SET(EROFS);
+        LOS_FsUnlock();
+        return MapToPosixRet(ret);
+    }
+
     if (mp->mFs->fsFops->mkdir != NULL) {
         ret = mp->mFs->fsFops->mkdir(mp, pathInMp);
     } else {
@@ -1047,6 +1073,12 @@ int rmdir(const char *path)
     if ((mp == NULL) || (pathInMp == NULL) || (*pathInMp == '\0') ||
         (mp->mFs->fsFops->rmdir == NULL)) {
         VFS_ERRNO_SET(ENOENT);
+        LOS_FsUnlock();
+        return MapToPosixRet(ret);
+    }
+
+    if (!mp->mWriteEnable) {
+        VFS_ERRNO_SET(EROFS);
         LOS_FsUnlock();
         return MapToPosixRet(ret);
     }
