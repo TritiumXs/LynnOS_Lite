@@ -527,6 +527,7 @@ static inline UINT64 __atomic_exchange_8(volatile void *mem, UINT64 val, int mod
 }
 #endif /* __XTENSA_LX6__ */
 
+#if (LOSCFG_LIBC_NEWLIB == 1)
 #define ALIAS_OF(of) __attribute__((alias(#of)))
 #define FUNC_ALIAS(real_func, new_alias, args_list, return_type) \
     return_type new_alias args_list ALIAS_OF(real_func)
@@ -534,6 +535,7 @@ static inline UINT64 __atomic_exchange_8(volatile void *mem, UINT64 val, int mod
 #else
 
 #define FUNC_ALIAS(real_func, new_alias, args_list, return_type)
+#endif
 
 #endif /* __GNUC__ */
 
