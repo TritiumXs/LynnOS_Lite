@@ -62,7 +62,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_ErrHandle(CHAR  *fileName,
         g_userErrFunc.pfnHook(fileName, lineNo, errorNo, paraLen, para);
     }
 
-    return LOS_OK;
+    return 0;
 }
 
 #ifdef __cplusplus
