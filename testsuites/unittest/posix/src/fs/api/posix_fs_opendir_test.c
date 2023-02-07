@@ -40,7 +40,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, TestFsOpendirOK, Function | MediumTest | Le
     int32_t ret;
 
     DIR *dir = opendir(TEST_ROOT);
-    ICUNIT_ASSERT_NOT_EQUAL_VOID(dir, NULL, dir);
+    ICUNIT_ASSERT_NOT_EQUAL(dir, NULL, dir);
 
     ret = closedir(dir);
     ICUNIT_ASSERT_NOT_EQUAL(ret, POSIX_FS_IS_ERROR, ret);
@@ -57,7 +57,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, TestFsOpendirEINVAL, Function | MediumTest 
 {
     DIR *dir = opendir(NULL);
     ICUNIT_ASSERT_EQUAL(errno, EINVAL, POSIX_FS_IS_ERROR);
-    ICUNIT_ASSERT_EQUAL_VOID(dir, NULL, dir);
+    ICUNIT_ASSERT_EQUAL(dir, NULL, dir);
 
     return POSIX_FS_NO_ERROR;
 }
@@ -76,8 +76,7 @@ LITE_TEST_CASE(PosixFsFuncTestSuite, TestFsOpendirENOENT, Function | MediumTest 
     dir = opendir(TEST_ROOT);
     g_mountPoints = mountBak;
     ICUNIT_ASSERT_EQUAL(errno, ENOENT, POSIX_FS_IS_ERROR);
-    ICUNIT_ASSERT_EQUAL_VOID(dir, NULL, dir);
-
+    ICUNIT_ASSERT_EQUAL(dir, NULL, dir);
     return POSIX_FS_NO_ERROR;
 }
 
