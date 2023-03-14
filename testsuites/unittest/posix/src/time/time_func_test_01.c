@@ -553,7 +553,7 @@ LITE_TEST_CASE(PosixTimeFuncTestSuite, testTimeStrftime003, Function | MediumTes
 LITE_TEST_CASE(PosixTimeFuncTestSuite, testTimes, Function | MediumTest | Level1)
 {
     const int testClockt = LOSCFG_BASE_CORE_TICK_PER_SECOND;
-    const int msPerClock = OS_SYS_MS_PER_SECOND / LOSCFG_BASE_CORE_TICK_PER_SECOND;
+    const int msPerClock = MILLISECONDS_PER_SECOND / LOSCFG_BASE_CORE_TICK_PER_SECOND;
     struct tms start = { 0 };
     struct tms end = { 0 };
     clock_t stTime = times(&start);
