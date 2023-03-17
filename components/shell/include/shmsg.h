@@ -44,6 +44,10 @@ extern "C" {
 extern UINT32 ShellMsgTypeGet(CmdParsed *cmdParsed, const CHAR *cmdType);
 extern VOID ExecCmdline(const CHAR *cmdline);
 
+#if (LOSCFG_USE_SHELL == 1)
+UINT32 LOS_ShellInit(VOID);
+#endif
+
 #define SHELL_CMD_PARSE_EVENT   0x111
 
 #define SH_OK  0

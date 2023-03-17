@@ -245,7 +245,7 @@ VOID ShellTaskEntry(VOID)
     }
 }
 
-LITE_OS_SEC_TEXT_MINOR UINT32 LosShellInit(VOID)
+LITE_OS_SEC_TEXT_MINOR UINT32 LOS_ShellInit(VOID)
 {
     UINT32 ret;
     UINT32 taskID1;
