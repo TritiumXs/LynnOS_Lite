@@ -253,7 +253,7 @@ choice
 
 config BACKTRACE_TYPE_1
     bool "1: Call stack analysis for cortex-m series by scanning the stack"
-    depends on ARCH_ARM && !ARCH_ARM9
+    depends on ARCH_ARM && !ARCH_ARM9 && !ARCH_CORTEX_R5
 
 config BACKTRACE_TYPE_2
     bool "2: Call stack analysis for risc-v by using frame pointer"
@@ -273,7 +273,7 @@ config BACKTRACE_TYPE_5
 
 config BACKTRACE_TYPE_6
     bool "6: Call stack analysis for arm9 by scanning the stack"
-    depends on ARCH_ARM9
+    depends on ARCH_ARM9 || ARCH_CORTEX_R5
 
 endchoice
 
