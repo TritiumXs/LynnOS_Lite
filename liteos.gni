@@ -33,6 +33,10 @@ LITEOS_MENUCONFIG_H = rebase_path("$root_out_dir/config.h")
 
 liteos_config_file = "${ohos_build_type}.config"
 
+if (board_toolchain_type == "clang") {
+  liteos_config_file = "clang-${liteos_config_file}"
+}
+
 liteos_config_file =
     rebase_path(liteos_config_file, "", "$product_path/kernel_configs")
 print("liteos_config_file:", liteos_config_file)
@@ -163,8 +167,8 @@ set_defaults("kernel_module") {
     "$LITEOSTOPDIR:los_config",
   ]
   visibility = [
-    "$LITEOSTOPDIR:*",
     ":*",
+    "$LITEOSTOPDIR:*",
     "..:*",
     "../..:*",
   ]
