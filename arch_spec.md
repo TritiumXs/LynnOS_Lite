@@ -5,6 +5,7 @@
 │   │   ├── arm9                                                --- ARM9 architecture
 │   │   │   └── gcc                                             --- Implementation of the GCC toolchain
 │   │   ├── cortex-m3                                           --- Cortex-m3 architecture
+│   │   │   └── iar                                             --- Implementation of the IAR toolchain
 │   │   │   └── keil                                            --- Implementation of the keil toolchain
 │   │   ├── cortex-m33                                          --- Cortex-m33 architecture
 │   │   │   │── gcc                                             --- Implementation of the GCC toolchain
