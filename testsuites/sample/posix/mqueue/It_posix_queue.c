@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -105,4 +105,19 @@ VOID ItSuitePosixMqueue(void)
     ItPosixQueue050();
     ItPosixQueue051();
     ItPosixQueue052();
+    ItPosixQueue053();
+    ItPosixQueue054();
+    ItPosixQueue055();
+    ItPosixQueue056();
+    ItPosixQueue057();
+    ItPosixQueue058();
+    ItPosixQueue059();
+    ItPosixQueue060();
+    ItPosixQueue061();
+    ItPosixQueue062();
+    ItPosixQueue063();
+    ItPosixQueue064();
+    ItPosixQueue065();
+    ItPosixQueue066();
+    ItPosixQueue067();
 }
