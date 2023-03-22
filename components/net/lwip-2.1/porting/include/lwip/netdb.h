@@ -34,6 +34,8 @@
 
 #include "lwip/arch.h"
 #include <netdb.h>
+#undef h_errno
+#undef LWIP_DNS_API_DECLARE_H_ERRNO
 #include_next <lwip/netdb.h>
 
 #endif /* _LWIP_PORTING_NETDB_H_ */
