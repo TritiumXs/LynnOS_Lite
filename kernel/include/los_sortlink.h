@@ -55,68 +55,25 @@ typedef struct {
     LOS_DL_LIST sortLink;
 } SortLinkAttribute;
 
-extern SortLinkAttribute g_taskSortLink;
+#define OS_SORT_LINK_INVALID_TIME               ((UINT64)-1)
+#define SET_SORTLIST_VALUE(sortList, value)     (((SortLinkList *)(sortList))->responseTime = (value))
+#define GET_SORTLIST_VALUE(sortList)            (((SortLinkList *)(sortList))->responseTime)
 
-#if (LOSCFG_BASE_CORE_SWTMR == 1)
-extern SortLinkAttribute g_swtmrSortLink;
-#endif
+#define OS_SORT_LINK_UINT64_MAX                 ((UINT64)-1)
 
-#define OS_SORT_LINK_INVALID_TIME ((UINT64)-1)
-#define SET_SORTLIST_VALUE(sortList, value) (((SortLinkList *)(sortList))->responseTime = (value))
-#define GET_SORTLIST_VALUE(sortList) (((SortLinkList *)(sortList))->responseTime)
+#define MIN(a,b)    ((a)<(b)?(a):(b))
 
-#define OS_SORT_LINK_UINT64_MAX ((UINT64)-1)
+extern UINT64 OsSortLinkGetRemainTime(UINT64 currTime, const SortLinkList *targetSortList);
+extern VOID OsDeleteNodeSortLink(SortLinkList *sortList);
+extern UINT64 OsGetNextExpireTime(UINT64 startTime, UINT32 tickPrecision, INT32 cpuid);
 
-STATIC INLINE UINT64 OsSortLinkGetRemainTime(UINT64 currTime, const SortLinkList *targetSortList)
-{
-    if (currTime >= targetSortList->responseTime) {
-        return 0;
-    }
-    return (targetSortList->responseTime - currTime);
-}
-
-STATIC INLINE VOID OsDeleteNodeSortLink(SortLinkList *sortList)
-{
-    LOS_ListDelete(&sortList->sortLinkNode);
-    SET_SORTLIST_VALUE(sortList, OS_SORT_LINK_INVALID_TIME);
-}
-
-STATIC INLINE UINT64 GetSortLinkNextExpireTime(SortLinkAttribute *sortHead, UINT64 startTime, UINT32 tickPrecision)
-{
-    LOS_DL_LIST *head = &sortHead->sortLink;
-    LOS_DL_LIST *list = head->pstNext;
-
-    if (LOS_ListEmpty(head)) {
-        return OS_SORT_LINK_UINT64_MAX - tickPrecision;
-    }
-
-    SortLinkList *listSorted = LOS_DL_LIST_ENTRY(list, SortLinkList, sortLinkNode);
-    if (listSorted->responseTime <= (startTime + tickPrecision)) {
-        return (startTime + tickPrecision);
-    }
-
-    return listSorted->responseTime;
-}
-
-STATIC INLINE UINT64 OsGetNextExpireTime(UINT64 startTime, UINT32 tickPrecision)
-{
-    UINT64 taskExpireTime = GetSortLinkNextExpireTime(&g_taskSortLink, startTime, tickPrecision);
-#if (LOSCFG_BASE_CORE_SWTMR == 1)
-    UINT64 swtmrExpireTime = GetSortLinkNextExpireTime(&g_swtmrSortLink, startTime, tickPrecision);
-#else
-    UINT64 swtmrExpireTime = taskExpireTime;
-#endif
-    return (taskExpireTime < swtmrExpireTime) ? taskExpireTime : swtmrExpireTime;
-}
-
-SortLinkAttribute *OsGetSortLinkAttribute(SortLinkType type);
-UINT32 OsSortLinkInit(SortLinkAttribute *sortLinkHead);
-VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, SortLinkType type);
-VOID OsDeleteSortLink(SortLinkList *node);
-UINT64 OsSortLinkGetTargetExpireTime(UINT64 currTime, const SortLinkList *targetSortList);
-UINT64 OsSortLinkGetNextExpireTime(const SortLinkAttribute *sortLinkHead);
-VOID OsSortLinkResponseTimeConvertFreq(UINT32 oldFreq);
-
+extern SortLinkAttribute *OsGetSortLinkAttribute(SortLinkType type, INT32 cpuid);
+extern UINT32 OsSortLinkInit(SortLinkAttribute *sortLinkHead);
+extern VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, SortLinkAttribute *sortLinkHead);
+extern VOID OsDeleteSortLink(SortLinkList *node);
+extern UINT64 OsSortLinkGetTargetExpireTime(UINT64 currTime, const SortLinkList *targetSortList);
+extern UINT64 OsSortLinkGetNextExpireTime(const SortLinkAttribute *sortLinkHead);
+extern VOID OsSortLinkResponseTimeConvertFreq(UINT32 oldFreq);
 
 #ifdef __cplusplus
 #if __cplusplus

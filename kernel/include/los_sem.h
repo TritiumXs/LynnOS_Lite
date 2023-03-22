@@ -37,7 +37,10 @@
 #ifndef _LOS_SEM_H
 #define _LOS_SEM_H
 
+#include "los_config.h"
 #include "los_task.h"
+
+#include "los_spinlock.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -306,6 +309,7 @@ typedef struct {
     UINT16 maxSemCount;  /**< Max number of available semaphores */
     UINT16 semID;        /**< Semaphore control structure ID */
     LOS_DL_LIST semList; /**< Queue of tasks that are waiting on a semaphore */
+    struct Spinlock lock;/**< Spinlock struct */
 } LosSemCB;
 
 /**

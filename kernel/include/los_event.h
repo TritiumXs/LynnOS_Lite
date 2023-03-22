@@ -37,7 +37,10 @@
 #ifndef _LOS_EVENT_H
 #define _LOS_EVENT_H
 
+#include "los_config.h"
+
 #include "los_list.h"
+#include "los_spinlock.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -172,6 +175,9 @@ typedef struct tagEvent {
     UINT32 uwEventID;        /**< Event mask in the event control block,
                                   indicating the event that has been logically processed. */
     LOS_DL_LIST stEventList; /**< Event control block linked list */
+
+    struct Spinlock lock;
+
 } EVENT_CB_S, *PEVENT_CB_S;
 /**
  * @ingroup los_event

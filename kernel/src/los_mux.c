@@ -36,11 +36,22 @@
 #include "los_interrupt.h"
 #include "los_memory.h"
 #include "los_sched.h"
+#include "los_spinlock.h"
 
 #if (LOSCFG_BASE_IPC_MUX == 1)
 
 LITE_OS_SEC_BSS       LosMuxCB*   g_allMux = NULL;
 LITE_OS_SEC_DATA_INIT LOS_DL_LIST g_unusedMuxList;
+
+STATIC VOID MuxLock(LosMuxCB *mux, UINT32 *intSave)
+{
+    LOS_SpinLockSave(&(mux->lock), intSave);
+}
+
+STATIC VOID MuxUnlock(LosMuxCB *mux, UINT32 intSave)
+{
+    LOS_SpinUnlockRestore(&(mux->lock), intSave);
+}
 
 /*****************************************************************************
  Function      : OsMuxInit
@@ -97,24 +108,33 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_MuxCreate(UINT32 *muxHandle)
         return LOS_ERRNO_MUX_PTR_NULL;
     }
 
-    intSave = LOS_IntLock();
+    OsSchedLock(&intSave);
     if (LOS_ListEmpty(&g_unusedMuxList)) {
-        LOS_IntRestore(intSave);
+        OsSchedUnlock(intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_MUX_ALL_BUSY);
     }
 
+    // 取出第一个空闲的控制块
     unusedMux = LOS_DL_LIST_FIRST(&(g_unusedMuxList));
     LOS_ListDelete(unusedMux);
     muxCreated = (GET_MUX_LIST(unusedMux));
+
+    // 初始化控制块
     muxCreated->muxCount = 0;
     muxCreated->muxStat = OS_MUX_USED;
     muxCreated->priority = 0;
     muxCreated->owner = (LosTaskCB *)NULL;
     LOS_ListInit(&muxCreated->muxList);
+    LOS_SpinInit(&(muxCreated->lock));// 初始化锁
+
+    // 保存互斥锁句柄
     *muxHandle = (UINT32)muxCreated->muxID;
-    LOS_IntRestore(intSave);
+
+    OsSchedUnlock(intSave);
+
     OsHookCall(LOS_HOOK_TYPE_MUX_CREATE, muxCreated);
     return LOS_OK;
+
 ERR_HANDLER:
     OS_RETURN_ERROR_P2(errLine, errNo);
 }
@@ -138,32 +158,39 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_MuxDelete(UINT32 muxHandle)
     }
 
     muxDeleted = GET_MUX(muxHandle);
-    intSave = LOS_IntLock();
+
+    // 持有自旋锁
+    MuxLock(muxDeleted, &intSave);
+
     if (muxDeleted->muxStat == OS_MUX_UNUSED) {
-        LOS_IntRestore(intSave);
+        MuxUnlock(muxDeleted, intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_MUX_INVALID);
     }
 
     if ((!LOS_ListEmpty(&muxDeleted->muxList)) || muxDeleted->muxCount) {
-        LOS_IntRestore(intSave);
+        MuxUnlock(muxDeleted, intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_MUX_PENDED);
     }
 
-    LOS_ListAdd(&g_unusedMuxList, &muxDeleted->muxList);
     muxDeleted->muxStat = OS_MUX_UNUSED;
-#if (LOSCFG_MUTEX_CREATE_TRACE == 1)
-    muxDeleted->createInfo = 0;
-#endif
-    LOS_IntRestore(intSave);
+    MuxUnlock(muxDeleted, intSave);
+
+    // 回收控制块
+    OsSchedLock(&intSave);
+    LOS_ListAdd(&g_unusedMuxList, &muxDeleted->muxList);
+    OsSchedUnlock(intSave);
 
     OsHookCall(LOS_HOOK_TYPE_MUX_DELETE, muxDeleted);
     return LOS_OK;
+
 ERR_HANDLER:
     OS_RETURN_ERROR_P2(errLine, errNo);
 }
 
 STATIC_INLINE UINT32 OsMuxValidCheck(LosMuxCB *muxPended)
 {
+    LosTask *losTask = OsTaskGet();
+
     if (muxPended->muxStat == OS_MUX_UNUSED) {
         return LOS_ERRNO_MUX_INVALID;
     }
@@ -172,12 +199,12 @@ STATIC_INLINE UINT32 OsMuxValidCheck(LosMuxCB *muxPended)
         return LOS_ERRNO_MUX_IN_INTERR;
     }
 
-    if (g_losTaskLock) {
+    if (OsTaskIslock(ArchCurrCpuid())) {
         PRINT_ERR("!!!LOS_ERRNO_MUX_PEND_IN_LOCK!!!\n");
         return LOS_ERRNO_MUX_PEND_IN_LOCK;
     }
 
-    if (g_losTask.runTask->taskStatus & OS_TASK_FLAG_SYSTEM_TASK) {
+    if (OsTaskIsSystemTask(losTask->runTask)) {
         return LOS_ERRNO_MUX_PEND_IN_SYSTEM_TASK;
     }
 
@@ -194,62 +221,93 @@ STATIC_INLINE UINT32 OsMuxValidCheck(LosMuxCB *muxPended)
  *****************************************************************************/
 LITE_OS_SEC_TEXT UINT32 LOS_MuxPend(UINT32 muxHandle, UINT32 timeout)
 {
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     LosMuxCB *muxPended = NULL;
     UINT32 retErr;
     LosTaskCB *runningTask = NULL;
+    LosTask *losTask = OsTaskGet();
 
     if (muxHandle >= (UINT32)LOSCFG_BASE_IPC_MUX_LIMIT) {
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);
     }
 
     muxPended = GET_MUX(muxHandle);
-    intSave = LOS_IntLock();
+
+    MuxLock(muxPended, &intSave);
+
     retErr = OsMuxValidCheck(muxPended);
     if (retErr) {
         goto ERROR_MUX_PEND;
     }
 
-    runningTask = (LosTaskCB *)g_losTask.runTask;
-    if (muxPended->muxCount == 0) {
+    // 获取当前任务句柄
+    runningTask = (LosTaskCB *)losTask->runTask;
+
+    // 当前没有任务持锁
+    if (muxPended->muxCount == 0)
+    {
         muxPended->muxCount++;
         muxPended->owner = runningTask;
         muxPended->priority = runningTask->priority;
-        LOS_IntRestore(intSave);
+
+        MuxUnlock(muxPended, intSave);
+
         goto HOOK;
     }
 
-    if (muxPended->owner == runningTask) {
+    // 当前任务已经持锁
+    if (muxPended->owner == runningTask)
+    {
         muxPended->muxCount++;
-        LOS_IntRestore(intSave);
+
+        MuxUnlock(muxPended, intSave);
+        
         goto HOOK;
     }
 
-    if (!timeout) {
+    if (!timeout)
+    {
         retErr = LOS_ERRNO_MUX_UNAVAILABLE;
         goto ERROR_MUX_PEND;
     }
 
     runningTask->taskMux = (VOID *)muxPended;
 
+    /* 调度相关 */
+    OsSchedLock(&intSave1);
+
+    // 提高当前持锁的任务的优先级
     if (muxPended->owner->priority > runningTask->priority) {
         (VOID)OsSchedModifyTaskSchedParam(muxPended->owner, runningTask->priority);
     }
 
+    // 挂起任务
     OsSchedTaskWait(&muxPended->muxList, timeout);
 
-    LOS_IntRestore(intSave);
+    OsSchedUnlock(intSave1);
+    /* 调度相关 */
+
+    MuxUnlock(muxPended, intSave);
+
     OsHookCall(LOS_HOOK_TYPE_MUX_PEND, muxPended, timeout);
+
+    // 当前核心触发一次调度
     LOS_Schedule();
 
-    intSave = LOS_IntLock();
-    if (runningTask->taskStatus & OS_TASK_STATUS_TIMEOUT) {
-        runningTask->taskStatus &= (~OS_TASK_STATUS_TIMEOUT);
+    // 执行到此处说明当前任务持锁操作已经完成(或者超时了)
+    OsSchedLock(&intSave1);
+
+    // 判断当前任务是否处于超时状态
+    if (OsSchedTimeoutHandle(runningTask) == OS_TASK_STATUS_TIMEOUT)
+    {
+        // 超时了
         retErr = LOS_ERRNO_MUX_TIMEOUT;
-        goto ERROR_MUX_PEND;
+        OsSchedUnlock(intSave1);
+        OS_RETURN_ERROR(retErr);
     }
 
-    LOS_IntRestore(intSave);
+    OsSchedUnlock(intSave1);
+
     return LOS_OK;
 
 HOOK:
@@ -257,7 +315,7 @@ HOOK:
     return LOS_OK;
 
 ERROR_MUX_PEND:
-    LOS_IntRestore(intSave);
+    MuxUnlock(muxPended, intSave);
     OS_RETURN_ERROR(retErr);
 }
 
@@ -270,41 +328,60 @@ ERROR_MUX_PEND:
  *****************************************************************************/
 LITE_OS_SEC_TEXT UINT32 LOS_MuxPost(UINT32 muxHandle)
 {
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     LosMuxCB *muxPosted = GET_MUX(muxHandle);
     LosTaskCB *resumedTask = NULL;
     LosTaskCB *runningTask = NULL;
 
-    intSave = LOS_IntLock();
+    LosTask *losTask = OsTaskGet();
+
+    MuxLock(muxPosted, &intSave);
 
     if ((muxHandle >= (UINT32)LOSCFG_BASE_IPC_MUX_LIMIT) ||
         (muxPosted->muxStat == OS_MUX_UNUSED)) {
-        LOS_IntRestore(intSave);
+
+        MuxUnlock(muxPosted, intSave);
+        
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);
     }
 
-    if (OS_INT_ACTIVE) {
-        LOS_IntRestore(intSave);
+    if (OS_INT_ACTIVE)
+    {
+        MuxUnlock(muxPosted, intSave);
+
         OS_RETURN_ERROR(LOS_ERRNO_MUX_IN_INTERR);
     }
 
-    runningTask = (LosTaskCB *)g_losTask.runTask;
-    if ((muxPosted->muxCount == 0) || (muxPosted->owner != runningTask)) {
-        LOS_IntRestore(intSave);
+    runningTask = (LosTaskCB *)losTask->runTask;
+    
+    if ((muxPosted->muxCount == 0) || (muxPosted->owner != runningTask))
+    {
+        MuxUnlock(muxPosted, intSave);
+
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);
     }
 
-    if (--(muxPosted->muxCount) != 0) {
-        LOS_IntRestore(intSave);
+    if (--(muxPosted->muxCount) != 0)
+    {
+        MuxUnlock(muxPosted, intSave);
+
         OsHookCall(LOS_HOOK_TYPE_MUX_POST, muxPosted);
         return LOS_OK;
     }
 
+    /* 调度相关 */
+    OsSchedLock(&intSave1);
+
+    // 修改优先级
     if ((muxPosted->owner->priority) != muxPosted->priority) {
         (VOID)OsSchedModifyTaskSchedParam(muxPosted->owner, muxPosted->priority);
     }
 
-    if (!LOS_ListEmpty(&muxPosted->muxList)) {
+    OsSchedUnlock(intSave1);
+    /* 调度相关 */
+
+    if (!LOS_ListEmpty(&muxPosted->muxList))
+    {
         resumedTask = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&(muxPosted->muxList)));
 
         muxPosted->muxCount = 1;
@@ -312,17 +389,35 @@ LITE_OS_SEC_TEXT UINT32 LOS_MuxPost(UINT32 muxHandle)
         muxPosted->priority = resumedTask->priority;
         resumedTask->taskMux = NULL;
 
+        /* 调度相关 */
+        OsSchedLock(&intSave1);
         OsSchedTaskWake(resumedTask);
+        OsSchedUnlock(intSave1);
+        /* 调度相关 */
 
-        LOS_IntRestore(intSave);
+        MuxUnlock(muxPosted, intSave);
+
         OsHookCall(LOS_HOOK_TYPE_MUX_POST, muxPosted);
-        LOS_Schedule();
-    } else {
+
+        // 让被释放的任务所在的核心执行一次调度
+        if (OS_SCHED_RQ_IS_RUNNING(resumedTask->schedRunqueueNum))
+        {
+            LOS_MpSchedule(CPUID_TO_AFFI_MASK(resumedTask->schedRunqueueNum));
+
+            // 当前核心进行任务调度
+            if (resumedTask->schedRunqueueNum == ArchCurrCpuid())
+            {
+                LOS_Schedule();
+            }
+        }
+    } 
+    else 
+    {
         muxPosted->owner = NULL;
-        LOS_IntRestore(intSave);
+
+        MuxUnlock(muxPosted, intSave);
     }
 
     return LOS_OK;
 }
-
 #endif /* (LOSCFG_BASE_IPC_MUX == 1) */

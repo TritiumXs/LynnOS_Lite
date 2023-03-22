@@ -52,6 +52,16 @@ LITE_OS_SEC_BSS LosQueueCB *g_staticQueue = NULL ;
 LITE_OS_SEC_BSS LOS_DL_LIST g_freeStaticQueueList;
 #endif
 
+STATIC VOID QueueLock(LosQueueCB *queue, UINT32 *intSave)
+{
+    LOS_SpinLockSave(&(queue->lock), intSave);
+}
+
+STATIC VOID QueueUnlock(LosQueueCB *queue, UINT32 intSave)
+{
+    LOS_SpinUnlockRestore(&(queue->lock), intSave);
+}
+
 /**************************************************************************
  Function    : OsQueueInit
  Description : queue initial
@@ -145,10 +155,10 @@ static UINT32 OsQueueCreate(const CHAR *queueName,
 #if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
     if (staticMem != NULL) {
         queue = staticMem;
-        intSave = LOS_IntLock();
+        OsSchedLock(&intSave);
 
         if (LOS_ListEmpty(&g_freeStaticQueueList)) {
-            LOS_IntRestore(intSave);
+            OsSchedUnlock(intSave);
             return LOS_ERRNO_QUEUE_CB_UNAVAILABLE;
         }
         unusedQueue = LOS_DL_LIST_FIRST(&(g_freeStaticQueueList));
@@ -158,9 +168,9 @@ static UINT32 OsQueueCreate(const CHAR *queueName,
             return LOS_ERRNO_QUEUE_CREATE_NO_MEMORY;
         }
 
-        intSave = LOS_IntLock();
+        OsSchedLock(&intSave);
         if (LOS_ListEmpty(&g_freeQueueList)) {
-            LOS_IntRestore(intSave);
+            OsSchedUnlock(intSave);
             (VOID)LOS_MemFree(m_aucSysMem0, queue);
             return LOS_ERRNO_QUEUE_CB_UNAVAILABLE;
         }
@@ -172,9 +182,9 @@ static UINT32 OsQueueCreate(const CHAR *queueName,
         return LOS_ERRNO_QUEUE_CREATE_NO_MEMORY;
     }
 
-    intSave = LOS_IntLock();
+    OsSchedLock(&intSave);
     if (LOS_ListEmpty(&g_freeQueueList)) {
-        LOS_IntRestore(intSave);
+        OsSchedUnlock(intSave);
         (VOID)LOS_MemFree(m_aucSysMem0, queue);
         return LOS_ERRNO_QUEUE_CB_UNAVAILABLE;
     }
@@ -195,10 +205,10 @@ static UINT32 OsQueueCreate(const CHAR *queueName,
     LOS_ListInit(&queueCB->readWriteList[OS_QUEUE_READ]);
     LOS_ListInit(&queueCB->readWriteList[OS_QUEUE_WRITE]);
     LOS_ListInit(&queueCB->memList);
-    LOS_IntRestore(intSave);
+    LOS_SpinInit(&(queueCB->lock));
 
     *queueID = queueCB->queueID;
-
+    OsSchedUnlock(intSave);
     OsHookCall(LOS_HOOK_TYPE_QUEUE_CREATE, queueCB);
 
     return LOS_OK;
@@ -302,7 +312,7 @@ static INLINE LITE_OS_SEC_TEXT UINT32 OsQueueWriteParameterCheck(UINT32 queueID,
 }
 
 static INLINE VOID OsQueueBufferOperate(LosQueueCB *queueCB, UINT32 operateType,
-                                                                VOID *bufferAddr, UINT32 *bufferSize)
+                                        VOID *bufferAddr, UINT32 *bufferSize)
 {
     UINT8 *queueNode = NULL;
     UINT32 msgDataSize;
@@ -386,9 +396,14 @@ UINT32 OsQueueOperate(UINT32 queueID, UINT32 operateType, VOID *bufferAddr, UINT
     UINT32 readWrite = OS_QUEUE_READ_WRITE_GET(operateType);
     UINT32 readWriteTmp = !readWrite;
 
-    UINT32 intSave = LOS_IntLock();
+    LosTask *losTask = OsTaskGet();
+
+    UINT32 intSave, intSave1;
 
     queueCB = (LosQueueCB *)GET_QUEUE_HANDLE(queueID);
+
+    QueueLock(queueCB, &intSave);
+
     ret = OsQueueOperateParamCheck(queueCB, operateType, bufferSize);
     if (ret != LOS_OK) {
         goto QUEUE_END;
@@ -400,40 +415,64 @@ UINT32 OsQueueOperate(UINT32 queueID, UINT32 operateType, VOID *bufferAddr, UINT
             goto QUEUE_END;
         }
 
-        if (g_losTaskLock) {
+        if (OsTaskIslock(ArchCurrCpuid())) {
             ret = LOS_ERRNO_QUEUE_PEND_IN_LOCK;
             goto QUEUE_END;
         }
 
-        LosTaskCB *runTsk = (LosTaskCB *)g_losTask.runTask;
+        LosTaskCB *runTsk = (LosTaskCB *)losTask->runTask;
+
+        // Schedule dependent
+        OsSchedLock(&intSave1);
         OsSchedTaskWait(&queueCB->readWriteList[readWrite], timeOut);
-        LOS_IntRestore(intSave);
+        OsSchedUnlock(intSave1);
+
+        // unlock
+        QueueUnlock(queueCB, intSave);
+
+        // The current task enters the blocking state and a scheduling is triggered on the current core
         LOS_Schedule();
 
-        intSave = LOS_IntLock();
-        if (runTsk->taskStatus & OS_TASK_STATUS_TIMEOUT) {
+        // lock again
+        QueueLock(queueCB, &intSave);
+
+        // Schedule dependent, timeout handling
+        OsSchedLock(&intSave1);
+        if (OsSchedTimeoutHandle(runTsk) == OS_TASK_STATUS_TIMEOUT) {
             runTsk->taskStatus &= ~OS_TASK_STATUS_TIMEOUT;
             ret = LOS_ERRNO_QUEUE_TIMEOUT;
+            OsSchedUnlock(intSave1);
             goto QUEUE_END;
         }
+        OsSchedUnlock(intSave1);
     } else {
         queueCB->readWriteableCnt[readWrite]--;
     }
 
     OsQueueBufferOperate(queueCB, operateType, bufferAddr, bufferSize);
 
-    if (!LOS_ListEmpty(&queueCB->readWriteList[readWriteTmp])) {
+    if (!(LOS_ListEmpty(&queueCB->readWriteList[readWriteTmp]))) {
         resumedTask = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&queueCB->readWriteList[readWriteTmp]));
+        // Schedule dependent
+        OsSchedLock(&intSave1);
         OsSchedTaskWake(resumedTask);
-        LOS_IntRestore(intSave);
-        LOS_Schedule();
+        OsSchedUnlock(intSave1);
+
+        // unlock
+        QueueUnlock(queueCB, intSave);
+
+        // Let the core where the freed task is located perform a scheduling
+        LOS_MpSchedule(CPUID_TO_AFFI_MASK(resumedTask->schedRunqueueNum));
+        if (resumedTask->schedRunqueueNum == ArchCurrCpuid()) {
+            LOS_Schedule();
+        }
         return LOS_OK;
     } else {
         queueCB->readWriteableCnt[readWriteTmp]++;
     }
 
 QUEUE_END:
-    LOS_IntRestore(intSave);
+    QueueUnlock(queueCB, intSave);
     return ret;
 }
 
@@ -559,9 +598,10 @@ LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteHead(UINT32 queueID,
 LITE_OS_SEC_TEXT VOID *OsQueueMailAlloc(UINT32 queueID, VOID *mailPool, UINT32 timeOut)
 {
     VOID *mem = (VOID *)NULL;
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     LosQueueCB *queueCB = (LosQueueCB *)NULL;
     LosTaskCB *runTsk = (LosTaskCB *)NULL;
+    LosTask *losTask = OsTaskGet();
 
     if (queueID >= OS_ALL_IPC_QUEUE_LIMIT) {
         return NULL;
@@ -577,8 +617,8 @@ LITE_OS_SEC_TEXT VOID *OsQueueMailAlloc(UINT32 queueID, VOID *mailPool, UINT32 t
         }
     }
 
-    intSave = LOS_IntLock();
     queueCB = GET_QUEUE_HANDLE(queueID);
+    QueueLock(queueCB, &intSave);
     if (queueCB->queueState == OS_QUEUE_UNUSED) {
         goto END;
     }
@@ -589,14 +629,22 @@ LITE_OS_SEC_TEXT VOID *OsQueueMailAlloc(UINT32 queueID, VOID *mailPool, UINT32 t
             goto END;
         }
 
-        runTsk = (LosTaskCB *)g_losTask.runTask;
+        runTsk = (LosTaskCB *)losTask->runTask;
+        
+        OsSchedLock(&intSave1);
         OsSchedTaskWait(&queueCB->memList, timeOut);
-        LOS_IntRestore(intSave);
+        OsSchedUnlock(intSave1);
+
+        QueueUnlock(queueCB, intSave);
+
         LOS_Schedule();
 
-        intSave = LOS_IntLock();
+        QueueLock(queueCB, &intSave);
+
+        OsSchedLock(&intSave1);
         if (runTsk->taskStatus & OS_TASK_STATUS_TIMEOUT) {
             runTsk->taskStatus &= (~OS_TASK_STATUS_TIMEOUT);
+            OsSchedUnlock(intSave1);
             goto END;
         } else {
             /* When enters the current branch, means the current task already got an available membox,
@@ -604,11 +652,12 @@ LITE_OS_SEC_TEXT VOID *OsQueueMailAlloc(UINT32 queueID, VOID *mailPool, UINT32 t
              */
             mem = runTsk->msg;
             runTsk->msg = NULL;
+            OsSchedUnlock(intSave1);
         }
     }
 
 END:
-    LOS_IntRestore(intSave);
+    QueueUnlock(queueCB, intSave);
     return mem;
 }
 
@@ -623,7 +672,7 @@ END:
  *****************************************************************************/
 LITE_OS_SEC_TEXT UINT32 OsQueueMailFree(UINT32 queueID, VOID *mailPool, VOID *mailMem)
 {
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     LosQueueCB *queueCB = (LosQueueCB *)NULL;
     LosTaskCB *resumedTask = (LosTaskCB *)NULL;
 
@@ -635,10 +684,12 @@ LITE_OS_SEC_TEXT UINT32 OsQueueMailFree(UINT32 queueID, VOID *mailPool, VOID *ma
         return LOS_ERRNO_QUEUE_MAIL_PTR_INVALID;
     }
 
-    intSave = LOS_IntLock();
     queueCB = GET_QUEUE_HANDLE(queueID);
+
+    QueueLock(queueCB, &intSave);
+
     if (queueCB->queueState == OS_QUEUE_UNUSED) {
-        LOS_IntRestore(intSave);
+        QueueUnlock(queueCB, intSave);
         return LOS_ERRNO_QUEUE_NOT_CREATE;
     }
 
@@ -648,16 +699,23 @@ LITE_OS_SEC_TEXT UINT32 OsQueueMailFree(UINT32 queueID, VOID *mailPool, VOID *ma
          * get an available mailMem.
          */
         resumedTask->msg = mailMem;
+        // Schedule dependent
+        OsSchedLock(&intSave1);
         OsSchedTaskWake(resumedTask);
-        LOS_IntRestore(intSave);
+        OsSchedUnlock(intSave1);
+
+        QueueUnlock(queueCB, intSave);
+
+        // Let the core where the task is being woken perform a scheduling
+        LOS_MpSchedule(CPUID_TO_AFFI_MASK(resumedTask->schedRunqueueNum));
         LOS_Schedule();
     } else {
         /* No task waiting for the mailMem, so free it. */
         if (LOS_MemboxFree(mailPool, mailMem)) {
-            LOS_IntRestore(intSave);
+            QueueUnlock(queueCB, intSave);
             return LOS_ERRNO_QUEUE_MAIL_FREE_ERROR;
         }
-        LOS_IntRestore(intSave);
+        QueueUnlock(queueCB, intSave);
     }
 
     return LOS_OK;
@@ -674,15 +732,17 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_QueueDelete(UINT32 queueID)
 {
     LosQueueCB *queueCB = NULL;
     UINT8 *queue = NULL;
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     UINT32 ret;
 
     if (queueID >= OS_ALL_IPC_QUEUE_LIMIT) {
         return LOS_ERRNO_QUEUE_NOT_FOUND;
     }
 
-    intSave = LOS_IntLock();
     queueCB = (LosQueueCB *)GET_QUEUE_HANDLE(queueID);
+
+    QueueLock(queueCB, &intSave);
+
     if (queueCB->queueState == OS_QUEUE_UNUSED) {
         ret = LOS_ERRNO_QUEUE_NOT_CREATE;
         goto QUEUE_END;
@@ -713,16 +773,17 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_QueueDelete(UINT32 queueID)
     queueCB->queue = (UINT8 *)NULL;
     queueCB->queueName = (UINT8 *)NULL;
     queueCB->queueState = OS_QUEUE_UNUSED;
+    OsSchedLock(&intSave1);
 
 #if (LOSCFG_BASE_IPC_QUEUE_STATIC == 1)
     if (queueID >= LOSCFG_BASE_IPC_QUEUE_LIMIT && queueID < OS_ALL_IPC_QUEUE_LIMIT) {
         LOS_ListAdd(&g_freeStaticQueueList, &queueCB->readWriteList[OS_QUEUE_WRITE]);
-        LOS_IntRestore(intSave);
+        OsSchedUnlock(intSave1);
         return LOS_OK;
     }
 #endif
     LOS_ListAdd(&g_freeQueueList, &queueCB->readWriteList[OS_QUEUE_WRITE]);
-    LOS_IntRestore(intSave);
+    OsSchedUnlock(intSave1);
 
     OsHookCall(LOS_HOOK_TYPE_QUEUE_DELETE, queueCB);
 
@@ -730,7 +791,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_QueueDelete(UINT32 queueID)
     return ret;
 
 QUEUE_END:
-    LOS_IntRestore(intSave);
+    QueueUnlock(queueCB, intSave);
     return ret;
 }
 
@@ -750,9 +811,11 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_QueueInfoGet(UINT32 queueID, QUEUE_INFO_S *que
     }
 
     (VOID)memset_s((VOID *)queueInfo, sizeof(QUEUE_INFO_S), 0, sizeof(QUEUE_INFO_S));
-    intSave = LOS_IntLock();
 
     queueCB = (LosQueueCB *)GET_QUEUE_HANDLE(queueID);
+
+    QueueLock(queueCB, &intSave);
+
     if (queueCB->queueState == OS_QUEUE_UNUSED) {
         ret = LOS_ERRNO_QUEUE_NOT_CREATE;
         goto QUEUE_END;
@@ -782,7 +845,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_QueueInfoGet(UINT32 queueID, QUEUE_INFO_S *que
     }
 
 QUEUE_END:
-    LOS_IntRestore(intSave);
+    QueueUnlock(queueCB, intSave);
     return ret;
 }
 

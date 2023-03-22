@@ -33,10 +33,10 @@
 #include "los_sched.h"
 #include "los_debug.h"
 
-SortLinkAttribute g_taskSortLink;
+STATIC SortLinkAttribute g_taskSortLink[LOSCFG_KERNEL_CORE_NUM] = {0};
 
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
-SortLinkAttribute g_swtmrSortLink;
+STATIC SortLinkAttribute g_swtmrSortLink[LOSCFG_KERNEL_CORE_NUM] = {0};
 #endif
 
 UINT32 OsSortLinkInit(SortLinkAttribute *sortLinkHead)
@@ -75,25 +75,20 @@ STATIC INLINE VOID OsAddNode2SortLink(SortLinkAttribute *sortLinkHead, SortLinkL
     } while (1);
 }
 
-VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, SortLinkType type)
+VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, SortLinkAttribute *sortLinkHead)
 {
     UINT32 intSave;
-    SortLinkAttribute *sortLinkHead = NULL;
-
-    if (type == OS_SORT_LINK_TASK) {
-        sortLinkHead = &g_taskSortLink;
-#if (LOSCFG_BASE_CORE_SWTMR == 1)
-    } else if (type == OS_SORT_LINK_SWTMR) {
-        sortLinkHead = &g_swtmrSortLink;
-#endif
-    } else {
-        LOS_Panic("Sort link type error : %u\n", type);
-    }
 
     intSave = LOS_IntLock();
-    SET_SORTLIST_VALUE(node, startTime + OS_SYS_TICK_TO_CYCLE(waitTicks));
+    SET_SORTLIST_VALUE(node, startTime + (UINT64)waitTicks * OS_CYCLE_PER_TICK);
     OsAddNode2SortLink(sortLinkHead, node);
     LOS_IntRestore(intSave);
+}
+
+VOID OsDeleteNodeSortLink(SortLinkList *sortList)
+{
+    LOS_ListDelete(&sortList->sortLinkNode);
+    SET_SORTLIST_VALUE(sortList, OS_SORT_LINK_INVALID_TIME);
 }
 
 VOID OsDeleteSortLink(SortLinkList *node)
@@ -126,22 +121,25 @@ STATIC INLINE VOID SortLinkNodeTimeUpdate(SortLinkAttribute *sortLinkHead, UINT3
 
 VOID OsSortLinkResponseTimeConvertFreq(UINT32 oldFreq)
 {
-    SortLinkAttribute *taskHead = &g_taskSortLink;
-    SortLinkNodeTimeUpdate(taskHead, oldFreq);
+    INT32 i;
+    for (i = 0; i < LOSCFG_KERNEL_CORE_NUM; i++) {
+        SortLinkNodeTimeUpdate(&g_taskSortLink[i], oldFreq);
+    }
 
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
-    SortLinkAttribute *swtmrHead = &g_swtmrSortLink;
-    SortLinkNodeTimeUpdate(swtmrHead, oldFreq);
+    for (i = 0; i < LOSCFG_KERNEL_CORE_NUM; i++) {
+        SortLinkNodeTimeUpdate(&g_swtmrSortLink[i], oldFreq);
+    }
 #endif
 }
 
-SortLinkAttribute *OsGetSortLinkAttribute(SortLinkType type)
+SortLinkAttribute *OsGetSortLinkAttribute(SortLinkType type, INT32 cpuid)
 {
     if (type == OS_SORT_LINK_TASK) {
-        return &g_taskSortLink;
+        return &g_taskSortLink[cpuid];
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
     } else if (type == OS_SORT_LINK_SWTMR) {
-        return &g_swtmrSortLink;
+        return &g_swtmrSortLink[cpuid];
 #endif
     }
 
@@ -149,6 +147,12 @@ SortLinkAttribute *OsGetSortLinkAttribute(SortLinkType type)
     return NULL;
 }
 
+/*
+    OsSortLinkGetTargetExpireTime
+        获取某个超时元素的超时时间(从 currTime 开始算)
+        如果超时时间已经大于 currTime
+        返回值为0
+*/
 UINT64 OsSortLinkGetTargetExpireTime(UINT64 currTime, const SortLinkList *targetSortList)
 {
     if (currTime >= targetSortList->responseTime) {
@@ -168,4 +172,52 @@ UINT64 OsSortLinkGetNextExpireTime(const SortLinkAttribute *sortLinkHead)
 
     SortLinkList *listSorted = LOS_DL_LIST_ENTRY(head->pstNext, SortLinkList, sortLinkNode);
     return OsSortLinkGetTargetExpireTime(OsGetCurrSchedTimeCycle(), listSorted);
+}
+
+UINT64 OsSortLinkGetRemainTime(UINT64 currTime, const SortLinkList *targetSortList)
+{
+    if (currTime >= targetSortList->responseTime) {
+        return 0;
+    }
+    return (targetSortList->responseTime - currTime);
+}
+
+STATIC INLINE UINT64 SortLinkGetNextExpireTime(SortLinkAttribute *sortHead, UINT64 startTime, UINT32 tickPrecision)
+{
+    LOS_DL_LIST *head = &sortHead->sortLink;
+    LOS_DL_LIST *list = head->pstNext;
+
+    if (LOS_ListEmpty(head)) {
+        return OS_SORT_LINK_UINT64_MAX - tickPrecision;
+    }
+
+    SortLinkList *listSorted = LOS_DL_LIST_ENTRY(list, SortLinkList, sortLinkNode);
+    if (listSorted->responseTime <= (startTime + tickPrecision)) {
+        return (startTime + tickPrecision);
+    }
+
+    return listSorted->responseTime;
+}
+
+/*
+OsGetNextExpireTime:
+    获取某个cpu的下一个触发时间
+        sortlink
+        swtmrlink
+*/
+UINT64 OsGetNextExpireTime(UINT64 startTime, UINT32 tickPrecision, INT32 cpuid)
+{
+    UINT64 tmp;
+    UINT64 taskExpireTime = OS_SORT_LINK_UINT64_MAX;
+    UINT64 swtmrExpireTime = OS_SORT_LINK_UINT64_MAX;
+
+    tmp = SortLinkGetNextExpireTime(&g_taskSortLink[cpuid], startTime, tickPrecision);
+    taskExpireTime = MIN(taskExpireTime, tmp);
+
+#if (LOSCFG_BASE_CORE_SWTMR == 1)
+    tmp = SortLinkGetNextExpireTime(&g_swtmrSortLink[cpuid], startTime, tickPrecision);
+    swtmrExpireTime = MIN(swtmrExpireTime, tmp);
+#endif
+
+    return MIN(taskExpireTime, swtmrExpireTime);
 }

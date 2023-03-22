@@ -227,6 +227,8 @@ extern CHAR *OsGetHwiFormName(UINT32 index);
 extern BOOL OsGetHwiCreated(UINT32 index);
 #endif
 
+extern UINT32 HalIrqSendIpi(UINT32 target, UINT32 ipi);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

@@ -35,14 +35,27 @@
 #include "los_task.h"
 #include "los_sched.h"
 
+STATIC VOID EventLock(PEVENT_CB_S eventCB, UINT32 *intSave)
+{
+    LOS_SpinLockSave(&(eventCB->lock), intSave);
+}
+
+STATIC VOID EventUnlock(PEVENT_CB_S eventCB, UINT32 intSave)
+{
+    LOS_SpinUnlockRestore(&(eventCB->lock), intSave);
+}
 
 LITE_OS_SEC_TEXT_INIT UINT32 LOS_EventInit(PEVENT_CB_S eventCB)
 {
     if (eventCB == NULL) {
         return LOS_ERRNO_EVENT_PTR_NULL;
     }
+
+    LOS_SpinInit(&(eventCB->lock));
+
     eventCB->uwEventID = 0;
     LOS_ListInit(&eventCB->stEventList);
+
     OsHookCall(LOS_HOOK_TYPE_EVENT_INIT, eventCB);
     return LOS_OK;
 }
@@ -55,7 +68,9 @@ LITE_OS_SEC_TEXT UINT32 LOS_EventPoll(UINT32 *eventID, UINT32 eventMask, UINT32 
     if (eventID == NULL) {
         return LOS_ERRNO_EVENT_PTR_NULL;
     }
+    
     intSave = LOS_IntLock();
+    
     if (mode & LOS_WAITMODE_OR) {
         if ((*eventID & eventMask) != 0) {
             ret = *eventID & eventMask;
@@ -65,10 +80,13 @@ LITE_OS_SEC_TEXT UINT32 LOS_EventPoll(UINT32 *eventID, UINT32 eventMask, UINT32 
             ret = *eventID & eventMask;
         }
     }
+    
     if (ret && (mode & LOS_WAITMODE_CLR)) {
         *eventID = *eventID & ~(ret);
     }
+    
     LOS_IntRestore(intSave);
+    
     return ret;
 }
 
@@ -77,28 +95,34 @@ LITE_OS_SEC_TEXT STATIC_INLINE UINT32 OsEventReadParamCheck(PEVENT_CB_S eventCB,
     if (eventCB == NULL) {
         return LOS_ERRNO_EVENT_PTR_NULL;
     }
+    
     if ((eventCB->stEventList.pstNext == NULL) || (eventCB->stEventList.pstPrev == NULL)) {
         return LOS_ERRNO_EVENT_NOT_INITIALIZED;
     }
+    
     if (eventMask == 0) {
         return LOS_ERRNO_EVENT_EVENTMASK_INVALID;
     }
+    
     if (eventMask & LOS_ERRTYPE_ERROR) {
         return LOS_ERRNO_EVENT_SETBIT_INVALID;
     }
+    
     if (((mode & LOS_WAITMODE_OR) && (mode & LOS_WAITMODE_AND)) ||
         (mode & ~(LOS_WAITMODE_OR | LOS_WAITMODE_AND | LOS_WAITMODE_CLR)) ||
         !(mode & (LOS_WAITMODE_OR | LOS_WAITMODE_AND))) {
         return LOS_ERRNO_EVENT_FLAGS_INVALID;
     }
+    
     return LOS_OK;
 }
 
 LITE_OS_SEC_TEXT UINT32 LOS_EventRead(PEVENT_CB_S eventCB, UINT32 eventMask, UINT32 mode, UINT32 timeOut)
 {
     UINT32 ret;
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     LosTaskCB *runTsk = NULL;
+    LosTask *losTask = OsTaskGet();
 
     ret = OsEventReadParamCheck(eventCB, eventMask, mode);
     if (ret != LOS_OK) {
@@ -108,40 +132,62 @@ LITE_OS_SEC_TEXT UINT32 LOS_EventRead(PEVENT_CB_S eventCB, UINT32 eventMask, UIN
     if (OS_INT_ACTIVE) {
         return LOS_ERRNO_EVENT_READ_IN_INTERRUPT;
     }
-    if (g_losTask.runTask->taskStatus & OS_TASK_FLAG_SYSTEM_TASK) {
+    
+    if (OsTaskIsSystemTask(losTask->runTask)) {
         return LOS_ERRNO_EVENT_READ_IN_SYSTEM_TASK;
     }
-    intSave = LOS_IntLock();
+
+    EventLock(eventCB, &intSave);
+
     ret = LOS_EventPoll(&(eventCB->uwEventID), eventMask, mode);
     OsHookCall(LOS_HOOK_TYPE_EVENT_READ, eventCB, eventMask, mode, timeOut);
-    if (ret == 0) {
-        if (timeOut == 0) {
-            LOS_IntRestore(intSave);
+    
+    if (ret == 0)
+    {
+        if (timeOut == 0)
+        {
+            EventUnlock(eventCB, intSave);
             return ret;
         }
 
-        if (g_losTaskLock) {
-            LOS_IntRestore(intSave);
+        if (OsTaskIslock(ArchCurrCpuid()))
+        {
+            EventUnlock(eventCB, intSave);
             return LOS_ERRNO_EVENT_READ_IN_LOCK;
         }
-        runTsk = g_losTask.runTask;
+
+        runTsk = losTask->runTask;
         runTsk->eventMask = eventMask;
         runTsk->eventMode = mode;
+
+        // 调度相关
+        OsSchedLock(&intSave1);
         OsSchedTaskWait(&eventCB->stEventList, timeOut);
-        LOS_IntRestore(intSave);
+        OsSchedUnlock(intSave1);
+
+        // 解锁
+        EventUnlock(eventCB, intSave);
+
+        // 当前任务进入阻塞状态, 触发当前核心的调度
         LOS_Schedule();
 
-        intSave = LOS_IntLock();
-        if (runTsk->taskStatus & OS_TASK_STATUS_TIMEOUT) {
+        // 再次上锁
+        EventLock(eventCB, &intSave);
+
+        // 调度相关, 超时处理
+        OsSchedLock(&intSave1);
+        if (OsSchedTimeoutHandle(runTsk) == OS_TASK_STATUS_TIMEOUT) {
             runTsk->taskStatus &= ~OS_TASK_STATUS_TIMEOUT;
-            LOS_IntRestore(intSave);
+            OsSchedUnlock(intSave1);
             return LOS_ERRNO_EVENT_READ_TIMEOUT;
         }
+        OsSchedUnlock(intSave1);
 
         ret = LOS_EventPoll(&eventCB->uwEventID, eventMask, mode);
     }
 
-    LOS_IntRestore(intSave);
+    // 解锁
+    EventUnlock(eventCB, intSave);
     return ret;
 }
 
@@ -149,74 +195,118 @@ LITE_OS_SEC_TEXT UINT32 LOS_EventWrite(PEVENT_CB_S eventCB, UINT32 events)
 {
     LosTaskCB *resumedTask = NULL;
     LosTaskCB *nextTask = (LosTaskCB *)NULL;
-    UINT32 intSave;
+    UINT32 intSave, intSave1;
     UINT8 exitFlag = 0;
+    
     if (eventCB == NULL) {
         return LOS_ERRNO_EVENT_PTR_NULL;
     }
+    
     if ((eventCB->stEventList.pstNext == NULL) || (eventCB->stEventList.pstPrev == NULL)) {
         return LOS_ERRNO_EVENT_NOT_INITIALIZED;
     }
+    
     if (events & LOS_ERRTYPE_ERROR) {
         return LOS_ERRNO_EVENT_SETBIT_INVALID;
     }
-    intSave = LOS_IntLock();
+
+    EventLock(eventCB, &intSave);
+
     OsHookCall(LOS_HOOK_TYPE_EVENT_WRITE, eventCB, events);
+    
     eventCB->uwEventID |= events;
-    if (!LOS_ListEmpty(&eventCB->stEventList)) {
+
+    if (!LOS_ListEmpty(&eventCB->stEventList))
+    {
         for (resumedTask = LOS_DL_LIST_ENTRY((&eventCB->stEventList)->pstNext, LosTaskCB, pendList);
-             &resumedTask->pendList != (&eventCB->stEventList);) {
+             &resumedTask->pendList != (&eventCB->stEventList);) 
+        {
             nextTask = LOS_DL_LIST_ENTRY(resumedTask->pendList.pstNext, LosTaskCB, pendList);
 
             if (((resumedTask->eventMode & LOS_WAITMODE_OR) && (resumedTask->eventMask & events) != 0) ||
                 ((resumedTask->eventMode & LOS_WAITMODE_AND) &&
-                 ((resumedTask->eventMask & eventCB->uwEventID) == resumedTask->eventMask))) {
+                 ((resumedTask->eventMask & eventCB->uwEventID) == resumedTask->eventMask)))
+            {
                 exitFlag = 1;
 
+                // 调度相关
+                OsSchedLock(&intSave1);
                 OsSchedTaskWake(resumedTask);
+                OsSchedUnlock(intSave1);
             }
+
             resumedTask = nextTask;
         }
 
         if (exitFlag == 1) {
-            LOS_IntRestore(intSave);
+
+            EventUnlock(eventCB, intSave);
+
+            // 让所有核心执行一次调度
+            LOS_MpSchedule(OS_MP_CPU_ALL);
             LOS_Schedule();
+            
             return LOS_OK;
         }
     }
 
-    LOS_IntRestore(intSave);
+    EventUnlock(eventCB, intSave);
+
+    return LOS_OK;
+}
+
+LITE_OS_SEC_TEXT_INIT UINT32 OsEventDestroy(PEVENT_CB_S eventCB)
+{
+    UINT32 intSave;
+
+    if (eventCB == NULL) {
+        return LOS_ERRNO_EVENT_PTR_NULL;
+    }
+
+    EventLock(eventCB, &intSave);
+
+    if (!LOS_ListEmpty(&eventCB->stEventList)) {
+        EventUnlock(eventCB, intSave);
+        return LOS_ERRNO_EVENT_SHOULD_NOT_DESTROYED;
+    }
+
+    eventCB->stEventList.pstNext = (LOS_DL_LIST *)NULL;
+    eventCB->stEventList.pstPrev = (LOS_DL_LIST *)NULL;
+
+    EventUnlock(eventCB, intSave);
+
     return LOS_OK;
 }
 
 LITE_OS_SEC_TEXT_INIT UINT32 LOS_EventDestroy(PEVENT_CB_S eventCB)
 {
+    UINT32 ret;
     UINT32 intSave;
-    if (eventCB == NULL) {
-        return LOS_ERRNO_EVENT_PTR_NULL;
-    }
-    intSave = LOS_IntLock();
 
-    if (!LOS_ListEmpty(&eventCB->stEventList)) {
-        LOS_IntRestore(intSave);
-        return LOS_ERRNO_EVENT_SHOULD_NOT_DESTROYED;
+    OsSchedLock(&intSave);
+    ret = OsEventDestroy(eventCB);
+    OsSchedUnlock(intSave);
+
+    if (LOS_OK == ret) {
+        OsHookCall(LOS_HOOK_TYPE_EVENT_DESTROY, eventCB);
     }
-    eventCB->stEventList.pstNext = (LOS_DL_LIST *)NULL;
-    eventCB->stEventList.pstPrev = (LOS_DL_LIST *)NULL;
-    LOS_IntRestore(intSave);
-    OsHookCall(LOS_HOOK_TYPE_EVENT_DESTROY, eventCB);
-    return LOS_OK;
+
+    return ret;
 }
 
 LITE_OS_SEC_TEXT_MINOR UINT32 LOS_EventClear(PEVENT_CB_S eventCB, UINT32 eventMask)
 {
     UINT32 intSave;
+    
     if (eventCB == NULL) {
         return LOS_ERRNO_EVENT_PTR_NULL;
     }
+    
     OsHookCall(LOS_HOOK_TYPE_EVENT_CLEAR, eventCB, eventMask);
-    intSave = LOS_IntLock();
+    
+    EventLock(eventCB, &intSave);
     eventCB->uwEventID &= eventMask;
-    LOS_IntRestore(intSave);
+    EventUnlock(eventCB, intSave);
+
     return LOS_OK;
 }

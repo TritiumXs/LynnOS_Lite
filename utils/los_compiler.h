@@ -323,6 +323,8 @@ typedef signed int             INTPTR;
 typedef volatile INT32 Atomic;
 typedef volatile INT64 Atomic64;
 
+typedef volatile INT32 SpinlockVal;
+
 #ifndef DEFINED_BOOL
 typedef unsigned int           BOOL;
 #define DEFINED_BOOL

@@ -33,4 +33,14 @@ config SHELL_DMESG
     help
       Answer Y to enable LiteOS support shell dmesg.
 
+config SHELL_AFFINITY
+      bool "Shell Task Affinity"
+      default n
+      depends on SHELL && KERNEL_SMP
+
+config SHELL_AFFINITY_CORE
+      int "Shell Task Affinity Core Num"
+      default 1
+      range 1 KERNEL_CORE_NUM
+      depends on SHELL && KERNEL_SMP && SHELL_AFFINITY
 endmenu

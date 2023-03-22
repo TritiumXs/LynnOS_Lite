@@ -43,11 +43,16 @@
 #include "los_tick.h"
 #include "los_sortlink.h"
 
+#include "los_core.h"
+#include "los_spinlock.h"
+
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
+
+#define CPUID_TO_AFFI_MASK(cpuid)               (0x1u << (cpuid))
 
 /**
  * @ingroup los_task
@@ -460,6 +465,7 @@ typedef struct tagTskInitParam {
     UINTPTR              stackAddr;                 /**< Task stack memory                      */
     UINT32               uwStackSize;               /**< Task stack size                        */
     CHAR                 *pcName;                   /**< Task name                              */
+    UINT32               usCpuAffiMask;             /**< Task cpu affinity                      */
     UINT32               uwResved;                  /**< Reserved                               */
 } TSK_INIT_PARAM_S;
 
@@ -961,6 +967,28 @@ extern UINT16 LOS_TaskPriGet(UINT32 taskID);
  * @see
  */
 extern UINT32 LOS_CurTaskIDGet(VOID);
+
+/**
+ * @ingroup  los_task
+ * @brief Obtain current running task ID by cpuid.
+ *
+ * @par Description:
+ * This API is used to obtain the ID of current running task by cpuid.
+ *
+ * @attention
+ * <ul>
+ * <li> This interface should not be called before system initialized.</li>
+ * </ul>
+ *
+ * @param  cpuid [IN] Type #UINT32 cpuid.
+ * 
+ * @retval #LOS_ERRNO_TSK_ID_INVALID    Invalid Task ID.
+ * @retval #UINT32                      Task ID.
+ * @par Dependency:
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
+ * @see
+ */
+extern UINT32 LOS_TaskIDGet(UINT32 cpuid);
 
 /**
  * @ingroup  los_task
@@ -1500,9 +1528,13 @@ typedef struct {
 #if (LOSCFG_KERNEL_SIGNAL == 1)
     VOID                        *sig;                     /**< Task signal */
 #endif
+    INT32                       schedRunqueueNum;         /**< Records the scheduling queue to which the current task is assigned */
+    UINT32                      cpuAffiMask;              /**< CPU affinity mask, support up to 32 cores */
 #ifdef LOSCFG_TASK_STRUCT_EXTENSION
     LOSCFG_TASK_STRUCT_EXTENSION;                         /**< Task extension field */
 #endif
+    UINT8                       cpuid;
+    BOOL                        waitExit;
 } LosTaskCB;
 
 STATIC INLINE BOOL OsTaskIsExit(const LosTaskCB *taskCB)
@@ -1552,20 +1584,21 @@ typedef struct {
 extern TaskSwitchInfo g_taskSwitchInfo;
 #endif
 
-extern LosTask              g_losTask;
-
-/**
- * @ingroup los_task
- * Task lock flag.
- *
- */
-extern UINT16               g_losTaskLock;
+extern LosTask              g_losTask[LOSCFG_KERNEL_CORE_NUM];
 
 /* *
  * @ingroup los_hw
  * Check task schedule.
  */
-#define LOS_CHECK_SCHEDULE (!g_losTaskLock)
+extern BOOL LOS_TaskIslock(INT32 cpuid);
+
+#define LOS_CHECK_SCHEDULE           (!LOS_TaskIslock(ArchCurrCpuid()))
+
+/* *
+ * @ingroup los_hw
+ * Check whether the task progress is locked.
+ */
+#define LOS_CHECK_SCHEDULE_ID(cpuid) (!LOS_TaskIslock(cpuid))
 
 /**
  * @ingroup los_task
@@ -1573,13 +1606,6 @@ extern UINT16               g_losTaskLock;
  *
  */
 extern UINT32               g_taskMaxNum;
-
-/**
- * @ingroup los_task
- * Idle task ID.
- *
- */
-extern UINT32               g_idleTaskID;
 
 /**
  * @ingroup los_task
@@ -1652,6 +1678,27 @@ extern UINT32 OsTaskInit(VOID);
  * @see
  */
 extern UINT32 OsIdleTaskCreate(VOID);
+
+/**
+ * @ingroup  los_task
+ * @brief Check idle task.
+ *
+ * @par Description:
+ * This API is used to check whether is idle task.
+ *
+ * @attention
+ * <ul>
+ * <li>None.</li>
+ * </ul>
+ *
+ * @param  None.
+ *
+ * @retval  UINT32   Check result.
+ * @par Dependency:
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
+ * @see
+ */
+extern BOOL OsIsIdleTask(UINT32 taskId);
 
 /**
  * @ingroup  los_task
@@ -1783,12 +1830,33 @@ extern VOID *OsTskUserStackInit(VOID* stackPtr, VOID* userSP, UINT32 userStackSi
 
 extern UINT32 OsPmEnterHandlerSet(VOID (*func)(VOID));
 
+extern VOID OsRunningTaskDelete(UINT32 taskID, LosTaskCB *taskCB);
+
+STATIC INLINE LosTask *OsTaskGetByID(UINT32 cpuid)
+{
+    return &(g_losTask[cpuid]);
+}
+
+STATIC INLINE LosTask *OsTaskGet(VOID)
+{
+    return OsTaskGetByID(ArchCurrCpuid());
+}
+
 STATIC INLINE LosTaskCB *OsCurrTaskGet(VOID)
 {
-    return g_losTask.runTask;
+    return OsTaskGet()->runTask;
 }
 
 extern VOID LOS_TaskResRecycle(VOID);
+
+extern UINT32 LOS_TaskGetAffinity(UINT32 taskID);
+extern UINT32 LOS_TaskGetCurrAffinity(VOID);
+
+extern UINT32 OsTaskIDGet(UINT32 cpuid);
+extern BOOL OsTaskIslock(INT32 cpuid);
+extern UINT32 OsTaskTimeOutCheck(LosTaskCB *task);
+
+extern BOOL OsTaskIsSystemTask(LosTaskCB *taskCB);
 
 #ifdef __cplusplus
 #if __cplusplus
