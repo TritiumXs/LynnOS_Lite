@@ -42,6 +42,8 @@ module_group("arch") {
   } else if ("$board_cpu" == "ck802" || "$board_cpu" == "e802" ||
              "$board_cpu" == "ck804ef") {
     modules += [ "csky" ]
+  } else if ("$board_cpu" == "ac695x" || "$board_cpu" == "ac79x") {
+    modules += [ "pi32" ]
   } else if ("$board_cpu" == "") {
     if ("$board_arch" != string_replace("$board_arch", "rv32i", "")) {
       modules += [ "risc-v" ]
