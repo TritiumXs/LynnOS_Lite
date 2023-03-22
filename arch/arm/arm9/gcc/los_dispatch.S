@@ -29,6 +29,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+    .syntax unified
+    .arch armv5te
+    .fpu fpv4-sp-d16
+    .thumb
+
     .equ    OS_PSR_THUMB,       0x20
     .equ    OS_PSR_INT_DIS,     0xC0
     .equ    OS_PSR_FIQ_DIS,     0x40
