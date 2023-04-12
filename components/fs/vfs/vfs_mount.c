@@ -346,18 +346,19 @@ errout:
     return (int)LOS_NOK;
 }
 
-static void CloseFdsInMp(const struct MountPoint *mp)
+static void CloseFdsInMp(struct MountPoint *mp)
 {
     for (int fd = 0; fd < NR_OPEN_DEFAULT; fd++) {
         struct File *f = FdToFile(fd);
-        if (f == NULL) {
+        if ((f == NULL) || (f->fMp != mp)) {
             continue;
         }
-        if ((f->fMp == mp) &&
-            (f->fFops != NULL) &&
+        if ((f->fFops != NULL) &&
             (f->fFops->close != NULL)) {
             (void)f->fFops->close(f);
         }
+        mp->mRefs--;
+        VfsFilePut(f);
     }
 }
 
@@ -372,15 +373,20 @@ int umount2(const char *target, int flag)
     }
 
     mp = VfsMpFind(target, NULL);
-    if ((mp == NULL) || (mp->mRefs != 0) ||
-        (mp->mFs == NULL) || (mp->mFs->fsMops == NULL) ||
+    if ((mp == NULL) || (mp->mFs == NULL) ||
+        (mp->mFs->fsMops == NULL) ||
         (mp->mFs->fsMops->umount2 == NULL)) {
         goto errout;
     }
 
-    /* Close all files under the mount point */
-    if ((UINT32)flag & MNT_FORCE) {
-        CloseFdsInMp(mp);
+    if (mp->mRefs != 0) {
+        if ((UINT32)flag & MNT_FORCE) {
+            CloseFdsInMp(mp);
+            CloseDirInMp(mp);
+            LOS_ASSERT(mp->mRefs == 0);
+        } else {
+            goto errout;
+        }
     }
 
     ret = mp->mFs->fsMops->umount2(mp, flag);

@@ -87,6 +87,7 @@ struct Dir {
     struct dirent      dDent;
     off_t              dOffset;
     void              *dData;
+    struct Dir        *next;
 };
 
 int FileToFd(const struct File *file);
@@ -94,6 +95,7 @@ struct File *FdToFile(int fd);
 struct File *VfsFileGet(void);
 struct File *VfsFileGetSpec(int fd);
 void VfsFilePut(struct File *file);
+void CloseDirInMp(struct MountPoint *mp);
 
 #ifdef __cplusplus
 #if __cplusplus
