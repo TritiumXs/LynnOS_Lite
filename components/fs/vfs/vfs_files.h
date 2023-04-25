@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -35,6 +35,7 @@
 #include "sys/stat.h"
 #include "unistd.h"
 #include "los_compiler.h"
+#include "los_list.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -87,6 +88,7 @@ struct Dir {
     struct dirent      dDent;
     off_t              dOffset;
     void              *dData;
+    LOS_DL_LIST        dirNode;
 };
 
 int FileToFd(const struct File *file);
@@ -94,6 +96,7 @@ struct File *FdToFile(int fd);
 struct File *VfsFileGet(void);
 struct File *VfsFileGetSpec(int fd);
 void VfsFilePut(struct File *file);
+void CloseDirInMp(struct MountPoint *mp);
 
 #ifdef __cplusplus
 #if __cplusplus

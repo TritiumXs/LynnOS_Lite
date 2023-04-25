@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -33,6 +33,7 @@
 
 #include "sys/statfs.h"
 #include "los_compiler.h"
+#include "los_list.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -59,6 +60,7 @@ struct MountPoint {
     UINT32             mRefs;  /* reference to mount point */
     void              *mData;  /* specific file system handle */
     BOOL               mWriteEnable; /* writable flag */
+    LOS_DL_LIST        dirList;
 };
 
 extern struct MountPoint *g_mountPoints;
