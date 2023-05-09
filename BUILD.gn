@@ -181,7 +181,9 @@ static_library("libkernel") {
 }
 
 group("kernel") {
-  deps = [ ":libkernel" ]
+  if (!defined(LOSCFG_LIB_KERNEL_SKIP)) {
+    deps = [ ":libkernel" ]
+  }
 }
 
 group("liteos_m") {

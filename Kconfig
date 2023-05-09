@@ -401,6 +401,10 @@ config LIB_LIBC
     help
       Answer Y to enable libc for full code.
 
+config LIB_KERNEL_SKIP
+    bool "Enable link without LibKernel.a"
+    default n
+
 endmenu
 
 
