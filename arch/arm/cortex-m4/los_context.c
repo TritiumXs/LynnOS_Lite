@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2023 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -36,10 +35,10 @@
 #include "los_task.h"
 #include "los_sched.h"
 #include "los_interrupt.h"
+#if (LOSCFG_COMPILER_ICCARM == 1)
 #include "los_timer.h"
 #include "los_debug.h"
-
-
+#endif
 /* ****************************************************************************
  Function    : ArchInit
  Description : arch init function
@@ -131,8 +130,13 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
     context->uwR2 = 0x02020202L;
     context->uwR3 = 0x03030303L;
     context->uwR12 = 0x12121212L;
+#if (LOSCFG_COMPILER_ICCARM == 1)
     context->uwLR = (UINTPTR)ArchSysExit;
     context->uwPC = (UINTPTR)OsTaskEntry;
+#else
+    context->uwLR = (UINT32)(UINTPTR)ArchSysExit;
+    context->uwPC = (UINT32)(UINTPTR)OsTaskEntry;
+#endif
     context->uwxPSR = 0x01000000L;
 
     return (VOID *)context;
@@ -150,6 +154,17 @@ VOID *ArchSignalContextInit(VOID *stackPointer, VOID *stackTop, UINTPTR sigHandl
 
     return (VOID *)context;
 }
+
+#if (LOSCFG_COMPILER_ICCARM == 0)
+#if (LOSCFG_SECURE == 1)
+VOID HalUserTaskStackInit(TaskContext *context, UINTPTR taskEntry, UINTPTR stack)
+{
+    context->uwR0 = stack;
+    context->uwPC = (UINT32)taskEntry;
+    context->uwxPSR = 0x01000000L; /* Thumb flag, always set 1 */
+}
+#endif
+#endif
 
 LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 {

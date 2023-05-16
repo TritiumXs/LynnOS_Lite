@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2023 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -121,6 +120,7 @@ typedef struct TagTskContext {
  */
 extern VOID HalStartToRun(VOID);
 
+#if (LOSCFG_COMPILER_ICCARM == 1)
 #if (LOSCFG_SECURE == 1)
 /**
  * @ingroup  los_config
@@ -142,6 +142,7 @@ extern VOID HalStartToRun(VOID);
  * @see None.
  */
 extern VOID HalUserTaskStackInit(TaskContext *context, UINTPTR taskEntry, UINTPTR stack);
+#endif
 #endif
 
 #ifdef __cplusplus

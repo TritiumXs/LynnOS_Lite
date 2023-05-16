@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2023 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -28,12 +27,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include "los_interrupt.h"
-#include "securec.h"
 #include <stdarg.h>
-#include "los_arch_interrupt.h"
+#include "securec.h"
 #include "los_context.h"
+#include "los_arch_interrupt.h"
 #include "los_debug.h"
 #include "los_hook.h"
 #include "los_task.h"
@@ -46,17 +44,23 @@
 
 UINT32 g_intCount = 0;
 
+#if (LOSCFG_COMPILER_ICCARM == 1)
 #ifdef __ICCARM__
 #pragma location = ".data.vector"
 #pragma data_alignment = LOSCFG_ARCH_HWI_VECTOR_ALIGN
 #elif defined(__CC_ARM) || defined(__GNUC__)
 LITE_OS_SEC_VEC
 #endif
+#endif
 /* *
  * @ingroup los_hwi
  * Hardware interrupt form mapping handling function array.
  */
+#if (LOSCFG_COMPILER_ICCARM == 1)
 STATIC HWI_PROC_FUNC g_hwiForm[OS_VECTOR_CNT] = {0};
+#else
+STATIC HWI_PROC_FUNC __attribute__((aligned(LOSCFG_ARCH_HWI_VECTOR_ALIGN))) g_hwiForm[OS_VECTOR_CNT] = {0};
+#endif
 
 #if (LOSCFG_DEBUG_TOOLS == 1)
 STATIC UINT32 g_hwiFormCnt[OS_HWI_MAX_NUM] = {0};
@@ -213,6 +217,59 @@ HwiControllerOps g_archHwiOps = {
     .clearIrq       = HwiClear,
 };
 
+UINT32 ArchIntTrigger(HWI_HANDLE_T hwiNum)
+{
+    if (g_archHwiOps.triggerIrq == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.triggerIrq(hwiNum);
+}
+
+UINT32 ArchIntEnable(HWI_HANDLE_T hwiNum)
+{
+    if (g_archHwiOps.enableIrq == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.enableIrq(hwiNum);
+}
+
+UINT32 ArchIntDisable(HWI_HANDLE_T hwiNum)
+{
+    if (g_archHwiOps.disableIrq == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.disableIrq(hwiNum);
+}
+
+UINT32 ArchIntClear(HWI_HANDLE_T hwiNum)
+{
+    if (g_archHwiOps.clearIrq == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.clearIrq(hwiNum);
+}
+
+UINT32 ArchIntSetPriority(HWI_HANDLE_T hwiNum, HWI_PRIOR_T priority)
+{
+    if (g_archHwiOps.setIrqPriority == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.setIrqPriority(hwiNum, priority);
+}
+
+UINT32 ArchIntCurIrqNum(VOID)
+{
+    if (g_archHwiOps.getCurIrqNum == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.getCurIrqNum();
+}
+
+HwiControllerOps *ArchIntOpsGet(VOID)
+{
+    return &g_archHwiOps;
+}
+
 inline UINT32 ArchIsIntActive(VOID)
 {
     return (g_intCount > 0);
@@ -224,7 +281,6 @@ inline UINT32 ArchIsIntActive(VOID)
  Output      : None
  Return      : None
  **************************************************************************** */
-/*lint -e529*/
 LITE_OS_SEC_TEXT_MINOR VOID HalHwiDefaultHandler(VOID)
 {
     PRINT_ERR("%s irqnum:%u\n", __FUNCTION__, HwiNumGet());
@@ -379,7 +435,11 @@ LITE_OS_SEC_TEXT_INIT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum, HwiIrqParam *irq
         return OS_ERRNO_HWI_NUM_INVALID;
     }
 
+#if (LOSCFG_COMPILER_ICCARM == 1)
     NVIC_DisableIRQ((IRQn_Type)hwiNum);
+#else
+    HwiMask((IRQn_Type)hwiNum);
+#endif
 
     intSave = LOS_IntLock();
 
@@ -612,6 +672,17 @@ LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, U
     ArchSysExit();
 }
 
+#if (LOSCFG_COMPILER_ICCARM == 0)
+/* stack protector */
+WEAK UINT32 __stack_chk_guard = 0xd00a0dff;
+
+WEAK VOID __stack_chk_fail(VOID)
+{
+    /* __builtin_return_address is a builtin function, building in gcc */
+    LOS_Panic("stack-protector: Kernel stack is corrupted in: %p\n",
+              __builtin_return_address(0));
+}
+#endif
 /* ****************************************************************************
  Function    : HalHwiInit
  Description : initialization of the hardware interrupt

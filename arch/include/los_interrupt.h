@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2023 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -39,6 +39,135 @@
 extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
+
+#if (LOSCFG_PLATFORM_QEMU_ARM_VIRT_CM4 == 1)
+typedef UINT32 HWI_HANDLE_T;
+typedef UINT16 HWI_PRIOR_T;
+typedef UINT16 HWI_MODE_T;
+typedef UINT32 HWI_ARG_T;
+
+#if (LOSCFG_PLATFORM_HWI_WITH_ARG == 1)
+typedef VOID (*HWI_PROC_FUNC)(VOID *parm);
+#else
+typedef VOID (*HWI_PROC_FUNC)(void);
+#endif
+typedef struct tagIrqParam {
+    int swIrq;         /**< The interrupt number */
+    VOID *pDevId;      /**< The pointer to the device ID that launches the interrupt */
+    const CHAR *pName; /**< The interrupt name */
+} HwiIrqParam;
+
+typedef struct {
+    UINT32 (*triggerIrq)(HWI_HANDLE_T hwiNum);
+    UINT32 (*clearIrq)(HWI_HANDLE_T hwiNum);
+    UINT32 (*enableIrq)(HWI_HANDLE_T hwiNum);
+    UINT32 (*disableIrq)(HWI_HANDLE_T hwiNum);
+    UINT32 (*setIrqPriority)(HWI_HANDLE_T hwiNum, UINT8 priority);
+    UINT32 (*getCurIrqNum)(VOID);
+} HwiControllerOps;
+
+/* stack protector */
+extern UINT32 __stack_chk_guard;
+extern VOID __stack_chk_fail(VOID);
+
+#define OS_INT_ACTIVE       (ArchIsIntActive())
+#define OS_INT_INACTIVE     (!(OS_INT_ACTIVE))
+#define LOS_HwiTrigger      ArchIntTrigger
+#define LOS_HwiEnable       ArchIntEnable
+#define LOS_HwiDisable      ArchIntDisable
+#define LOS_HwiClear        ArchIntClear
+#define LOS_HwiSetPriority  ArchIntSetPriority
+#define LOS_HwiCurIrqNum    ArchIntCurIrqNum
+#define LOS_IntLock         ArchIntLock
+#define LOS_IntRestore      ArchIntRestore
+#define LOS_IntUnLock       ArchIntUnLock
+#define LOS_HwiOpsGet       ArchIntOpsGet
+#define LOS_HwiCreate       ArchHwiCreate
+#define LOS_HwiDelete       ArchHwiDelete
+
+UINT32 ArchIsIntActive(VOID);
+UINT32 ArchIntTrigger(HWI_HANDLE_T hwiNum);
+UINT32 ArchIntEnable(HWI_HANDLE_T hwiNum);
+UINT32 ArchIntDisable(HWI_HANDLE_T hwiNum);
+UINT32 ArchIntClear(HWI_HANDLE_T hwiNum);
+UINT32 ArchIntSetPriority(HWI_HANDLE_T hwiNum, HWI_PRIOR_T priority);
+UINT32 ArchIntCurIrqNum(VOID);
+UINT32 ArchIntLock(VOID);
+VOID ArchIntRestore(UINT32 intSave);
+UINT32 ArchIntUnLock(VOID);
+HwiControllerOps *ArchIntOpsGet(VOID);
+
+/**
+ * @ingroup  los_interrupt
+ * @brief Delete hardware interrupt.
+ *
+ * @par Description:
+ * This API is used to delete hardware interrupt.
+ *
+ * @attention
+ * <ul>
+ * <li>The hardware interrupt module is usable only when the configuration item for hardware
+ * interrupt tailoring is enabled.</li>
+ * <li>Hardware interrupt number value range: [OS_USER_HWI_MIN,OS_USER_HWI_MAX]. The value range
+ * applicable for a Cortex-A7 platform is [32,95].</li>
+ * <li>OS_HWI_MAX_NUM specifies the maximum number of interrupts that can be created.</li>
+ * <li>Before executing an interrupt on a platform, refer to the chip manual of the platform.</li>
+ * </ul>
+ *
+ * @param  hwiNum   [IN] Type#HWI_HANDLE_T: hardware interrupt number. The value range applicable
+ *                       for a Cortex-A7 platform is [32,95].
+ * @param  irqParam [IN] Type #HwiIrqParam *. ID of hardware interrupt which will base on
+ *                                                when delete the hardware interrupt.
+ * @retval #OS_ERRNO_HWI_NUM_INVALID              0x02000900: Invalid interrupt number.
+ * @retval #LOS_OK                                0         : The interrupt is successfully delete.
+ * @par Dependency:
+ * <ul><li>los_interrupt.h: the header file that contains the API declaration.</li></ul>
+ * @see None.
+ */
+UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum, HwiIrqParam *irqParam);
+
+/**
+ * @ingroup  los_interrupt
+ * @brief Create a hardware interrupt.
+ *
+ * @par Description:
+ * This API is used to configure a hardware interrupt and register a hardware interrupt handling function.
+ *
+ * @attention
+ * <ul>
+ * <li>The hardware interrupt module is usable only when the configuration item for hardware
+ * interrupt tailoring is enabled.</li>
+ * <li>Hardware interrupt number value range: [OS_USER_HWI_MIN,OS_USER_HWI_MAX]. The value range
+ * applicable for a Cortex-A7 platform is [32,95].</li>
+ * <li>OS_HWI_MAX_NUM specifies the maximum number of interrupts that can be created.</li>
+ * <li>Before executing an interrupt on a platform, refer to the chip manual of the platform.</li>
+ * </ul>
+ *
+ * @param  hwiNum   [IN] Type#HWI_HANDLE_T: hardware interrupt number. The value range applicable for a
+ *                       Cortex-A7 platform is [32,95].
+ * @param  hwiPrio  [IN] Type#HWI_PRIOR_T: hardware interrupt priority. Ignore this parameter temporarily.
+ * @param  mode     [IN] Type#HWI_MODE_T: hardware interrupt mode. Ignore this parameter temporarily.
+ * @param  handler  [IN] Type#HWI_PROC_FUNC: interrupt handler used when a hardware interrupt is triggered.
+ * @param  irqParam [IN] Type#HwiIrqParam: input parameter of the interrupt
+ *                                         handler used when a hardware interrupt is triggered.
+ *
+ * @retval #OS_ERRNO_HWI_PROC_FUNC_NULL               0x02000901: Null hardware interrupt handling function.
+ * @retval #OS_ERRNO_HWI_NUM_INVALID                  0x02000900: Invalid interrupt number.
+ * @retval #OS_ERRNO_HWI_NO_MEMORY                    0x02000903: Insufficient memory for hardware interrupt creation.
+ * @retval #OS_ERRNO_HWI_ALREADY_CREATED              0x02000904: The interrupt handler being created has
+ *                                                                already been created.
+ * @retval #LOS_OK                                    0         : The interrupt is successfully created.
+ * @par Dependency:
+ * <ul><li>los_interrupt.h: the header file that contains the API declaration.</li></ul>
+ * @see None.
+ */
+UINT32 ArchHwiCreate(HWI_HANDLE_T hwiNum,
+                     HWI_PRIOR_T hwiPrio,
+                     HWI_MODE_T mode,
+                     HWI_PROC_FUNC handler,
+                     HwiIrqParam *irqParam);
+
+#else   /* #ifdef LOS_CFG_ARCH_CORTEX_M4 */
 
 typedef UINT32 HWI_HANDLE_T;
 
@@ -220,6 +349,8 @@ STATIC INLINE HwiControllerOps *ArchIntOpsGet(VOID)
 {
     return &g_archHwiOps;
 }
+
+#endif  /* #ifdef LOS_CFG_ARCH_CORTEX_M4 */
 
 #if (LOSCFG_DEBUG_TOOLS == 1)
 extern UINT32 OsGetHwiFormCnt(UINT32 index);

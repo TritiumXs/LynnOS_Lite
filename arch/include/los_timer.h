@@ -41,17 +41,17 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-#define TICK_CHECK                           0x4000000
-#define CYCLE_CHECK                          0xFFFFFFFFU
-#define SHIFT_32_BIT                          32
-#define MAX_HOUR 24
-#define MAX_MINUTES 60
-#define MAX_SECONDS 60
-#define MILSEC 1000
-#define RTC_WAKEUPCLOCK_RTCCLK 32768
-#define RTC_WAKEUPCLOCK_RTCCLK_DIV 16
-#define RTC_CALIBRATE_SLEEP_TIME 8
-#define MACHINE_CYCLE_DEALAY_TIMES (LOSCFG_BASE_CORE_TICK_PER_SECOND << 2)
+#define TICK_CHECK                  0x4000000
+#define CYCLE_CHECK                 0xFFFFFFFFU
+#define SHIFT_32_BIT                32
+#define MAX_HOUR                    24
+#define MAX_MINUTES                 60
+#define MAX_SECONDS                 60
+#define MILSEC                      1000
+#define RTC_WAKEUPCLOCK_RTCCLK      32768
+#define RTC_WAKEUPCLOCK_RTCCLK_DIV  16
+#define RTC_CALIBRATE_SLEEP_TIME    8
+#define MACHINE_CYCLE_DEALAY_TIMES  (LOSCFG_BASE_CORE_TICK_PER_SECOND << 2)
 
 typedef struct {
     UINT32        freq;
