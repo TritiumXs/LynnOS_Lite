@@ -41,7 +41,8 @@ extern "C" {
 #endif /* __cplusplus */
 
 #if ((LOSCFG_ARCH_CORTEX_M4 == 1) || \
-     (LOSCFG_ARCH_CORTEX_M55 == 1))
+     (LOSCFG_ARCH_CORTEX_M55 == 1) || \
+     (LOSCFG_ARCH_CSKY == 1))
 typedef UINT32 HWI_HANDLE_T;
 typedef UINT16 HWI_PRIOR_T;
 typedef UINT16 HWI_MODE_T;
