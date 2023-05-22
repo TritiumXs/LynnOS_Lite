@@ -40,7 +40,8 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-#if (LOSCFG_PLATFORM_QEMU_ARM_VIRT_CM4 == 1)
+#if ((LOSCFG_ARCH_CORTEX_M4 == 1) || \
+     (LOSCFG_ARCH_CORTEX_M55 == 1))
 typedef UINT32 HWI_HANDLE_T;
 typedef UINT16 HWI_PRIOR_T;
 typedef UINT16 HWI_MODE_T;
