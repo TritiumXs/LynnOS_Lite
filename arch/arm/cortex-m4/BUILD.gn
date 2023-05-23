@@ -1,5 +1,4 @@
-# Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
-# Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
+# Copyright (c) 2023 Huawei Device Co., Ltd. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -33,15 +32,29 @@ module_name = "arch"
 kernel_module(module_name) {
   sources = [
     "los_context.c",
-    "los_dispatch.S",
-    "los_exc.S",
     "los_interrupt.c",
     "los_mpu.c",
     "los_timer.c",
   ]
+  if (defined(LOSCFG_COMPILER_ICCARM)) {
+    sources += [
+      "./iar/los_dispatch.S",
+      "./iar/los_exc.S",
+    ]
+  } else {
+    sources += [
+      "./gcc/los_dispatch.S",
+      "./gcc/los_exc.S",
+    ]
+  }
   configs += [ "$LITEOSTOPDIR:warn_config" ]
 }
 
 config("public") {
   include_dirs = [ "." ]
+  if (defined(LOSCFG_COMPILER_ICCARM)) {
+    include_dirs += [ "./iar" ]
+  } else {
+    include_dirs += [ "./gcc" ]
+  }
 }
