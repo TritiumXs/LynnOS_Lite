@@ -235,6 +235,59 @@ HwiControllerOps g_archHwiOps = {
     .clearIrq       = HwiClear,
 };
 
+UINT32 ArchIntTrigger(HWI_HANDLE_T hwiNum)
+{
+    if (g_archHwiOps.triggerIrq == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.triggerIrq(hwiNum);
+}
+
+UINT32 ArchIntEnable(HWI_HANDLE_T hwiNum)
+{
+    if (g_archHwiOps.enableIrq == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.enableIrq(hwiNum);
+}
+
+UINT32 ArchIntDisable(HWI_HANDLE_T hwiNum)
+{
+    if (g_archHwiOps.disableIrq == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.disableIrq(hwiNum);
+}
+
+UINT32 ArchIntClear(HWI_HANDLE_T hwiNum)
+{
+    if (g_archHwiOps.clearIrq == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.clearIrq(hwiNum);
+}
+
+UINT32 ArchIntSetPriority(HWI_HANDLE_T hwiNum, HWI_PRIOR_T priority)
+{
+    if (g_archHwiOps.setIrqPriority == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.setIrqPriority(hwiNum, priority);
+}
+
+UINT32 ArchIntCurIrqNum(VOID)
+{
+    if (g_archHwiOps.getCurIrqNum == NULL) {
+        return LOS_NOK;
+    }
+    return g_archHwiOps.getCurIrqNum();
+}
+
+HwiControllerOps *ArchIntOpsGet(VOID)
+{
+    return &g_archHwiOps;
+}
+
 INLINE UINT32 ArchIsIntActive(VOID)
 {
     return (g_intCount > 0);
