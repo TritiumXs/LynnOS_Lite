@@ -54,3 +54,4 @@ INT32 OsShellCmdDate(INT32 argc, const CHAR **argv)
     return DATE_OK;
 }
 
+SHELLCMD_ENTRY(CMD_TYPE_STD, "date", XARGS, (CmdCallBackFunc)OsShellCmdDate);

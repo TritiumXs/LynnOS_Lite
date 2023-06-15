@@ -35,6 +35,8 @@
 #include "los_arch.h"
 #include "los_interrupt.h"
 #include "los_arch_interrupt.h"
+#include "shell.h"
+#include "shcmd.h"
 
 #if (LOSCFG_DEBUG_TOOLS == 1)
 
@@ -147,3 +149,5 @@ UINT32 OsShellCmdHwiDump(INT32 argc, const CHAR **argv)
     return LOS_OK;
 }
 #endif /* LOSCFG_STACK_DUMP == 1 */
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "hwi", 1, (CmdCallBackFunc)OsShellCmdHwiDump);

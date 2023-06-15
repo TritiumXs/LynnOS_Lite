@@ -35,6 +35,8 @@
 #include "los_config.h"
 #include "securec.h"
 #include "trace_cnv.h"
+#include "shcmd.h"
+#include "shell.h"
 
 #if (LOSCFG_KERNEL_SMP == 1)
 #include "los_mp_pri.h"
@@ -412,5 +414,15 @@ LITE_OS_SEC_TEXT_MINOR UINT32 OsShellCmdTraceDump(INT32 argc, const CHAR **argv)
     return LOS_OK;
 }
 #endif
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "trace_start", 0, (CmdCallBackFunc)LOS_TraceStart);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "trace_stop",  0, (CmdCallBackFunc)LOS_TraceStop);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "trace_mask",  1, (CmdCallBackFunc)OsShellCmdTraceSetMask);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "trace_reset", 0, (CmdCallBackFunc)LOS_TraceReset);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "trace_dump", 1, (CmdCallBackFunc)OsShellCmdTraceDump);
 
 #endif /* LOSCFG_KERNEL_TRACE == 1 */

@@ -56,3 +56,4 @@ INT32 OsShellCmdDumpTask(INT32 argc, const CHAR **argv)
     }
 }
 
+SHELLCMD_ENTRY(CMD_TYPE_EX, "task", 1, (CmdCallBackFunc)OsShellCmdDumpTask);

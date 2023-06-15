@@ -30,6 +30,7 @@
  */
 
 #include "shcmd.h"
+#include "shell.h"
 
 #define DEFAULT_SCREEN_WIDTH 80
 #define MAX_CMD_KEY_WIDTH    8
@@ -60,3 +61,5 @@ INT32 OsShellCmdHelp(INT32 argc, const CHAR **argv)
     PRINTK("\n");
     return 0;
 }
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "help", 0, (CmdCallBackFunc)OsShellCmdHelp);

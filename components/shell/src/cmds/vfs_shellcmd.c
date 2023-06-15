@@ -970,3 +970,20 @@ INT32 OsShellCmdRmdir(INT32 argc, const CHAR **argv)
     return 0;
 }
 
+SHELLCMD_ENTRY(CMD_TYPE_EX, "touch", XARGS, (CmdCallBackFunc)OsShellCmdTouch);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "ls", XARGS, (CmdCallBackFunc)OsShellCmdLs);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "pwd", XARGS, (CmdCallBackFunc)OsShellCmdPwd);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "cd", XARGS, (CmdCallBackFunc)OsShellCmdCd);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "cat", XARGS, (CmdCallBackFunc)OsShellCmdCat);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "rm", XARGS, (CmdCallBackFunc)OsShellCmdRm);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "rmdir", XARGS, (CmdCallBackFunc)OsShellCmdRmdir);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "mkdir", XARGS, (CmdCallBackFunc)OsShellCmdMkdir);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "cp", XARGS, (CmdCallBackFunc)OsShellCmdCp);
