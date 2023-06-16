@@ -38,6 +38,7 @@
 #include "securec.h"
 #include "los_mux.h"
 #include "los_memory.h"
+#include "los_tables.h"
 
 #if (LOSCFG_DEBUG_TOOLS == 1)
 #include "los_debugtools.h"
@@ -51,42 +52,9 @@
 
 STATIC CmdModInfo cmdInfo;
 ShellCB *g_shellCB = NULL;
-CmdItem g_shellcmdAll[] = {
-    {CMD_TYPE_STD, "date", XARGS, (CmdCallBackFunc)OsShellCmdDate},
-    {CMD_TYPE_EX, "task", 1, (CmdCallBackFunc)OsShellCmdDumpTask},
-    {CMD_TYPE_EX, "free", XARGS, (CmdCallBackFunc)OsShellCmdFree},
-#if (LOSCFG_MEM_WATERLINE == 1)
-    {CMD_TYPE_EX, "memusage", XARGS, (CmdCallBackFunc)OsShellCmdWaterLine},
-#endif
-#ifdef LWIP_SHELLCMD_ENABLE
-    {CMD_TYPE_EX, "ifconfig", XARGS, (CmdCallBackFunc)lwip_ifconfig},
-    {CMD_TYPE_EX, "ping", XARGS, (CmdCallBackFunc)OsShellPing},
-#endif
-#if (LOSCFG_FS_VFS == 1)
-    {CMD_TYPE_EX, "touch", XARGS, (CmdCallBackFunc)OsShellCmdTouch},
-    {CMD_TYPE_EX, "ls", XARGS, (CmdCallBackFunc)OsShellCmdLs},
-    {CMD_TYPE_EX, "pwd", XARGS, (CmdCallBackFunc)OsShellCmdPwd},
-    {CMD_TYPE_EX, "cd", XARGS, (CmdCallBackFunc)OsShellCmdCd},
-    {CMD_TYPE_EX, "cat", XARGS, (CmdCallBackFunc)OsShellCmdCat},
-    {CMD_TYPE_EX, "rm", XARGS, (CmdCallBackFunc)OsShellCmdRm},
-    {CMD_TYPE_EX, "rmdir", XARGS, (CmdCallBackFunc)OsShellCmdRmdir},
-    {CMD_TYPE_EX, "mkdir", XARGS, (CmdCallBackFunc)OsShellCmdMkdir},
-    {CMD_TYPE_EX, "cp", XARGS, (CmdCallBackFunc)OsShellCmdCp},
-#endif
-#if (LOSCFG_DEBUG_TOOLS == 1)
-    {CMD_TYPE_EX, "stack", 1, (CmdCallBackFunc)OsShellCmdStackDump},
-    {CMD_TYPE_EX, "hwi", 1, (CmdCallBackFunc)OsShellCmdHwiDump},
-    {CMD_TYPE_EX, "st", 1, (CmdCallBackFunc)OsShellCmdSchedTrace},
-#endif
-    {CMD_TYPE_EX, "help", 0, (CmdCallBackFunc)OsShellCmdHelp},
-#if (LOSCFG_KERNEL_TRACE == 1)
-    {CMD_TYPE_EX, "trace_start", 0, (CmdCallBackFunc)LOS_TraceStart},
-    {CMD_TYPE_EX, "trace_stop",  0, (CmdCallBackFunc)LOS_TraceStop},
-    {CMD_TYPE_EX, "trace_mask",  1, (CmdCallBackFunc)OsShellCmdTraceSetMask},
-    {CMD_TYPE_EX, "trace_reset", 0, (CmdCallBackFunc)LOS_TraceReset},
-    {CMD_TYPE_EX, "trace_dump", 1, (CmdCallBackFunc)OsShellCmdTraceDump},
-#endif
-};
+
+LOS_HAL_TABLE_BEGIN(g_shellcmd, shellcmd);
+LOS_HAL_TABLE_END(g_shellcmdEnd, shellcmd);
 
 CmdModInfo *OsCmdInfoGet(VOID)
 {

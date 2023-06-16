@@ -107,3 +107,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 OsShellCmdWaterLine(INT32 argc, const CHAR *argv[]
     return 0;
 }
 #endif
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "free", XARGS, (CmdCallBackFunc)OsShellCmdFree);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "memusage", XARGS, (CmdCallBackFunc)OsShellCmdWaterLine);

@@ -47,6 +47,8 @@
 #include <stdlib.h>
 #include "los_debug.h"
 #include "los_task.h"
+#include "shell.h"
+#include "shcmd.h"
 
 /* Forward Declarations [START] */
 #ifndef LWIP_TESTBED
@@ -609,3 +611,6 @@ ping_error:
     return LOS_NOK;
 }
 
+SHELLCMD_ENTRY(CMD_TYPE_EX, "ifconfig", XARGS, (CmdCallBackFunc)lwip_ifconfig);
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "ping", XARGS, (CmdCallBackFunc)OsShellPing);

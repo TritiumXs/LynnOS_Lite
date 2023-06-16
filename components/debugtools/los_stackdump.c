@@ -33,6 +33,8 @@
 #include "los_debug.h"
 #include "los_memory.h"
 #include "los_arch.h"
+#include "shell.h"
+#include "shcmd.h"
 
 #if (LOSCFG_DEBUG_TOOLS == 1)
 typedef struct {
@@ -152,4 +154,7 @@ UINT32 OsShellCmdStackDump(INT32 argc, const CHAR **argv)
     LOS_TaskStackDump(taskID);
     return LOS_OK;
 }
+
+SHELLCMD_ENTRY(CMD_TYPE_EX, "stack", 1, (CmdCallBackFunc)OsShellCmdStackDump);
+
 #endif /* LOSCFG_STACK_DUMP == 1 */
