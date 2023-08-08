@@ -114,6 +114,49 @@ void LOS_FsUnlock(void)
     (void)LOS_MuxPost(g_fsMutex);
 }
 
+#if (LOSCFG_PARTITION_LOCK == 1)
+static int FsPatitionLock(UINT32 mutex)
+{
+    if (!OsCheckKernelRunning()) {
+        return LOS_OK;
+    }
+    if (LOS_MuxPend(mutex, (UINT32)LOSCFG_FS_LOCK_TIMEOUT) != LOS_OK) {
+        PRINT_ERR("FsPatitionLock failed!");
+        return (int)LOS_NOK;
+    }
+
+    return LOS_OK;
+}
+
+static void FsPatitionUnLock(UINT32 mutex)
+{
+    if (!OsCheckKernelRunning()) {
+        return;
+    }
+    (void)LOS_MuxPost(mutex);
+}
+#endif
+
+/* will change the public lock to the partition private lock */
+static void ChangeLock(struct MountPoint *mp)
+{
+#if (LOSCFG_PARTITION_LOCK == 1)
+    if (FsPatitionLock(mp->mLock) == LOS_OK) {
+        LOS_FsUnlock();
+    }
+#endif
+    return;
+}
+
+static void UnLock(struct MountPoint *mp)
+{
+#if (LOSCFG_PARTITION_LOCK == 1)
+    FsPatitionUnLock(mp->mLock);
+#endif
+    (void)mp;
+    LOS_FsUnlock();
+}
+
 #ifdef LOSCFG_RANDOM_DEV
 /**
  * @brief Get canonical form of a given path based on cwd(Current working directory).
@@ -284,6 +327,7 @@ static int VfsOpen(const char *path, int flags)
     file->fMp = mp;
     file->fOwner = LOS_CurTaskIDGet();
 
+    ChangeLock(mp);
     if (file->fFops->open(file, pathInMp, flags) == 0) {
         mp->mRefs++;
         fd = FileToFd(file);
@@ -293,7 +337,7 @@ static int VfsOpen(const char *path, int flags)
         VfsFilePut(file);
     }
 
-    LOS_FsUnlock();
+    UnLock(file->fMp);
     return fd;
 }
 
@@ -342,6 +386,9 @@ static struct File *VfsAttachFileWithStatus(int fd, int status)
 
 static void VfsDetachFile(const struct File *file)
 {
+#if (LOSCFG_PARTITION_LOCK == 1)
+    FsPatitionUnLock(file->fMp->mLock);
+#endif
     (void)file;
     LOS_FsUnlock();
 }
@@ -350,12 +397,14 @@ static int VfsClose(int fd)
 {
     struct File *file = NULL;
     int ret = (int)LOS_NOK;
+    struct MountPoint *mp;
 
     file = VfsAttachFileWithStatus(fd, FILE_STATUS_CLOSING);
     if (file == NULL) {
         return ret;
     }
 
+    ChangeLock(file->fMp);
     if ((file->fFops != NULL) && (file->fFops->close != NULL)) {
         ret = file->fFops->close(file);
     } else {
@@ -370,9 +419,10 @@ static int VfsClose(int fd)
         LOSCFG_FS_FREE_HOOK((void *)file->fullPath);
     }
 
+    mp = file->fMp;
     VfsFilePut(file);
 
-    VfsDetachFile(file);
+    UnLock(mp);
 
     return ret;
 }
@@ -396,6 +446,7 @@ static ssize_t VfsRead(int fd, char *buff, size_t bytes)
         return ret;
     }
 
+    ChangeLock(file->fMp);
     if ((file->fFlags & O_ACCMODE) == O_WRONLY) {
         VFS_ERRNO_SET(EACCES);
     } else if ((file->fFops != NULL) && (file->fFops->read != NULL)) {
@@ -425,6 +476,7 @@ static ssize_t VfsWrite(int fd, const void *buff, size_t bytes)
         return ret;
     }
 
+    ChangeLock(file->fMp);
     if ((file->fFlags & O_ACCMODE) == O_RDONLY) {
         VFS_ERRNO_SET(EACCES);
     } else if ((file->fFops != NULL) && (file->fFops->write != NULL)) {
@@ -433,7 +485,6 @@ static ssize_t VfsWrite(int fd, const void *buff, size_t bytes)
         VFS_ERRNO_SET(ENOTSUP);
     }
 
-    /* else ret will be -1 */
     VfsDetachFile(file);
 
     return ret;
@@ -451,6 +502,7 @@ static int VfsIoctl(int fd, int func, va_list ap)
         return ret;
     }
 
+    ChangeLock(file->fMp);
     if ((file->fFops != NULL) && (file->fFops->ioctl != NULL)) {
         ret = file->fFops->ioctl(file, func, arg);
     } else {
@@ -674,6 +726,7 @@ off_t lseek(int fd, off_t off, int whence)
         return ret;
     }
 
+    ChangeLock(file->fMp);
     if ((file->fFops == NULL) || (file->fFops->lseek == NULL)) {
         ret = file->fOffset;
     } else {
@@ -714,13 +767,14 @@ int stat(const char *path, struct stat *stat)
         return MapToPosixRet(ret);
     }
 
+    ChangeLock(mp);
     if (mp->mFs->fsFops->stat != NULL) {
         ret = mp->mFs->fsFops->stat(mp, pathInMp, stat);
     } else {
         VFS_ERRNO_SET(ENOTSUP);
     }
 
-    LOS_FsUnlock();
+    UnLock(mp);
     return MapToPosixRet(ret);
 }
 #if (LOSCFG_LIBC_NEWLIB == 1)
@@ -754,13 +808,14 @@ int statfs(const char *path, struct statfs *buf)
         return MapToPosixRet(ret);
     }
 
+    ChangeLock(mp);
     if (mp->mFs->fsMops->statfs != NULL) {
         ret = mp->mFs->fsMops->statfs(pathInMp, buf);
     } else {
         VFS_ERRNO_SET(ENOTSUP);
     }
 
-    LOS_FsUnlock();
+    UnLock(mp);
     return MapToPosixRet(ret);
 }
 
@@ -787,9 +842,10 @@ int unlink(const char *path)
         return MapToPosixRet(ret);
     }
 
+    ChangeLock(mp);
     ret = mp->mFs->fsFops->unlink(mp, pathInMp);
 
-    LOS_FsUnlock();
+    UnLock(mp);
     return MapToPosixRet(ret);
 }
 #if (LOSCFG_LIBC_NEWLIB == 1)
@@ -844,13 +900,14 @@ int rename(const char *oldpath, const char *newpath)
         return MapToPosixRet(ret);
     }
 
+    ChangeLock(mpOld);
     if (mpOld->mFs->fsFops->rename != NULL) {
         ret = mpOld->mFs->fsFops->rename(mpOld, pathInMpOld, pathInMpNew);
     } else {
         VFS_ERRNO_SET(ENOTSUP);
     }
 
-    LOS_FsUnlock();
+    UnLock(mpOld);
     return MapToPosixRet(ret);
 }
 
@@ -870,6 +927,7 @@ int fsync(int fd)
         return MapToPosixRet(ret);
     }
 
+    ChangeLock(file->fMp);
     if ((file->fFops != NULL) && (file->fFops->sync != NULL)) {
         ret = file->fFops->sync(file);
     } else {
@@ -956,6 +1014,7 @@ struct dirent *readdir(DIR *dir)
         return NULL;
     }
 
+    ChangeLock(d->dMp);
     if ((d->dMp->mFs != NULL) && (d->dMp->mFs->fsFops != NULL) &&
         (d->dMp->mFs->fsFops->readdir != NULL)) {
         if (d->dMp->mFs->fsFops->readdir(d, &d->dDent) == 0) {
@@ -965,7 +1024,7 @@ struct dirent *readdir(DIR *dir)
         VFS_ERRNO_SET(ENOTSUP);
     }
 
-    LOS_FsUnlock();
+    UnLock(d->dMp);
 
     return ret;
 }
@@ -1031,13 +1090,14 @@ int mkdir(const char *path, mode_t mode)
         return MapToPosixRet(ret);
     }
 
+    ChangeLock(mp);
     if (mp->mFs->fsFops->mkdir != NULL) {
         ret = mp->mFs->fsFops->mkdir(mp, pathInMp);
     } else {
         VFS_ERRNO_SET(ENOTSUP);
     }
 
-    LOS_FsUnlock();
+    UnLock(mp);
     return MapToPosixRet(ret);
 }
 
@@ -1065,9 +1125,10 @@ int rmdir(const char *path)
         return MapToPosixRet(ret);
     }
 
+    ChangeLock(mp);
     ret = mp->mFs->fsFops->rmdir(mp, pathInMp);
 
-    LOS_FsUnlock();
+    UnLock(mp);
     return MapToPosixRet(ret);
 }
 
@@ -1318,6 +1379,7 @@ int ftruncate(int fd, off_t length)
         return ret;
     }
 
+    ChangeLock(file->fMp);
     if ((file->fFlags & O_ACCMODE) == O_RDONLY) {
         VFS_ERRNO_SET(EACCES);
     } else if ((file->fFops != NULL) && (file->fFops->truncate != NULL)) {
