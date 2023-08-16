@@ -1532,7 +1532,6 @@ LITE_TEST_CASE(CmsisTaskFuncTestSuite, testOsThreadGetState003, Function | Mediu
     osThreadId_t id;
     osThreadAttr_t attr;
     osStatus_t status;
-
     attr.name = "test";
     attr.attr_bits = 0U;
     attr.cb_mem = NULL;
