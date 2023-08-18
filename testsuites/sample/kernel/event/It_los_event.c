@@ -83,4 +83,27 @@ VOID ItSuiteLosEvent()
     ItLosEvent038();
 #endif
 #endif
+
+#ifdef LOSCFG_KERNEL_SMP
+    ItSmpLosEvent001();
+    ItSmpLosEvent002();
+    ItSmpLosEvent003();
+    ItSmpLosEvent004();
+    ItSmpLosEvent005();
+    ItSmpLosEvent006();
+    ItSmpLosEvent007();
+    ItSmpLosEvent008();
+    ItSmpLosEvent009();
+    ItSmpLosEvent010();
+    ItSmpLosEvent011();
+    ItSmpLosEvent012();
+    ItSmpLosEvent013();
+    ItSmpLosEvent014();
+    ItSmpLosEvent015();
+    ItSmpLosEvent016();
+    ItSmpLosEvent017();
+    ItSmpLosEvent018();
+    ItSmpLosEvent019();
+    ItSmpLosEvent020();
+#endif
 }

@@ -39,6 +39,8 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
+#define LOOP 100
+
 #define SELF_DELETED 0
 #define SYS_EXIST_SWTMR 1
 #define TEST_HWI_RUNTIME 0x100000
@@ -188,6 +190,31 @@ extern VOID ItLosSwtmrDelay003(VOID);
 extern VOID ItLosSwtmrDelay004(VOID);
 extern VOID ItLosSwtmrDelay005(VOID);
 
+extern VOID ItSmpLosSwtmr001(VOID);
+extern VOID ItSmpLosSwtmr002(VOID);
+extern VOID ItSmpLosSwtmr003(VOID);
+extern VOID ItSmpLosSwtmr004(VOID);
+extern VOID ItSmpLosSwtmr005(VOID);
+extern VOID ItSmpLosSwtmr006(VOID);
+extern VOID ItSmpLosSwtmr007(VOID);
+extern VOID ItSmpLosSwtmr008(VOID);
+extern VOID ItSmpLosSwtmr009(VOID);
+extern VOID ItSmpLosSwtmr010(VOID);
+extern VOID ItSmpLosSwtmr011(VOID);
+extern VOID ItSmpLosSwtmr012(VOID);
+extern VOID ItSmpLosSwtmr013(VOID);
+extern VOID ItSmpLosSwtmr014(VOID);
+extern VOID ItSmpLosSwtmr015(VOID);
+extern VOID ItSmpLosSwtmr016(VOID);
+extern VOID ItSmpLosSwtmr017(VOID);
+extern VOID ItSmpLosSwtmr018(VOID);
+extern VOID ItSmpLosSwtmr019(VOID);
+extern VOID ItSmpLosSwtmr020(VOID);
+extern VOID ItSmpLosSwtmr021(VOID);
+extern VOID ItSmpLosSwtmr022(VOID);
+extern VOID ItSmpLosSwtmr023(VOID);
+extern VOID ItSmpLosSwtmr024(VOID);
+extern VOID ItSmpLosSwtmr025(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

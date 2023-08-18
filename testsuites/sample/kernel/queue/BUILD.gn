@@ -188,7 +188,34 @@ static_library("test_queue") {
     "It_los_queue_static_006.c",
     "LLt_los_queue_003.c",
     "Llt_los_queue_001.c",
+    "smp/It_smp_los_queue_001.c",
+    "smp/It_smp_los_queue_002.c",
+    "smp/It_smp_los_queue_003.c",
+    "smp/It_smp_los_queue_004.c",
+    "smp/It_smp_los_queue_005.c",
+    "smp/It_smp_los_queue_006.c",
+    "smp/It_smp_los_queue_007.c",
+    "smp/It_smp_los_queue_008.c",
+    "smp/It_smp_los_queue_009.c",
+    "smp/It_smp_los_queue_010.c",
+    "smp/It_smp_los_queue_011.c",
+    "smp/It_smp_los_queue_012.c",
+    "smp/It_smp_los_queue_013.c",
+    "smp/It_smp_los_queue_014.c",
+    "smp/It_smp_los_queue_015.c",
+    "smp/It_smp_los_queue_016.c",
+    "smp/It_smp_los_queue_017.c",
+    "smp/It_smp_los_queue_018.c",
+    "smp/It_smp_los_queue_019.c",
+    "smp/It_smp_los_queue_020.c",
+    "smp/It_smp_los_queue_021.c",
+    "smp/It_smp_los_queue_022.c",
+    "smp/It_smp_los_queue_023.c",
+    "smp/It_smp_los_queue_024.c",
+    "smp/It_smp_los_queue_025.c",
   ]
+
+  include_dirs = [ "." ]
 
   configs += [ "$LITEOSTOPDIR/testsuites:include" ]
 }

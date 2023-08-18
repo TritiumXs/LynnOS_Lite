@@ -85,6 +85,18 @@ VOID ItLosSem042(void);
 VOID ItLosSem043(void);
 VOID ItLosSem044(void);
 
+VOID ItSmpLosSem001(void);
+VOID ItSmpLosSem002(void);
+VOID ItSmpLosSem003(void);
+VOID ItSmpLosSem004(void);
+VOID ItSmpLosSem005(void);
+VOID ItSmpLosSem006(void);
+VOID ItSmpLosSem007(void);
+VOID ItSmpLosSem008(void);
+VOID ItSmpLosSem009(void);
+VOID ItSmpLosSem010(void);
+VOID ItSmpLosSem011(void);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

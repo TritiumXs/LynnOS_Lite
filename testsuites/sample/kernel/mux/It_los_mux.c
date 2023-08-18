@@ -52,6 +52,28 @@ VOID ItSuiteLosMux(void)
     ItLosMux029();
     ItLosMux031();
 
+#if LOSCFG_KERNEL_SMP
+    ItSmpLosMux001();
+    ItSmpLosMux002();
+    ItSmpLosMux003();
+    ItSmpLosMux004();
+    ItSmpLosMux005();
+    ItSmpLosMux006();
+    ItSmpLosMux007();
+    ItSmpLosMux008();
+    ItSmpLosMux009();
+    ItSmpLosMux010();
+    ItSmpLosMux011();
+    ItSmpLosMux012();
+    ItSmpLosMux013();
+    ItSmpLosMux014();
+    ItSmpLosMux015();
+    ItSmpLosMux016();
+    ItSmpLosMux017();
+    ItSmpLosMux018();
+    ItSmpLosMux019();
+#endif
+
 #if (LOS_KERNEL_TEST_FULL == 1)
     ItLosMux007();
     ItLosMux010();

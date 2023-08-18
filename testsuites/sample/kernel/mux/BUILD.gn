@@ -64,7 +64,28 @@ static_library("test_mux") {
     "It_los_mutex_033.c",
     "It_los_mutex_034.c",
     "It_los_mux.c",
+    "smp/It_smp_los_mux_001.c",
+    "smp/It_smp_los_mux_002.c",
+    "smp/It_smp_los_mux_003.c",
+    "smp/It_smp_los_mux_004.c",
+    "smp/It_smp_los_mux_005.c",
+    "smp/It_smp_los_mux_006.c",
+    "smp/It_smp_los_mux_007.c",
+    "smp/It_smp_los_mux_008.c",
+    "smp/It_smp_los_mux_009.c",
+    "smp/It_smp_los_mux_010.c",
+    "smp/It_smp_los_mux_011.c",
+    "smp/It_smp_los_mux_012.c",
+    "smp/It_smp_los_mux_013.c",
+    "smp/It_smp_los_mux_014.c",
+    "smp/It_smp_los_mux_015.c",
+    "smp/It_smp_los_mux_016.c",
+    "smp/It_smp_los_mux_017.c",
+    "smp/It_smp_los_mux_018.c",
+    "smp/It_smp_los_mux_019.c",
   ]
+
+  include_dirs = [ "." ]
 
   configs += [ "$LITEOSTOPDIR/testsuites:include" ]
 }

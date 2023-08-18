@@ -74,7 +74,29 @@ static_library("test_event") {
     "It_los_event_041.c",
     "It_los_event_042.c",
     "It_los_event_043.c",
+    "smp/It_smp_los_event_001.c",
+    "smp/It_smp_los_event_002.c",
+    "smp/It_smp_los_event_003.c",
+    "smp/It_smp_los_event_004.c",
+    "smp/It_smp_los_event_005.c",
+    "smp/It_smp_los_event_006.c",
+    "smp/It_smp_los_event_007.c",
+    "smp/It_smp_los_event_008.c",
+    "smp/It_smp_los_event_009.c",
+    "smp/It_smp_los_event_010.c",
+    "smp/It_smp_los_event_011.c",
+    "smp/It_smp_los_event_012.c",
+    "smp/It_smp_los_event_013.c",
+    "smp/It_smp_los_event_014.c",
+    "smp/It_smp_los_event_015.c",
+    "smp/It_smp_los_event_016.c",
+    "smp/It_smp_los_event_017.c",
+    "smp/It_smp_los_event_018.c",
+    "smp/It_smp_los_event_019.c",
+    "smp/It_smp_los_event_020.c",
   ]
+
+  include_dirs = [ "." ]
 
   configs += [ "$LITEOSTOPDIR/testsuites:include" ]
 }

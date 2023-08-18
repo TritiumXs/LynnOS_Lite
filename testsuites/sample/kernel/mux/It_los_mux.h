@@ -81,6 +81,26 @@ VOID ItSuiteLosMux(void);
 VOID ItLosMux020(void);
 #endif
 
+VOID ItSmpLosMux001(VOID);
+VOID ItSmpLosMux002(VOID);
+VOID ItSmpLosMux003(VOID);
+VOID ItSmpLosMux004(VOID);
+VOID ItSmpLosMux005(VOID);
+VOID ItSmpLosMux006(VOID);
+VOID ItSmpLosMux007(VOID);
+VOID ItSmpLosMux008(VOID);
+VOID ItSmpLosMux009(VOID);
+VOID ItSmpLosMux010(VOID);
+VOID ItSmpLosMux011(VOID);
+VOID ItSmpLosMux012(VOID);
+VOID ItSmpLosMux013(VOID);
+VOID ItSmpLosMux014(VOID);
+VOID ItSmpLosMux015(VOID);
+VOID ItSmpLosMux016(VOID);
+VOID ItSmpLosMux017(VOID);
+VOID ItSmpLosMux018(VOID);
+VOID ItSmpLosMux019(VOID);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

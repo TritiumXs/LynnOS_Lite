@@ -84,4 +84,18 @@ VOID ItSuiteLosSem(void)
     ItLosSem037();
     ItLosSem039();
 #endif
+
+#if LOSCFG_KERNEL_SMP
+    ItSmpLosSem001();
+    ItSmpLosSem002();
+    ItSmpLosSem003();
+    ItSmpLosSem004();
+    ItSmpLosSem005();
+    ItSmpLosSem006();
+    ItSmpLosSem007();
+    ItSmpLosSem008();
+    ItSmpLosSem009();
+    ItSmpLosSem010();
+    ItSmpLosSem011();
+#endif
 }

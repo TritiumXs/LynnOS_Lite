@@ -249,6 +249,13 @@ extern UINT32 TaskUsedCountGet(VOID);
 #define TASK_EXISTED_NUM TaskUsedCountGet()
 #define QUEUE_EXISTED_NUM QueueUsedCountGet()
 
+extern UINT64 TestTickCountGet(VOID);
+extern UINT64 TestTickCountByCurrCpuid(VOID);
+extern VOID TestBusyTaskDelay(UINT32 tick);
+extern VOID TestAssertBusyTaskDelay(UINT32 timeout, UINT32 flag);
+
+#define TEST_HwiClear(ID) LOS_HwiClear(ID)
+
 #define HWI_NUM_INT_NEG (-4)
 #define HWI_NUM_INT0 0
 #define HWI_NUM_INT1 1

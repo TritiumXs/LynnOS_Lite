@@ -146,7 +146,34 @@ static_library("test_swtmr") {
     "It_los_swtmr_Delay_003.c",
     "It_los_swtmr_Delay_004.c",
     "It_los_swtmr_Delay_005.c",
+    "smp/It_smp_los_swtmr_001.c",
+    "smp/It_smp_los_swtmr_002.c",
+    "smp/It_smp_los_swtmr_003.c",
+    "smp/It_smp_los_swtmr_004.c",
+    "smp/It_smp_los_swtmr_005.c",
+    "smp/It_smp_los_swtmr_006.c",
+    "smp/It_smp_los_swtmr_007.c",
+    "smp/It_smp_los_swtmr_008.c",
+    "smp/It_smp_los_swtmr_009.c",
+    "smp/It_smp_los_swtmr_010.c",
+    "smp/It_smp_los_swtmr_011.c",
+    "smp/It_smp_los_swtmr_012.c",
+    "smp/It_smp_los_swtmr_013.c",
+    "smp/It_smp_los_swtmr_014.c",
+    "smp/It_smp_los_swtmr_015.c",
+    "smp/It_smp_los_swtmr_016.c",
+    "smp/It_smp_los_swtmr_017.c",
+    "smp/It_smp_los_swtmr_018.c",
+    "smp/It_smp_los_swtmr_019.c",
+    "smp/It_smp_los_swtmr_020.c",
+    "smp/It_smp_los_swtmr_021.c",
+    "smp/It_smp_los_swtmr_022.c",
+    "smp/It_smp_los_swtmr_023.c",
+    "smp/It_smp_los_swtmr_024.c",
+    "smp/It_smp_los_swtmr_025.c",
   ]
+
+  include_dirs = [ "." ]
 
   configs += [ "$LITEOSTOPDIR/testsuites:include" ]
 }
