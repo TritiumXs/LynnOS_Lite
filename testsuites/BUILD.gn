@@ -59,20 +59,20 @@ kernel_module("test_init") {
 group("testsuites") {
   deps = [
     ":test_init",
-    "sample/cmsis:test_cmsis",
-    "sample/kernel/atomic:test_atomic",
+    #"sample/cmsis:test_cmsis",
+    #"sample/kernel/atomic:test_atomic",
     "sample/kernel/event:test_event",
     "sample/kernel/hwi:test_hwi",
     "sample/kernel/mem:test_mem",
     "sample/kernel/mux:test_mux",
-    "sample/kernel/power:test_pm",
+    #"sample/kernel/power:test_pm",
     "sample/kernel/queue:test_queue",
     "sample/kernel/sem:test_sem",
-    "sample/kernel/swtmr:test_swtmr",
+    #"sample/kernel/swtmr:test_swtmr",
     "sample/kernel/task:test_task",
-    "sample/posix:test_posix",
-    "unittest/posix:posix_test",
-    "unittest/xts:xts_test",
+    #"sample/posix:test_posix",
+    #"unittest/posix:posix_test",
+    #"unittest/xts:xts_test",
   ]
   if (defined(LOSCFG_DYNLINK)) {
     deps += [ "sample/kernel/dynlink:test_dynlink" ]

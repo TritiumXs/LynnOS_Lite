@@ -437,6 +437,52 @@ QUEUE_END:
     return ret;
 }
 
+LITE_OS_SEC_TEXT UINT32 OsQueueOperateIsr(UINT32 queueID, UINT32 operateType, VOID *bufferAddr, UINT32 *bufferSize)
+{
+    LosQueueCB *queueCB = NULL;
+    LosTaskCB *resumedTask = NULL;
+    LosTaskCB *runTask = NULL;
+    UINT32 ret;
+    UINT32 readWrite = OS_QUEUE_READ_WRITE_GET(operateType);
+    UINT32 readWriteTmp = !readWrite;
+
+    UINT32 intSave;
+
+    queueCB = (LosQueueCB *)GET_QUEUE_HANDLE(queueID);
+
+    intSave = LOS_IntLock();
+
+    ret = OsQueueOperateParamCheck(queueCB, operateType, bufferSize);
+    if (ret != LOS_OK) {
+        goto QUEUE_END;
+    }
+
+    if (queueCB->readWriteableCnt[readWrite] == 0) {
+        ret = OS_QUEUE_IS_READ(operateType) ? LOS_ERRNO_QUEUE_ISEMPTY : LOS_ERRNO_QUEUE_ISFULL;
+        goto QUEUE_END;
+    } else {
+        queueCB->readWriteableCnt[readWrite]--;
+    }
+
+    OsQueueBufferOperate(queueCB, operateType, bufferAddr, bufferSize);
+    if (!LOS_ListEmpty(&queueCB->readWriteList[readWriteTmp])) {
+        runTask = g_losTask.runTask;
+        resumedTask = OS_TCB_FROM_PENDLIST(LOS_DL_LIST_FIRST(&queueCB->readWriteList[readWriteTmp]));
+        OsSchedTaskWake(resumedTask);
+        if (resumedTask->priority < runTask->priority) {
+           LOS_Schedule();
+        }
+        LOS_IntRestore(intSave);
+        return LOS_OK;
+    } else {
+        queueCB->readWriteableCnt[readWriteTmp]++;
+    }
+
+QUEUE_END:
+    LOS_IntRestore(intSave);
+    return ret;
+}
+
 LITE_OS_SEC_TEXT UINT32 LOS_QueueReadCopy(UINT32 queueID,
                                           VOID *bufferAddr,
                                           UINT32 *bufferSize,
@@ -458,6 +504,22 @@ LITE_OS_SEC_TEXT UINT32 LOS_QueueReadCopy(UINT32 queueID,
     return OsQueueOperate(queueID, operateType, bufferAddr, bufferSize, timeOut);
 }
 
+LITE_OS_SEC_TEXT UINT32 LOS_QueueReadCopyIsr(UINT32 queueID,
+                                             VOID *bufferAddr,
+                                             UINT32 *bufferSize)
+{
+    UINT32 ret;
+    UINT32 operateType;
+
+    ret = OsQueueReadParameterCheck(queueID, bufferAddr, bufferSize, LOS_NO_WAIT);
+    if (ret != LOS_OK) {
+        return ret;
+    }
+
+    operateType = OS_QUEUE_OPERATE_TYPE(OS_QUEUE_READ, OS_QUEUE_HEAD, OS_QUEUE_NOT_POINT);
+    return OsQueueOperateIsr(queueID, operateType, bufferAddr, bufferSize);
+}
+
 LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteHeadCopy(UINT32 queueID,
                                                VOID *bufferAddr,
                                                UINT32 bufferSize,
@@ -473,6 +535,22 @@ LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteHeadCopy(UINT32 queueID,
 
     operateType = OS_QUEUE_OPERATE_TYPE(OS_QUEUE_WRITE, OS_QUEUE_HEAD, OS_QUEUE_NOT_POINT);
     return OsQueueOperate(queueID, operateType, bufferAddr, &bufferSize, timeOut);
+}
+
+LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteHeadCopyIsr(UINT32 queueID,
+                                                  VOID *bufferAddr,
+                                                  UINT32 bufferSize)
+{
+    UINT32 ret;
+    UINT32 operateType;
+
+    ret = OsQueueWriteParameterCheck(queueID, bufferAddr, &bufferSize, LOS_NO_WAIT);
+    if (ret != LOS_OK) {
+        return ret;
+    }
+
+    operateType = OS_QUEUE_OPERATE_TYPE(OS_QUEUE_WRITE, OS_QUEUE_HEAD, OS_QUEUE_NOT_POINT);
+    return OsQueueOperateIsr(queueID, operateType, bufferAddr, &bufferSize);
 }
 
 LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteCopy(UINT32 queueID,
@@ -496,6 +574,22 @@ LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteCopy(UINT32 queueID,
     return OsQueueOperate(queueID, operateType, bufferAddr, &bufferSize, timeOut);
 }
 
+LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteCopyIsr(UINT32 queueID,
+                                              VOID *bufferAddr,
+                                              UINT32 bufferSize)
+{
+    UINT32 ret;
+    UINT32 operateType;
+
+    ret = OsQueueWriteParameterCheck(queueID, bufferAddr, &bufferSize, LOS_NO_WAIT);
+    if (ret != LOS_OK) {
+        return ret;
+    }
+
+    operateType = OS_QUEUE_OPERATE_TYPE(OS_QUEUE_WRITE, OS_QUEUE_TAIL, OS_QUEUE_NOT_POINT);
+    return OsQueueOperateIsr(queueID, operateType, bufferAddr, &bufferSize);
+}
+
 LITE_OS_SEC_TEXT UINT32 LOS_QueueRead(UINT32 queueID, VOID *bufferAddr, UINT32 bufferSize, UINT32 timeOut)
 {
     UINT32 ret;
@@ -511,6 +605,21 @@ LITE_OS_SEC_TEXT UINT32 LOS_QueueRead(UINT32 queueID, VOID *bufferAddr, UINT32 b
     OsHookCall(LOS_HOOK_TYPE_QUEUE_READ, (LosQueueCB *)GET_QUEUE_HANDLE(queueID), operateType, bufferSize, timeOut);
 
     return OsQueueOperate(queueID, operateType, bufferAddr, &bufferSize, timeOut);
+}
+
+LITE_OS_SEC_TEXT UINT32 LOS_QueueReadIsr(UINT32 queueID, VOID *bufferAddr, UINT32 bufferSize)
+{
+    UINT32 ret;
+    UINT32 operateType;
+
+    ret = OsQueueReadParameterCheck(queueID, bufferAddr, &bufferSize, LOS_NO_WAIT);
+    if (ret != LOS_OK) {
+        return ret;
+    }
+
+    operateType = OS_QUEUE_OPERATE_TYPE(OS_QUEUE_READ, OS_QUEUE_HEAD, OS_QUEUE_POINT);
+
+    return OsQueueOperateIsr(queueID, operateType, bufferAddr, &bufferSize);
 }
 
 LITE_OS_SEC_TEXT UINT32 LOS_QueueWrite(UINT32 queueID, VOID *bufferAddr, UINT32 bufferSize, UINT32 timeOut)
@@ -532,6 +641,23 @@ LITE_OS_SEC_TEXT UINT32 LOS_QueueWrite(UINT32 queueID, VOID *bufferAddr, UINT32 
     return OsQueueOperate(queueID, operateType, &bufferAddr, &size, timeOut);
 }
 
+LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteIsr(UINT32 queueID, VOID *bufferAddr, UINT32 bufferSize)
+{
+    UINT32 ret;
+    UINT32 operateType;
+    UINT32 size = sizeof(UINT32 *);
+    (VOID) bufferSize;
+
+    ret = OsQueueWriteParameterCheck(queueID, bufferAddr, &size, LOS_NO_WAIT);
+    if (ret != LOS_OK) {
+        return ret;
+    }
+
+    operateType = OS_QUEUE_OPERATE_TYPE(OS_QUEUE_WRITE, OS_QUEUE_TAIL, OS_QUEUE_POINT);
+
+    return OsQueueOperateIsr(queueID, operateType, &bufferAddr, &size);
+}
+
 LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteHead(UINT32 queueID,
                                            VOID *bufferAddr,
                                            UINT32 bufferSize,
@@ -545,6 +671,25 @@ LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteHead(UINT32 queueID,
     }
 
     return LOS_QueueWriteHeadCopy(queueID, &bufferAddr, size, timeOut);
+}
+
+LITE_OS_SEC_TEXT UINT32 LOS_QueueWriteHeadIsr(UINT32 queueID,
+                                              VOID *bufferAddr,
+                                              UINT32 bufferSize)
+{
+    UINT32 ret;
+    UINT32 operateType;
+    UINT32 size = sizeof(UINT32 *);
+    (VOID) bufferSize;
+
+    ret = OsQueueWriteParameterCheck(queueID, bufferAddr, &size, LOS_NO_WAIT);
+    if (ret != LOS_OK) {
+        return ret;
+    }
+
+    operateType = OS_QUEUE_OPERATE_TYPE(OS_QUEUE_WRITE, OS_QUEUE_HEAD, OS_QUEUE_POINT);
+
+    return OsQueueOperateIsr(queueID, operateType, &bufferAddr, &size);
 }
 
 /*****************************************************************************
