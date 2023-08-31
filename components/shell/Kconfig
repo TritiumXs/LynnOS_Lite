@@ -19,9 +19,4 @@ config SHELL_PRIO
     range 1 31
     depends on SHELL
 
-config SHELL_STACK_SIZE
-    int "Shell Task Stack Size"
-    default 4096
-    depends on SHELL
-
 endmenu

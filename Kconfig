@@ -1,5 +1,5 @@
 # Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
-# Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
+# Copyright (c) 2020-2023 Huawei Device Co., Ltd. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -247,11 +247,6 @@ config BACKTRACE_TYPE
     default 5 if BACKTRACE_TYPE_5
     default 6 if BACKTRACE_TYPE_6
 
-config BACKTRACE_DEPTH
-    int "Backtrace depth"
-    default 15
-    depends on KERNEL_BACKTRACE
-
 config KERNEL_CPPSUPPORT
     bool "Enable C++ Support"
     default n
@@ -335,6 +330,25 @@ source "components/trace/Kconfig"
 
 ######################### config options of lms #########################
 source "components/lms/Kconfig"
+
+######################## config options of task ############################
+config BASE_CORE_EXC_TSK_SWITCH
+    bool "Enable task switch"
+    default y
+
+config BASE_CORE_TSK_MONITOR
+    bool "Enable task monitor"
+    default y
+
+######################## config options of hardware interrupt ############################
+config PLATFORM_HWI
+    bool "Enable takeover on interruption mode."
+    default y
+
+config USE_SYSTEM_DEFINED_INTERRUPT
+    bool "Enable default interrupt of the OS on interruption mode."
+    default y
+    depends on PLATFORM_HWI
 
 endmenu
 
@@ -475,10 +489,6 @@ config SECURE_TRUSTZONE
     default n
     depends on ARCH_ARM
     depends on ARCH_ARM_V8M
-config SECURE_HEAP_SIZE
-    int "TrustZone Heap Size (bytes)"
-    default 2048
-    depends on SECURE_TRUSTZONE
 config SECURE
     bool "Enable Security"
     default n
@@ -535,4 +545,67 @@ config CC_STACKPROTECTOR_ALL
 
 endchoice
 
+endmenu
+
+######################## config options of IPC ############################
+menu "IPC"
+config BASE_IPC_QUEUE
+    bool "Enable queue"
+    default y
+
+config BASE_IPC_SEM
+    bool "Enable semaphore"
+    default y
+
+config BASE_IPC_MUX
+    bool "Enable mutex"
+    default y
+
+endmenu
+
+######################## config options of time ############################
+menu "Time"
+config BASE_CORE_SWTMR
+    bool "Enable software timer"
+    default y
+
+config BASE_CORE_SWTMR_ALIGN
+    bool "Enable software timer align"
+    default y 
+    depends on BASE_CORE_SWTMR
+
+config BASE_CORE_TICK_HW_TIME
+    bool "Enable  External configuration item for timer tailoring."
+    default n
+
+config BASE_CORE_TICK_WTIMER
+    bool "Enable base core tick wtimer."
+    default n
+
+endmenu
+
+
+######################## config options of memory ############################
+menu "Memory"
+config SYS_EXTERNAL_HEAP
+    bool "Enable external heap memory"
+    default y
+
+    help
+      Answer Y to enable external heap memory.
+
+config MEM_MUL_POOL
+    bool "Enable memory pool"
+    default y
+
+    help
+      Answer Y to enable memory pool.
+
+config MEM_FREE_BY_TASKID
+    bool "Enable memory free by taskid"
+    default y
+
+config MEMORY_BESTFIT
+    bool "Enable memory bestfit"
+    default y
 endmenu
