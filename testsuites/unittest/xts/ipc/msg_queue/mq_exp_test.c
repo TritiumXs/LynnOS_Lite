@@ -585,7 +585,7 @@ LITE_TEST_CASE(IpcMqExceptionApiTestSuite, testMqGetAttrEBADFEINVAL, Function | 
     char qName[MQ_NAME_LEN];
 
     memset_s(&mqstat, sizeof(mqstat), 0, sizeof(mqstat));
-    ret = sprintf_s(qName, MQ_NAME_LEN, "testMqSendEINVAL_%d", GetRandom(10000)); /* 10000, common data for test, no special meaning */
+    ret = sprintf_s(qName, MQ_NAME_LEN, "testMqGetAttrEBADFEINVAL_%d", GetRandom(10000)); /* 10000, common data for test, no special meaning */
     ICUNIT_ASSERT_EQUAL(ret, strlen(qName), ret);
     queue = mq_open(qName, O_CREAT | O_RDWR | O_NONBLOCK, S_IRUSR | S_IWUSR, NULL);
 
@@ -841,6 +841,172 @@ LITE_TEST_CASE(IpcMqExceptionApiTestSuite, testMqCloseEBADF, Function | MediumTe
     return 0;
 }
 
+/* *
+ * @tc.number SUB_KERNEL_IPC_MQ_OPEN_0500
+ * @tc.name   mq_open function errno for ENFILE test
+ * @tc.desc   [C- SOFTWARE -0200]
+ */
+LITE_TEST_CASE(IpcMqExceptionApiTestSuite, testMqOpenENFILE, Function | MediumTest | Level3)
+{
+    char qName[MAX_MQ_NUMBER + 1][24];
+    mqd_t queue[MAX_MQ_NUMBER + 1];
+    int flag = 0;
+    int i, ret;
+
+    errno_t err = memset_s(queue, sizeof(queue), 0, sizeof(queue));
+    ICUNIT_ASSERT_EQUAL(err, EOK, err);
+    for (i = 0; i < MAX_MQ_NUMBER + 1; i++) {
+        ret = sprintf_s(qName[i], 24, "testMqOpenENFILE_%d", i);
+        ICUNIT_ASSERT_EQUAL(ret, strlen(qName[i]), ret);
+    }
+
+    for (i = 0; i < MAX_MQ_NUMBER; i++) {
+        queue[i] = mq_open(qName[i], O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, NULL);
+
+        if (queue[i] == (mqd_t)-1) {
+            flag = 1;
+            break;
+        }
+
+        ICUNIT_ASSERT_NOT_EQUAL(queue[i], (mqd_t)-1, queue[i]);
+    }
+
+    if (flag == 0) {
+        queue[i] = mq_open(qName[i], O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, NULL);
+    }
+    ICUNIT_ASSERT_EQUAL(queue[i], (mqd_t)-1, queue[i]);
+    ICUNIT_ASSERT_EQUAL(errno, ENFILE, errno);
+
+    for (i = 0; i < MAX_MQ_NUMBER + 1 ; i++) {
+        if(queue[i] == (mqd_t)-1){
+            break;
+        }
+        ret = mq_close(queue[i]);
+        ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+        ret = mq_unlink(qName[i]);
+        ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    }
+    return 0;
+}
+
+/* *
+ * @tc.number SUB_KERNEL_IPC_MQ_SEND_0100
+ * @tc.name   mq_send function errno for EAGAIN test
+ * @tc.desc   [C- SOFTWARE -0200]
+ */
+LITE_TEST_CASE(IpcMqExceptionApiTestSuite, testMqSendEAGAIN, Function | MediumTest | Level2)
+{
+    int ret;
+    mqd_t queue;
+    struct mq_attr attr = { 0 };
+    char qName[MQ_NAME_LEN];
+
+    ret = sprintf_s(qName, MQ_NAME_LEN, "testMqSendEAGAIN_%d", GetRandom(10000)); /* 10000, common data for test, no special meaning */
+    ICUNIT_ASSERT_EQUAL(ret, strlen(qName), ret);
+    attr.mq_msgsize = MQ_MSG_SIZE;
+    attr.mq_maxmsg = 1;
+    queue = mq_open(qName, O_CREAT | O_RDWR | O_NONBLOCK, S_IRUSR | S_IWUSR, &attr);
+    ICUNIT_ASSERT_NOT_EQUAL(queue , (mqd_t)-1, queue);
+
+    ret = mq_send(queue, MQ_MSG, MQ_MSG_LEN, 0);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    ret = mq_send(queue, MQ_MSG, MQ_MSG_LEN, 0);
+    ICUNIT_ASSERT_EQUAL(ret, -1, ret);
+    ICUNIT_ASSERT_EQUAL(errno, EAGAIN, errno);
+
+    ret = mq_close(queue);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    ret = mq_unlink(qName);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    return 0;
+}
+
+/* *
+ * @tc.number SUB_KERNEL_IPC_MQ_SEND_0200
+ * @tc.name   mq_send function errno for EBADF and EMSGSIZE test
+ * @tc.desc   [C- SOFTWARE -0200]
+ */
+LITE_TEST_CASE(IpcMqExceptionApiTestSuite, testMqSendEBADFEMSGSIZE, Function | MediumTest | Level2)
+{
+    int ret;
+    mqd_t queue;
+    struct mq_attr attr = { 0 };
+    char qName[MQ_NAME_LEN];
+
+    ret = sprintf_s(qName, MQ_NAME_LEN, "testMqSendEBADFEMSGSIZE_%d", GetRandom(10000)); /* 10000, common data for test, no special meaning */
+    ICUNIT_ASSERT_EQUAL(ret, strlen(qName), ret);
+    attr.mq_msgsize = 1;
+    attr.mq_maxmsg = MQ_MAX_MSG;
+    queue = mq_open(qName, O_CREAT | O_RDWR | O_NONBLOCK, S_IRUSR | S_IWUSR, &attr);
+    ICUNIT_ASSERT_NOT_EQUAL(queue , (mqd_t)-1, queue);
+
+    ret = mq_send(NULL, MQ_MSG, 1, MQ_MSG_PRIO);
+    ICUNIT_ASSERT_EQUAL(ret, -1, ret);
+    ICUNIT_ASSERT_EQUAL(errno, EBADF, errno);
+
+    ret = mq_send(queue, MQ_MSG, MQ_MSG_LEN, MQ_MSG_PRIO);
+    ICUNIT_ASSERT_EQUAL(ret, -1, ret);
+    ICUNIT_ASSERT_EQUAL(errno, EMSGSIZE, errno);
+
+    ret = mq_close(queue);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    ret = mq_unlink(qName);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+
+    attr.mq_msgsize = MQ_MSG_SIZE;
+    attr.mq_maxmsg = MQ_MAX_MSG;
+    queue = mq_open(qName, O_CREAT | O_RDONLY | O_NONBLOCK, S_IRUSR | S_IWUSR, &attr);
+    ICUNIT_ASSERT_NOT_EQUAL(queue , (mqd_t)-1, queue);
+
+    ret = mq_send(queue, MQ_MSG, MQ_MSG_LEN, MQ_MSG_PRIO);
+    ICUNIT_ASSERT_EQUAL(ret, -1, ret);
+    ICUNIT_ASSERT_EQUAL(errno, EBADF, errno);
+
+    attr.mq_flags |= O_NONBLOCK;
+    ret = mq_setattr(queue, &attr, NULL);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    ret = mq_send(queue, MQ_MSG, MQ_MSG_LEN, MQ_MSG_PRIO);
+    ICUNIT_ASSERT_EQUAL(ret, -1, ret);
+    ICUNIT_ASSERT_EQUAL(errno, EBADF, errno);
+
+    ret = mq_close(queue);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    ret = mq_unlink(qName);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    return 0;
+}
+
+/* *
+ * @tc.number SUB_KERNEL_IPC_MQ_SEND_0300
+ * @tc.name   mq_send function errno for EINVAL  test
+ * @tc.desc   [C- SOFTWARE -0200]
+ */
+LITE_TEST_CASE(IpcMqExceptionApiTestSuite, testMqSendEINVAL, Function | MediumTest | Level3)
+{
+    int ret;
+    mqd_t queue;
+    struct mq_attr attr = { 0 };
+    char qName[MQ_NAME_LEN];
+
+    ret = sprintf_s(qName, MQ_NAME_LEN, "testMqSendEINVAL_%d", GetRandom(10000)); /* 10000, common data for test, no special meaning */
+    ICUNIT_ASSERT_EQUAL(ret, strlen(qName), ret);
+    attr.mq_msgsize = MQ_MSG_SIZE;
+    attr.mq_maxmsg = MQ_MAX_MSG;
+
+    queue = mq_open(qName, O_CREAT | O_RDWR | O_NONBLOCK, S_IRUSR | S_IWUSR, &attr);
+    ICUNIT_ASSERT_NOT_EQUAL(queue , (mqd_t)-1, queue);
+
+    ret = mq_send(queue, MQ_MSG, 0, MQ_MSG_PRIO);
+    ICUNIT_ASSERT_EQUAL(ret, -1, ret);
+    ICUNIT_ASSERT_EQUAL(errno, EINVAL, errno);
+
+    ret = mq_close(queue);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    ret = mq_unlink(qName);
+    ICUNIT_ASSERT_EQUAL(ret, 0, ret);
+    return 0;
+}
+
 RUN_TEST_SUITE(IpcMqExceptionApiTestSuite);
 
 void IpcMqExceptionFuncTest(void)
@@ -867,4 +1033,8 @@ void IpcMqExceptionFuncTest(void)
     RUN_ONE_TESTCASE(testMqOpenENOENT);
     RUN_ONE_TESTCASE(testMqOpenENOSPC);
     RUN_ONE_TESTCASE(testMqCloseEBADF);
+    RUN_ONE_TESTCASE(testMqOpenENFILE);
+    RUN_ONE_TESTCASE(testMqSendEAGAIN);
+    RUN_ONE_TESTCASE(testMqSendEBADFEMSGSIZE);
+    RUN_ONE_TESTCASE(testMqSendEINVAL);
 }
