@@ -5,13 +5,6 @@ config KERNEL_LMS
     help
       Select y to build LiteOS with memory sanitizer.
 
-config LMS_MAX_RECORD_POOL_NUM
-    int "Lms check pool max num"
-    default 50
-    depends on KERNEL_LMS
-    help
-      The Max num of lms check pool
-
 config LMS_LOAD_CHECK
     bool "Enable lms read check"
     default y

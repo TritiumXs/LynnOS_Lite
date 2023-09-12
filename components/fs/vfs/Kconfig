@@ -1,5 +1,5 @@
 # Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
-# Copyright (c) 2020-2022 Huawei Device Co., Ltd. All rights reserved.
+# Copyright (c) 2020-2023 Huawei Device Co., Ltd. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -36,12 +36,6 @@ config FS_VFS
       Answer Y to enable LiteOS support VFS.
 
 if FS_VFS
-config FS_LOCK_TIMEOUT
-    int "Filesystem global lock timeout value in tick. -1 for waiting forever"
-    default -1
-    help
-        The timeout value of getting filesystem lock in tick. -1 for waiting forever
-
 config FS_SUPPORT_MOUNT_TARGET_RECURSIVE
     bool "Mount target can be recursive"
     default n
