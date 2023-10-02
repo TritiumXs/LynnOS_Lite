@@ -355,7 +355,7 @@ LITE_TEST_CASE(MqueueFuncTestSuite, TestMqOpenENOSPC, Function | MediumTest | Le
  */
 LITE_TEST_CASE(MqueueFuncTestSuite, TestMqCloseEBADF, Function | MediumTest | Level2)
 {
-    ICUNIT_TRACK_EQUAL(mq_close(NULL), -1, -1);
+    ICUNIT_TRACK_EQUAL(mq_close((mqd_t)NULL), -1, -1);
     ICUNIT_TRACK_EQUAL(errno, EBADF, errno);
     return 0;
 }
@@ -411,7 +411,7 @@ LITE_TEST_CASE(MqueueFuncTestSuite, TestMqSendEBADFEMSGSIZE, Function | MediumTe
     queue = mq_open(qName, O_CREAT | O_RDWR | O_NONBLOCK, S_IRUSR | S_IWUSR, &attr);
     ICUNIT_ASSERT_NOT_EQUAL(queue, (mqd_t)-1, queue);
 
-    ret = mq_send(NULL, MQ_MSG, 1, MQ_MSG_PRIO);
+    ret = mq_send((mqd_t)NULL, MQ_MSG, 1, MQ_MSG_PRIO);
     ICUNIT_TRACK_EQUAL(ret, -1, ret);
     ICUNIT_TRACK_EQUAL(errno, EBADF, errno);
 

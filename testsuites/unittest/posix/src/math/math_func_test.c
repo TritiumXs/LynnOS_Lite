@@ -119,9 +119,19 @@ LITE_TEST_CASE(PosixMathFuncTestSuite, testMathAbs001, Function | MediumTest | L
  */
 LITE_TEST_CASE(PosixMathFuncTestSuite, testMathAbs002, Function | MediumTest | Level1)
 {
+    // the first case ( abs(-2147483648) ) is UB
+    // quote from "man abs": "Trying to take the absolute value of the most negative integer is not defined."
+    // so this case is disabled for non-GCC toolchains
+#ifdef LOSCFG_COMPILER_GCC
     const int testCount = 3;
     int testValues[] = {-2147483648, -2147483647, 2147483647};
     int expected[] = {-2147483648, 2147483647, 2147483647};
+#else
+    const int testCount = 2;
+    int testValues[] = {-2147483647, 2147483647};
+    int expected[] = {2147483647, 2147483647};
+#endif
+
     int ret;
     for (int i = 0; i < testCount; ++i) {
         ret = abs(testValues[i]);
