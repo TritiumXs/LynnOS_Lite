@@ -42,6 +42,10 @@
 #include "los_interrupt.h"
 #endif
 
+#if (LOSCFG_KERNEL_SMP == 1)
+#include "los_mp.h"
+#endif
+
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
 #include "los_swtmr.h"
 #endif
@@ -153,6 +157,10 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_KernelInit(VOID)
 
     ArchInit();
 
+#ifdef LOSCFG_KERNEL_SMP
+    OsSmpInit();
+#endif
+
     ret = OsTickTimerInit();
     if (ret != LOS_OK) {
         PRINT_ERR("OsTickTimerInit error! 0x%x\n", ret);
@@ -223,7 +231,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_KernelInit(VOID)
     }
 #endif
 
-    ret = OsIdleTaskCreate();
+    ret = OsIdleTaskCreate(0);
     if (ret != LOS_OK) {
         return ret;
     }

@@ -270,6 +270,7 @@ STATIC VOID ExcInfoDisplayContext(const LosExcInfo *exc)
 
 STATIC VOID ExcInfoDisplay(VOID)
 {
+    UINT32 cpuID = ArchCurrCpuid();
     PRINTK("\nException Information     \n");
 
     if (g_excInfo.type < RISCV_EXC_TYPE_NUM) {
@@ -279,8 +280,8 @@ STATIC VOID ExcInfoDisplay(VOID)
     }
 
     if (LOS_TaskIsRunning()) {
-        PRINTK("taskName = %s\n", g_losTask.runTask->taskName);
-        PRINTK("taskID = %u\n", g_losTask.runTask->taskID);
+        PRINTK("taskName = %s\n", g_losTask[cpuID].runTask->taskName);
+        PRINTK("taskID = %u\n", g_losTask[cpuID].runTask->taskID);
     } else {
         PRINTK("The exception occurs during system startup!\n");
     }

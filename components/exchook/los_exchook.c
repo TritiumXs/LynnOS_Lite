@@ -44,6 +44,15 @@ struct Node {
 STATIC struct Node g_excNodes[LOSCFG_BASE_EXC_HOOK_LIMIT];
 STATIC struct Node *g_excHeads[EXC_TYPE_END + 1]; /* EXC_TYPE_END is used for the free list. */
 
+#if (LOSCFG_KERNEL_SMP == 1)
+LITE_OS_SEC_BSS SPIN_LOCK_INIT(g_excHookSpin);
+#define EXC_HOOK_LOCK(state)             LOS_SpinLockSave(&g_excHookSpin, &(state))
+#define EXC_HOOK_UNLOCK(state)           LOS_SpinUnlockRestore(&g_excHookSpin, (state))
+#else
+#define EXC_HOOK_LOCK(state)             (state) = LOS_IntLock()
+#define EXC_HOOK_UNLOCK(state)           LOS_IntRestore(state)
+#endif 
+
 STATIC VOID DoExcHookInRegOrder(EXC_TYPE excType, struct Node *node)
 {
     if (node != NULL) {
@@ -58,9 +67,9 @@ STATIC VOID DoExcHook(EXC_TYPE excType)
     if (excType >= EXC_TYPE_END) {
         return;
     }
-    intSave = LOS_IntLock();
+    EXC_HOOK_LOCK(intSave);
     DoExcHookInRegOrder(excType, g_excHeads[excType]);
-    LOS_IntRestore(intSave);
+    EXC_HOOK_UNLOCK(intSave);
 }
 
 STATIC struct Node *GetFreeNode(VOID)
@@ -94,17 +103,17 @@ UINT32 LOS_RegExcHook(EXC_TYPE excType, ExcHookFn excHookFn)
         return LOS_ERRNO_SYS_PTR_NULL;
     }
 
-    intSave = LOS_IntLock();
+    EXC_HOOK_LOCK(intSave);
     node = GetFreeNode();
     if (node == NULL) {
-        LOS_IntRestore(intSave);
+        EXC_HOOK_UNLOCK(intSave);
         return LOS_ERRNO_SYS_HOOK_IS_FULL;
     }
 
     node->excHookFn = excHookFn;
     node->next = g_excHeads[excType];
     g_excHeads[excType] = node;
-    LOS_IntRestore(intSave);
+    EXC_HOOK_UNLOCK(intSave);
     return LOS_OK;
 }
 
@@ -117,7 +126,7 @@ UINT32 LOS_UnRegExcHook(EXC_TYPE excType, ExcHookFn excHookFn)
         return LOS_ERRNO_SYS_PTR_NULL;
     }
 
-    intSave = LOS_IntLock();
+    EXC_HOOK_LOCK(intSave);
     for (node = g_excHeads[excType]; node != NULL; node = node->next) {
         if (node->excHookFn == excHookFn) {
             if (preNode) {
@@ -131,6 +140,6 @@ UINT32 LOS_UnRegExcHook(EXC_TYPE excType, ExcHookFn excHookFn)
         }
         preNode = node;
     }
-    LOS_IntRestore(intSave);
+    EXC_HOOK_UNLOCK(intSave);
     return LOS_OK;
 }

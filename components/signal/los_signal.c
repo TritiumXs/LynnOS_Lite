@@ -114,10 +114,10 @@ STATIC VOID SignalHandle(LosTaskCB *task, BOOL cleanStatus)
     UINT32 intSave;
     OsSigCB *sigCB = NULL;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     sigCB = task->sig;
     if (sigCB == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return;
     }
 
@@ -128,18 +128,18 @@ STATIC VOID SignalHandle(LosTaskCB *task, BOOL cleanStatus)
 
         SIG_HANDLER handler = sigCB->sigHandlers[sigNo - 1];
         sigCB->sigPendFlag &= ~LOS_SIGNAL_MASK(sigNo);
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
 
         if (handler != NULL) {
             handler(sigNo);
         }
-        intSave = LOS_IntLock();
+        SCHEDULER_LOCK(intSave);
 
         if (cleanStatus == TRUE) {
             task->taskStatus &= ~OS_TASK_FLAG_SIGNAL;
         }
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 }
 
 STATIC VOID SignalEntry(INT32 sigNo)
@@ -154,7 +154,9 @@ STATIC VOID SignalEntry(INT32 sigNo)
     sigCB->sigSaveSP = NULL;
     sigCB->sigRestoreSP = task->stackPointer;
     task->taskStatus &= ~OS_TASK_FLAG_SIGNAL;
-
+#ifdef LOSCFG_KERNEL_SMP
+    LOS_MpSchedule(OS_MP_CPU_ALL);
+#endif
     LOS_Schedule();
 }
 
@@ -164,10 +166,10 @@ STATIC VOID SignalSend(LosTaskCB *task, INT32 sigNo)
     OsSigCB *sigCB = NULL;
     sigset_t mask = LOS_SIGNAL_MASK(sigNo);
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     sigCB = task->sig;
     if (sigCB == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return;
     }
 
@@ -177,7 +179,7 @@ STATIC VOID SignalSend(LosTaskCB *task, INT32 sigNo)
 
     if (task == OsCurrTaskGet()) {
         task->taskStatus |= OS_TASK_FLAG_SIGNAL;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
 
         if (!OS_INT_ACTIVE) {
             SignalHandle(task, TRUE);
@@ -196,7 +198,10 @@ STATIC VOID SignalSend(LosTaskCB *task, INT32 sigNo)
             task->stackPointer = ArchSignalContextInit(task->stackPointer, (VOID *)task->topOfStack,
                                                        (UINTPTR)SignalEntry, sigNo);
         }
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
+#ifdef LOSCFG_KERNEL_SMP
+        LOS_MpSchedule(OS_MP_CPU_ALL);
+#endif
         LOS_Schedule();
     }
 }
@@ -241,10 +246,10 @@ SIG_HANDLER LOS_SignalSet(INT32 sigNo, SIG_HANDLER handler)
         return SIG_ERR;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     sigCB = SignalCBInit(task);
     if (sigCB == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return SIG_ERR;
     }
 
@@ -259,7 +264,7 @@ SIG_HANDLER LOS_SignalSet(INT32 sigNo, SIG_HANDLER handler)
         sigCB->sigHandlers[sigNo - 1] = handler;
         sigCB->sigSetFlag |= LOS_SIGNAL_MASK(sigNo);
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return old;
 }
@@ -274,10 +279,10 @@ UINT32 LOS_SignalMask(INT32 how, const sigset_t *set, sigset_t *oldSet)
         return LOS_ERRNO_SIGNAL_CAN_NOT_CALL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     sigCB = SignalCBInit(task);
     if (sigCB == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_SIGNAL_NO_MEMORY;
     }
 
@@ -286,7 +291,7 @@ UINT32 LOS_SignalMask(INT32 how, const sigset_t *set, sigset_t *oldSet)
     }
 
     if (set == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_SIGNAL_INVALID;
     }
 
@@ -304,7 +309,7 @@ UINT32 LOS_SignalMask(INT32 how, const sigset_t *set, sigset_t *oldSet)
             PRINT_ERR("The error parameter how = %d\n", how);
             break;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return LOS_OK;
 }
@@ -315,12 +320,12 @@ STATIC INLINE UINT32 SignalTimedWait(LosTaskCB *task, const sigset_t *set, UINT3
     INT32 sigNo;
 
     if (timeout == 0) {
-        LOS_IntRestore(*intSave);
+        SCHEDULER_UNLOCK(*intSave);
         return LOS_ERRNO_SIGNAL_INVALID;
     }
 
     if (OS_INT_ACTIVE) {
-        LOS_IntRestore(*intSave);
+        SCHEDULER_UNLOCK(*intSave);
         return LOS_ERRNO_SIGNAL_PEND_INTERR;
     }
 
@@ -328,16 +333,19 @@ STATIC INLINE UINT32 SignalTimedWait(LosTaskCB *task, const sigset_t *set, UINT3
     sigCB->sigStatus |= OS_SIGNAL_STATUS_WAIT;
 
     OsSchedTaskWait(&g_waitSignalList, timeout);
-    LOS_IntRestore(*intSave);
+    SCHEDULER_UNLOCK(*intSave);
+#ifdef LOSCFG_KERNEL_SMP
+    LOS_MpSchedule(OS_MP_CPU_ALL);
+#endif
     LOS_Schedule();
 
-    *intSave = LOS_IntLock();
+    SCHEDULER_LOCK(*intSave);
     task->taskStatus &= ~OS_TASK_FLAG_SIGNAL;
     sigCB->sigStatus &= ~OS_SIGNAL_STATUS_WAIT;
     sigCB->sigWaitFlag = 0;
     if (task->taskStatus & OS_TASK_STATUS_TIMEOUT) {
         task->taskStatus &= ~OS_TASK_STATUS_TIMEOUT;
-        LOS_IntRestore(*intSave);
+        SCHEDULER_UNLOCK(*intSave);
         return LOS_ERRNO_SIGNAL_TIMEOUT;
     }
     sigNo = sigCB->sigInfo.si_signo;
@@ -361,10 +369,10 @@ UINT32 LOS_SignalWait(const sigset_t *set, siginfo_t *info, UINT32 timeout)
         return LOS_ERRNO_SIGNAL_CAN_NOT_CALL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     sigCB = SignalCBInit(task);
     if (sigCB == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_SIGNAL_NO_MEMORY;
     }
 
@@ -376,7 +384,7 @@ UINT32 LOS_SignalWait(const sigset_t *set, siginfo_t *info, UINT32 timeout)
     } else {
         sigNo = SignalTimedWait(task, set, timeout, &intSave);
         if (sigNo > LOS_SIGNAL_SUPPORT_MAX) {
-            LOS_IntRestore(intSave);
+            SCHEDULER_UNLOCK(intSave);
             return sigNo;
         }
     }
@@ -384,7 +392,7 @@ UINT32 LOS_SignalWait(const sigset_t *set, siginfo_t *info, UINT32 timeout)
     if (info != NULL) {
         (VOID)memcpy_s(info, sizeof(siginfo_t), &sigCB->sigInfo, sizeof(siginfo_t));
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return sigNo;
 }
@@ -408,25 +416,25 @@ UINT32 LOS_SignalSend(UINT32 taskID, INT32 sigNo)
     info.si_code = SI_USER;
     info.si_value.sival_ptr = NULL;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     task = OS_TCB_FROM_TID(taskID);
     sigCB = SignalCBInit(task);
     if (sigCB == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_SIGNAL_NO_MEMORY;
     }
 
     if (!(sigCB->sigSetFlag & LOS_SIGNAL_MASK(sigNo))) { /* the signal has not been set */
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_SIGNAL_NO_SET;
     }
 
     UINT32 ret = AddSigInfoToList(sigCB, &info);
     if (ret != LOS_OK) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_SIGNAL_NO_MEMORY;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     /* send signal to this thread */
     SignalSend(task, sigNo);

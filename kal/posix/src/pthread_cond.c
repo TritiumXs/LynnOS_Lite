@@ -269,13 +269,14 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     INT32 ret;
     UINT64 absTicks;
     LosMuxCB *muxPosted = NULL;
+    UINT32 cpuID = ArchCurrCpuid();
     pthread_testcancel();
     if ((cond == NULL) || (mutex == NULL) || (ts == NULL) || (mutex->magic != _MUX_MAGIC)) {
         return EINVAL;
     }
 
     muxPosted = GET_MUX(mutex->handle);
-    if ((mutex->stAttr.type == PTHREAD_MUTEX_ERRORCHECK) && (g_losTask.runTask != muxPosted->owner)) {
+    if ((mutex->stAttr.type == PTHREAD_MUTEX_ERRORCHECK) && (g_losTask[cpuID].runTask != muxPosted->owner)) {
         return EPERM;
     }
 

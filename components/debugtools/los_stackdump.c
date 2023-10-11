@@ -106,16 +106,16 @@ VOID LOS_TaskStackDump(UINT32 taskID)
         return;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     info.waterLine = OsGetTaskWaterLine(taskID);
     if (info.waterLine == OS_NULL_INT) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return;
     }
 
     buf = (UINTPTR *)LOS_MemAlloc(OS_SYS_MEM_ADDR, info.waterLine);
     if (buf == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         PRINT_ERR("alloc failed for dump\n");
         return;
     }
@@ -123,14 +123,14 @@ VOID LOS_TaskStackDump(UINT32 taskID)
 
     ret = DumpTaskInfo(taskID, buf, &info);
     if (ret != LOS_OK) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         (VOID)LOS_MemFree(OS_SYS_MEM_ADDR, buf);
         PRINT_ERR("SP 0x%x may error or memcpy_s failed, stack space from 0x%x to 0x%x\r\n", \
                   info.taskSP, info.taskSPTop, info.taskSPLimit);
         return;
     }
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     PRINTK("Task %u, SP 0x%x, WaterLine 0x%x", taskID, info.taskSP, info.waterLine);
     ShowFormat(buf, &info);
     (VOID)LOS_MemFree(OS_SYS_MEM_ADDR, buf);

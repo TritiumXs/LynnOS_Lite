@@ -57,9 +57,7 @@ STATIC SortLinkAttribute *g_taskSortLinkList = NULL;
 STATIC LOS_DL_LIST g_priQueueList[OS_PRIORITY_QUEUE_NUM];
 STATIC UINT32 g_queueBitmap;
 
-STATIC UINT32 g_schedResponseID = 0;
-STATIC UINT16 g_tickIntLock = 0;
-STATIC UINT64 g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
+SchedRunqueue g_schedRunqueue[LOSCFG_KERNEL_CORE_NUM] = {0};
 
 STATIC INT32 g_schedTimeSlice;
 STATIC INT32 g_schedTimeSliceMin;
@@ -68,8 +66,9 @@ STATIC UINT32 g_tickResponsePrecision;
 
 VOID OsSchedResetSchedResponseTime(UINT64 responseTime)
 {
-    if (responseTime <= g_schedResponseTime) {
-        g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
+    UINT32 cpuID = ArchCurrCpuid();
+    if (responseTime <= g_schedRunqueue[cpuID].responseTime) {
+        g_schedRunqueue[cpuID].responseTime = OS_SCHED_MAX_RESPONSE_TIME;
     }
 }
 
@@ -78,7 +77,7 @@ STATIC INLINE VOID OsTimeSliceUpdate(LosTaskCB *taskCB, UINT64 currTime)
     LOS_ASSERT(currTime >= taskCB->startTime);
 
     INT32 incTime = currTime - taskCB->startTime;
-    if (taskCB->taskID != g_idleTaskID) {
+    if (!OsIsIdleTask(taskCB->taskID)) {
         taskCB->timeSlice -= incTime;
     }
     taskCB->startTime = currTime;
@@ -88,6 +87,7 @@ STATIC INLINE VOID OsSchedSetNextExpireTime(UINT32 responseID, UINT64 taskEndTim
 {
     UINT64 nextResponseTime;
     BOOL isTimeSlice = FALSE;
+    UINT32 cpuID = ArchCurrCpuid();
 
     UINT64 currTime = OsGetCurrSchedTimeCycle();
     UINT64 nextExpireTime = OsGetNextExpireTime(currTime, g_tickResponsePrecision);
@@ -97,39 +97,40 @@ STATIC INLINE VOID OsSchedSetNextExpireTime(UINT32 responseID, UINT64 taskEndTim
         isTimeSlice = TRUE;
     }
 
-    if ((g_schedResponseTime <= nextExpireTime) ||
-        ((g_schedResponseTime - nextExpireTime) < g_tickResponsePrecision)) {
+    if ((g_schedRunqueue[cpuID].responseTime <= nextExpireTime)
+         || ((g_schedRunqueue[cpuID].responseTime - nextExpireTime) < g_tickResponsePrecision)) {
         return;
     }
 
     if (isTimeSlice) {
         /* The expiration time of the current system is the thread's slice expiration time */
-        g_schedResponseID = responseID;
+        g_schedRunqueue[cpuID].responseID = responseID;
     } else {
-        g_schedResponseID = OS_INVALID;
+        g_schedRunqueue[cpuID].responseID = OS_INVALID;
     }
 
     nextResponseTime = nextExpireTime - currTime;
     if (nextResponseTime < g_tickResponsePrecision) {
         nextResponseTime = g_tickResponsePrecision;
     }
-    g_schedResponseTime = currTime + OsTickTimerReload(nextResponseTime);
+    g_schedRunqueue[cpuID].responseTime = currTime + OsTickTimerReload(nextResponseTime);
 }
 
 VOID OsSchedUpdateExpireTime(VOID)
 {
+    UINT32 cpuID = ArchCurrCpuid();
     UINT64 endTime;
     BOOL isPmMode = FALSE;
-    LosTaskCB *runTask = g_losTask.runTask;
+    LosTaskCB *runTask = g_losTask[cpuID].runTask;
 
-    if (!g_taskScheduled || g_tickIntLock) {
+    if (!OS_SCHEDULER_ACTIVE || g_schedRunqueue[cpuID].tickIntLock) {
         return;
     }
 
 #if (LOSCFG_KERNEL_PM == 1)
     isPmMode = OsIsPmMode();
 #endif
-    if ((runTask->taskID != g_idleTaskID) && !isPmMode) {
+    if (!OsIsIdleTask(runTask->taskID) && !isPmMode) {
         INT32 timeSlice = (runTask->timeSlice <= g_schedTimeSliceMin) ? g_schedTimeSlice : runTask->timeSlice;
         endTime = runTask->startTime + timeSlice;
     } else {
@@ -225,7 +226,7 @@ VOID OsSchedTaskEnQueue(LosTaskCB *taskCB)
 {
     LOS_ASSERT(!(taskCB->taskStatus & OS_TASK_STATUS_READY));
 
-    if (taskCB->taskID != g_idleTaskID) {
+    if (!OsIsIdleTask(taskCB->taskID)) {
         if (taskCB->timeSlice > g_schedTimeSliceMin) {
             OsSchedPriQueueEnHead(&taskCB->pendList, taskCB->priority);
         } else {
@@ -244,7 +245,7 @@ VOID OsSchedTaskEnQueue(LosTaskCB *taskCB)
 VOID OsSchedTaskDeQueue(LosTaskCB *taskCB)
 {
     if (taskCB->taskStatus & OS_TASK_STATUS_READY) {
-        if (taskCB->taskID != g_idleTaskID) {
+        if (!OsIsIdleTask(taskCB->taskID)) {
             OsSchedPriQueueDelete(&taskCB->pendList, taskCB->priority);
         }
 
@@ -270,7 +271,8 @@ VOID OsSchedTaskExit(LosTaskCB *taskCB)
 
 VOID OsSchedYield(VOID)
 {
-    LosTaskCB *runTask = g_losTask.runTask;
+    UINT32 cpuID = ArchCurrCpuid();
+    LosTaskCB *runTask = g_losTask[cpuID].runTask;
 
     runTask->timeSlice = 0;
 }
@@ -283,7 +285,8 @@ VOID OsSchedDelay(LosTaskCB *runTask, UINT32 tick)
 
 VOID OsSchedTaskWait(LOS_DL_LIST *list, UINT32 ticks)
 {
-    LosTaskCB *runTask = g_losTask.runTask;
+    UINT32 cpuID = ArchCurrCpuid();
+    LosTaskCB *runTask = g_losTask[cpuID].runTask;
 
     runTask->taskStatus |= OS_TASK_STATUS_PEND;
     LOS_ListTailInsert(list, &runTask->pendList);
@@ -409,9 +412,11 @@ UINT32 OsSchedSwtmrScanRegister(SchedScan func)
 
 UINT32 OsTaskNextSwitchTimeGet(VOID)
 {
-    UINT32 intSave = LOS_IntLock();
+    UINT32 intSave;
+
+    SCHEDULER_LOCK(intSave);
     UINT32 ticks = OsSortLinkGetNextExpireTime(g_taskSortLinkList);
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return ticks;
 }
 
@@ -441,7 +446,9 @@ STATIC VOID TaskSchedTimeConvertFreq(UINT32 oldFreq)
 
 STATIC VOID SchedTimeBaseInit(VOID)
 {
-    g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
+    UINT32 cpuID = ArchCurrCpuid();
+
+    g_schedRunqueue[cpuID].responseTime = OS_SCHED_MAX_RESPONSE_TIME;
 
     g_schedTickMinPeriod = g_sysClock / LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI;
     g_tickResponsePrecision =  (g_schedTickMinPeriod * 75) / 100; /* 75 / 100: minimum accuracy */
@@ -476,6 +483,33 @@ UINT32 OsSchedInit(VOID)
     return LOS_OK;
 }
 
+#ifdef LOSCFG_KERNEL_SMP
+LosTaskCB *OsGetTopTask(VOID)
+{
+    UINT32 priority;
+    LosTaskCB *newTask = NULL;
+    UINT32 bitmap = g_queueBitmap;
+    UINT32 cpuID = ArchCurrCpuid();
+
+    while (bitmap) {
+        priority = CLZ(bitmap);
+        LOS_DL_LIST_FOR_EACH_ENTRY(newTask, &g_priQueueList[priority], LosTaskCB, pendList) {
+            if (newTask == NULL) {
+                break;
+            }
+            if (newTask->cpuAffiMask & CPUID_TO_AFFI_MASK(cpuID)) {
+                newTask->currCpu = cpuID & 0xFF;
+                return newTask;
+            }
+        }
+        bitmap &= ~(PRIQUEUE_PRIOR0_BIT >> priority);
+    }
+
+    newTask = OS_TCB_FROM_TID(g_idleTaskID[cpuID]);
+    newTask->currCpu = cpuID & 0xFF;
+    return newTask;
+}
+#else
 LosTaskCB *OsGetTopTask(VOID)
 {
     UINT32 priority;
@@ -484,22 +518,23 @@ LosTaskCB *OsGetTopTask(VOID)
         priority = CLZ(g_queueBitmap);
         newTask = LOS_DL_LIST_ENTRY(((LOS_DL_LIST *)&g_priQueueList[priority])->pstNext, LosTaskCB, pendList);
     } else {
-        newTask = OS_TCB_FROM_TID(g_idleTaskID);
+        newTask = OS_TCB_FROM_TID(g_idleTaskID[ArchCurrCpuid()]);
     }
-
     return newTask;
 }
+#endif
 
 VOID OsSchedStart(VOID)
 {
     PRINTK("Entering scheduler\n");
 
     (VOID)LOS_IntLock();
+    UINT32 cpuID = ArchCurrCpuid();
     LosTaskCB *newTask = OsGetTopTask();
 
     newTask->taskStatus |= OS_TASK_STATUS_RUNNING;
-    g_losTask.newTask = newTask;
-    g_losTask.runTask = g_losTask.newTask;
+    g_losTask[cpuID].newTask = newTask;
+    g_losTask[cpuID].runTask = g_losTask[cpuID].newTask;
 
     newTask->startTime = OsGetCurrSchedTimeCycle();
     OsSchedTaskDeQueue(newTask);
@@ -511,18 +546,22 @@ VOID OsSchedStart(VOID)
 #endif
 
     /* Initialize the schedule timeline and enable scheduling */
-    g_taskScheduled = TRUE;
+    OS_SCHEDULER_SET(cpuID);
 
-    g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
-    g_schedResponseID = OS_INVALID;
+    g_schedRunqueue[cpuID].responseTime = OS_SCHED_MAX_RESPONSE_TIME;
+    g_schedRunqueue[cpuID].responseID = OS_INVALID;
     OsSchedSetNextExpireTime(newTask->taskID, newTask->startTime + newTask->timeSlice);
 }
 
 BOOL OsSchedTaskSwitch(VOID)
 {
+    UINT32 intSave;
     UINT64 endTime;
     BOOL isTaskSwitch = FALSE;
-    LosTaskCB *runTask = g_losTask.runTask;
+    UINT32 cpuID = ArchCurrCpuid();
+    LosTaskCB *runTask = g_losTask[cpuID].runTask;
+
+    SCHEDULER_LOCK(intSave);
     OsTimeSliceUpdate(runTask, OsGetCurrSchedTimeCycle());
 
     if (runTask->taskStatus & (OS_TASK_STATUS_PEND_TIME | OS_TASK_STATUS_DELAY)) {
@@ -532,7 +571,7 @@ BOOL OsSchedTaskSwitch(VOID)
     }
 
     LosTaskCB *newTask = OsGetTopTask();
-    g_losTask.newTask = newTask;
+    g_losTask[cpuID].newTask = newTask;
 
     if (runTask != newTask) {
 #if (LOSCFG_BASE_CORE_TSK_MONITOR == 1)
@@ -551,16 +590,17 @@ BOOL OsSchedTaskSwitch(VOID)
 
     OsSchedTaskDeQueue(newTask);
 
-    if (newTask->taskID != g_idleTaskID) {
+    if (!OsIsIdleTask(newTask->taskID)) {
         endTime = newTask->startTime + newTask->timeSlice;
     } else {
         endTime = OS_SCHED_MAX_RESPONSE_TIME - g_tickResponsePrecision;
     }
 
-    if (g_schedResponseID == runTask->taskID) {
-        g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
+    if (g_schedRunqueue[cpuID].responseID == runTask->taskID) {
+        g_schedRunqueue[cpuID].responseTime = OS_SCHED_MAX_RESPONSE_TIME;
     }
     OsSchedSetNextExpireTime(newTask->taskID, endTime);
+    SCHEDULER_UNLOCK(intSave);
 
     return isTaskSwitch;
 }
@@ -570,11 +610,12 @@ UINT64 LOS_SchedTickTimeoutNsGet(VOID)
     UINT32 intSave;
     UINT64 responseTime;
     UINT64 currTime;
+    UINT32 cpuID = ArchCurrCpuid();
 
-    intSave = LOS_IntLock();
-    responseTime = g_schedResponseTime;
+    SCHEDULER_LOCK(intSave);
+    responseTime = g_schedRunqueue[cpuID].responseTime;
     currTime = OsGetCurrSchedTimeCycle();
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     if (responseTime > currTime) {
         responseTime = responseTime - currTime;
@@ -587,33 +628,37 @@ UINT64 LOS_SchedTickTimeoutNsGet(VOID)
 
 VOID LOS_SchedTickHandler(VOID)
 {
-    if (!g_taskScheduled) {
+    UINT32 intSave;
+    UINT32 cpuID = ArchCurrCpuid();
+
+    if (!OS_SCHEDULER_ACTIVE) {
         return;
     }
 
-    UINT32 intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     UINT64 tickStartTime = OsGetCurrSchedTimeCycle();
-    if (g_schedResponseID == OS_INVALID) {
-        g_tickIntLock++;
-        if (g_swtmrScan != NULL) {
+    SchedRunqueue *rq = &g_schedRunqueue[cpuID];
+    if (rq->responseID == OS_INVALID) {
+        rq->tickIntLock++;
+        if (cpuID == 0 && g_swtmrScan != NULL) {
             (VOID)g_swtmrScan();
         }
 
         (VOID)OsSchedScanTimerList();
-        g_tickIntLock--;
+        rq->tickIntLock--;
     }
 
-    OsTimeSliceUpdate(g_losTask.runTask, tickStartTime);
-    g_losTask.runTask->startTime = OsGetCurrSchedTimeCycle();
+    OsTimeSliceUpdate(g_losTask[cpuID].runTask, tickStartTime);
+    g_losTask[cpuID].runTask->startTime = OsGetCurrSchedTimeCycle();
 
-    g_schedResponseTime = OS_SCHED_MAX_RESPONSE_TIME;
+    rq->responseTime = OS_SCHED_MAX_RESPONSE_TIME;
     if (LOS_CHECK_SCHEDULE) {
         ArchTaskSchedule();
     } else {
         OsSchedUpdateExpireTime();
     }
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 }
 
 VOID LOS_Schedule(VOID)
@@ -622,3 +667,13 @@ VOID LOS_Schedule(VOID)
         ArchTaskSchedule();
     }
 }
+
+#ifdef LOSCFG_KERNEL_SMP
+VOID LOS_MpSchedule(UINT32 target)
+{
+    UINT32 cpuID = ArchCurrCpuid();
+
+    target &= ~CPUID_TO_AFFI_MASK(cpuID);
+    LOS_HwiSendIpi(target, LOS_MP_IPI_SCHEDULE);
+}
+#endif

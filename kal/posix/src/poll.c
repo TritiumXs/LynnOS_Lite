@@ -36,6 +36,15 @@
 #include "los_interrupt.h"
 #include "los_memory.h"
 
+#if (LOSCFG_KERNEL_SMP == 1)
+LITE_OS_SEC_BSS SPIN_LOCK_INIT(g_pollSpin);
+#define POLL_LOCK(state)             LOS_SpinLockSave(&g_pollSpin, &(state))
+#define POLL_UNLOCK(state)           LOS_SpinUnlockRestore(&g_pollSpin, (state))
+#else
+#define POLL_LOCK(state)             (state) = LOS_IntLock()
+#define POLL_UNLOCK(state)           LOS_IntRestore(state)
+#endif
+
 VOID PollWaitQueueInit(struct PollWaitQueue *waitQueue)
 {
     if (waitQueue == NULL) {
@@ -54,9 +63,9 @@ STATIC VOID DestroyPollWait(struct PollTable *table)
     UINT32 intSave;
     struct PollWaitNode *waitNode = table->node;
 
-    intSave = LOS_IntLock();
+    POLL_LOCK(intSave);
     LOS_ListDelete(&waitNode->node);
-    LOS_IntRestore(intSave);
+    POLL_UNLOCK(intSave);
 
     (VOID)LOS_MemFree(OS_SYS_MEM_ADDR, waitNode);
     if (LOS_SemDelete(table->sem) != LOS_OK) {
@@ -72,11 +81,11 @@ STATIC VOID AddPollWaitQueue(struct PollWaitQueue *waitQueue, struct PollTable *
         return;
     }
 
-    intSave = LOS_IntLock();
+    POLL_LOCK(intSave);
     waitNode->table = table;
     LOS_ListAdd(&waitQueue->queue, &waitNode->node);
     table->node = waitNode;
-    LOS_IntRestore(intSave);
+    POLL_UNLOCK(intSave);
 }
 
 STATIC INT32 WaitSemTime(struct PollTable *table, UINT32 timeout)
@@ -132,7 +141,7 @@ VOID PollNotify(struct PollWaitQueue *waitQueue, PollEvent event)
         return;
     }
 
-    intSave = LOS_IntLock();
+    POLL_LOCK(intSave);
     LOS_DL_LIST_FOR_EACH_ENTRY(waitNode, &waitQueue->queue, struct PollWaitNode, node) {
         if (!event || (event & waitNode->table->event)) {
             if (LOS_SemPost(waitNode->table->sem) != LOS_OK) {
@@ -140,7 +149,7 @@ VOID PollNotify(struct PollWaitQueue *waitQueue, PollEvent event)
             }
         }
     }
-    LOS_IntRestore(intSave);
+    POLL_UNLOCK(intSave);
 }
 
 VOID PollWait(struct PollWaitQueue *waitQueue, struct PollTable *table)

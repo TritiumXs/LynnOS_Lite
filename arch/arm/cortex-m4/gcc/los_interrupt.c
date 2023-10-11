@@ -351,6 +351,7 @@ STATIC VOID OsExcInfoDisplay(const ExcInfo *excInfo)
 LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, UINT32 pid, EXC_CONTEXT_S *excBufAddr)
 {
     UINT16 tmpFlag = (excType >> 16) & OS_NULL_SHORT; /* 16: Get Exception Type */
+    UINT32 cpuID = ArchCurrCpuid();
     g_intCount++;
     g_excInfo.nestCnt++;
 
@@ -361,13 +362,13 @@ LITE_OS_SEC_TEXT_INIT VOID HalExcHandleEntry(UINT32 excType, UINT32 faultAddr, U
     } else {
         g_excInfo.faultAddr = OS_EXC_IMPRECISE_ACCESS_ADDR;
     }
-    if (g_losTask.runTask != NULL) {
+    if (g_losTask[cpuID].runTask != NULL) {
         if (tmpFlag & OS_EXC_FLAG_IN_HWI) {
             g_excInfo.phase = OS_EXC_IN_HWI;
             g_excInfo.thrdPid = pid;
         } else {
             g_excInfo.phase = OS_EXC_IN_TASK;
-            g_excInfo.thrdPid = g_losTask.runTask->taskID;
+            g_excInfo.thrdPid = g_losTask[cpuID].runTask->taskID;
         }
     } else {
         g_excInfo.phase = OS_EXC_IN_INIT;

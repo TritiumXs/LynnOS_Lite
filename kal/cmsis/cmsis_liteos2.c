@@ -31,6 +31,7 @@
 
 #include "cmsis_os2.h"
 #include "kal.h"
+#include "los_sched.h"
 #include "los_event.h"
 #include "los_membox.h"
 #include "los_memory.h"
@@ -117,13 +118,15 @@ osStatus_t osKernelGetInfo(osVersion_t *version, char *id_buf, uint32_t id_size)
 
 osKernelState_t osKernelGetState(void)
 {
-    if (!g_taskScheduled) {
+    UINT32 cpuID = ArchCurrCpuid();
+
+    if (!OS_SCHEDULER_ACTIVE) {
         if (g_kernelState == osKernelReady) {
             return osKernelReady;
         } else {
             return osKernelInactive;
         }
-    } else if (g_losTaskLock > 0) {
+    } else if (g_losTaskLock[cpuID] > 0) {
         return osKernelLocked;
     } else {
         return osKernelRunning;
@@ -149,17 +152,18 @@ osStatus_t osKernelStart(void)
 
 int32_t osKernelLock(void)
 {
+    UINT32 cpuID = ArchCurrCpuid();
     int32_t lock;
 
     if (OS_INT_ACTIVE) {
         return (int32_t)osErrorISR;
     }
 
-    if (!g_taskScheduled) {
+    if (!OS_SCHEDULER_ACTIVE) {
         return (int32_t)osError;
     }
 
-    if (g_losTaskLock > 0) {
+    if (g_losTaskLock[cpuID] > 0) {
         lock = KERNEL_LOCKED;
     } else {
         LOS_TaskLock();
@@ -172,18 +176,21 @@ int32_t osKernelLock(void)
 int32_t osKernelUnlock(void)
 {
     int32_t lock;
+    UINT32 cpuID;
+    
+    cpuID = ArchCurrCpuid();
 
     if (OS_INT_ACTIVE) {
         return (int32_t)osErrorISR;
     }
 
-    if (!g_taskScheduled) {
+    if (!OS_SCHEDULER_ACTIVE) {
         return (int32_t)osError;
     }
 
-    if (g_losTaskLock > 0) {
+    if (g_losTaskLock[cpuID] > 0) {
         LOS_TaskUnlock();
-        if (g_losTaskLock != 0) {
+        if (g_losTaskLock[cpuID] != 0) {
             return (int32_t)osError;
         }
         lock = KERNEL_LOCKED;
@@ -196,18 +203,20 @@ int32_t osKernelUnlock(void)
 
 int32_t osKernelRestoreLock(int32_t lock)
 {
+    UINT32 cpuID = ArchCurrCpuid();
+
     if (OS_INT_ACTIVE) {
         return (int32_t)osErrorISR;
     }
 
-    if (!g_taskScheduled) {
+    if (!OS_SCHEDULER_ACTIVE) {
         return (int32_t)osError;
     }
 
     switch (lock) {
         case KERNEL_UNLOCKED:
             LOS_TaskUnlock();
-            if (g_losTaskLock != 0) {
+            if (g_losTaskLock[cpuID] != 0) {
                 break;
             }
             return KERNEL_UNLOCKED;
@@ -307,7 +316,8 @@ const char *osThreadGetName(osThreadId_t thread_id)
 
 osThreadId_t osThreadGetId(void)
 {
-    return (osThreadId_t)(g_losTask.runTask);
+    UINT32 cpuID = ArchCurrCpuid();
+    return (osThreadId_t)(g_losTask[cpuID].runTask);
 }
 
 void *osThreadGetArgument(void)
@@ -377,11 +387,11 @@ uint32_t osTaskStackWaterMarkGet(UINT32 taskID)
         return 0;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
 
     pstTaskCB = OS_TCB_FROM_TID(taskID);
     if (OS_TASK_STATUS_UNUSED & (pstTaskCB->taskStatus)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return 0;
     }
 
@@ -395,7 +405,7 @@ uint32_t osTaskStackWaterMarkGet(UINT32 taskID)
 
     count *= sizeof(UINT32);
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return count;
 }
 
@@ -749,6 +759,7 @@ osTimerId_t osTimerExtNew(osTimerFunc_t func, osTimerType_t type, void *argument
 osStatus_t osTimerStart(osTimerId_t timer_id, uint32_t ticks)
 {
     UINT32 ret;
+    UINT32 intSave;
     SWTMR_CTRL_S *pstSwtmr = NULL;
     if (OS_INT_ACTIVE) {
         return osErrorISR;
@@ -757,11 +768,11 @@ osStatus_t osTimerStart(osTimerId_t timer_id, uint32_t ticks)
         return osErrorParameter;
     }
 
-    UINT32 intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     pstSwtmr = (SWTMR_CTRL_S *)timer_id;
     pstSwtmr->uwInterval = ticks;
     ret = LOS_SwtmrStart(pstSwtmr->usTimerID);
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     if (ret == LOS_OK) {
         return osOK;
     } else if (ret == LOS_ERRNO_SWTMR_ID_INVALID) {
@@ -900,11 +911,11 @@ uint32_t osEventFlagsClear(osEventFlagsId_t ef_id, uint32_t flags)
         return (uint32_t)osFlagsErrorParameter;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     rflags = pstEventCB->uwEventID;
 
     ret = LOS_EventClear(pstEventCB, ~flags);
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     if (ret == LOS_OK) {
         return rflags;
     } else {
@@ -922,9 +933,9 @@ uint32_t osEventFlagsGet(osEventFlagsId_t ef_id)
         return 0;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     rflags = pstEventCB->uwEventID;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return rflags;
 }
@@ -985,11 +996,11 @@ osStatus_t osEventFlagsDelete(osEventFlagsId_t ef_id)
     if (OS_INT_ACTIVE) {
         return osErrorISR;
     }
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (LOS_EventDestroy(pstEventCB) != LOS_OK) {
         ret = osErrorParameter;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     if (LOS_MemFree(m_aucSysMem0, (void *)pstEventCB) != LOS_OK) {
         ret = osErrorParameter;
@@ -1085,9 +1096,9 @@ osThreadId_t osMutexGetOwner(osMutexId_t mutex_id)
         return NULL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     pstTaskCB = ((LosMuxCB *)mutex_id)->owner;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return (osThreadId_t)pstTaskCB;
 }
@@ -1196,14 +1207,14 @@ uint32_t osSemaphoreGetCount(osSemaphoreId_t semaphore_id)
         return 0;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (semCB->semStat == 0) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return 0;
     }
 
     count = semCB->semCount;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return (uint32_t)count;
 }
@@ -1519,7 +1530,7 @@ void *osMemoryPoolAlloc(osMemoryPoolId_t mp_id, uint32_t timeout)
         return NULL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mp->status & MEM_POOL_VALID) == MEM_POOL_VALID) {
         node = mp->poolInfo.stFreeList.pstNext;
         if (node != NULL) {
@@ -1527,7 +1538,7 @@ void *osMemoryPoolAlloc(osMemoryPoolId_t mp_id, uint32_t timeout)
             mp->poolInfo.uwBlkCnt++;
         }
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return node;
 }
@@ -1544,15 +1555,15 @@ osStatus_t osMemoryPoolFree(osMemoryPoolId_t mp_id, void *block)
         return osErrorParameter;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mp->status & MEM_POOL_VALID) != MEM_POOL_VALID) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return osErrorResource;
     }
 
     if (((UINTPTR)block < (UINTPTR)mp->poolBase) ||
         ((UINTPTR)block >= ((UINTPTR)mp->poolBase + (UINTPTR)mp->poolSize))) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return osErrorParameter;
     }
 
@@ -1561,7 +1572,7 @@ osStatus_t osMemoryPoolFree(osMemoryPoolId_t mp_id, void *block)
     mp->poolInfo.stFreeList.pstNext = node;
     node->pstNext = nodeTmp;
     mp->poolInfo.uwBlkCnt--;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return osOK;
 }
@@ -1579,9 +1590,9 @@ osStatus_t osMemoryPoolDelete(osMemoryPoolId_t mp_id)
         return osErrorParameter;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mp->status & MEM_POOL_VALID) != MEM_POOL_VALID) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return osErrorResource;
     }
 
@@ -1596,7 +1607,7 @@ osStatus_t osMemoryPoolDelete(osMemoryPoolId_t mp_id)
     if (mp->status & MP_ALLOC) {
         (void)LOS_MemFree(OS_SYS_MEM_ADDR, mp);
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return osOK;
 }
@@ -1611,13 +1622,13 @@ uint32_t osMemoryPoolGetCapacity(osMemoryPoolId_t mp_id)
         return 0;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mp->status & MEM_POOL_VALID) != MEM_POOL_VALID) {
         num = 0;
     } else {
         num = mp->poolInfo.uwBlkNum;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return num;
 }
@@ -1632,13 +1643,13 @@ uint32_t osMemoryPoolGetBlockSize(osMemoryPoolId_t mp_id)
         return 0;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mp->status & MEM_POOL_VALID) != MEM_POOL_VALID) {
         size = 0;
     } else {
         size = mp->poolInfo.uwBlkSize;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return size;
 }
@@ -1653,13 +1664,13 @@ uint32_t osMemoryPoolGetCount(osMemoryPoolId_t mp_id)
         return 0;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mp->status & MEM_POOL_VALID) != MEM_POOL_VALID) {
         count = 0;
     } else {
         count = mp->poolInfo.uwBlkCnt;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return count;
 }
@@ -1674,13 +1685,13 @@ uint32_t osMemoryPoolGetSpace(osMemoryPoolId_t mp_id)
         return 0;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mp->status & MEM_POOL_VALID) != MEM_POOL_VALID) {
         space = 0;
     } else {
         space = mp->poolInfo.uwBlkNum - mp->poolInfo.uwBlkCnt;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return space;
 
@@ -1700,11 +1711,11 @@ const char *osMemoryPoolGetName(osMemoryPoolId_t mp_id)
         return NULL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mp->status & MEM_POOL_VALID) == MEM_POOL_VALID) {
         p = mp->name;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return p;
 }
@@ -1739,12 +1750,13 @@ uint32_t osThreadFlagsClear(uint32_t flags)
     UINT32 saveFlags;
     LosTaskCB *runTask = NULL;
     EVENT_CB_S *eventCB = NULL;
+    UINT32 cpuID = ArchCurrCpuid();
 
     if (OS_INT_ACTIVE) {
         return (uint32_t)osFlagsErrorUnknown;
     }
 
-    runTask = g_losTask.runTask;
+    runTask = g_losTask[cpuID].runTask;
     eventCB = &(runTask->event);
     saveFlags = eventCB->uwEventID;
 
@@ -1760,12 +1772,13 @@ uint32_t osThreadFlagsGet(void)
 {
     LosTaskCB *runTask = NULL;
     EVENT_CB_S *eventCB = NULL;
+    UINT32 cpuID = ArchCurrCpuid();
 
     if (OS_INT_ACTIVE) {
         return (uint32_t)osFlagsErrorUnknown;
     }
 
-    runTask = g_losTask.runTask;
+    runTask = g_losTask[cpuID].runTask;
     eventCB = &(runTask->event);
 
     return (uint32_t)(eventCB->uwEventID);
@@ -1777,6 +1790,7 @@ uint32_t osThreadFlagsWait(uint32_t flags, uint32_t options, uint32_t timeout)
     UINT32 mode = 0;
     LosTaskCB *runTask = NULL;
     EVENT_CB_S *eventCB = NULL;
+    UINT32 cpuID = ArchCurrCpuid();
 
     if (OS_INT_ACTIVE) {
         return (uint32_t)osFlagsErrorUnknown;
@@ -1798,7 +1812,7 @@ uint32_t osThreadFlagsWait(uint32_t flags, uint32_t options, uint32_t timeout)
         mode |= LOS_WAITMODE_CLR;
     }
 
-    runTask = g_losTask.runTask;
+    runTask = g_losTask[cpuID].runTask;
     eventCB = &(runTask->event);
 
     ret = LOS_EventRead(eventCB, (UINT32)flags, mode, (UINT32)timeout);

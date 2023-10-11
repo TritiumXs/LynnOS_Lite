@@ -54,6 +54,7 @@ static UINT32 TestCase(VOID)
 {
     UINT32 ret;
     TSK_INIT_PARAM_S task1 = { 0 };
+    UINT32 cpuID = ArchCurrCpuid();
     task1.pfnTaskEntry = (TSK_ENTRY_FUNC)TaskF01;
     task1.uwStackSize = TASK_STACK_SIZE_TEST;
     task1.pcName = "Tsk105A";
@@ -65,7 +66,7 @@ static UINT32 TestCase(VOID)
     ret = LOS_TaskPriSet(g_testTaskID01, TASK_PRIO_TEST - 1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_NOT_CREATED, ret);
 
-    ret = LOS_TaskPriSet(g_idleTaskID, TASK_PRIO_TEST - 1);
+    ret = LOS_TaskPriSet(g_idleTaskID[cpuID], TASK_PRIO_TEST - 1);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_OPERATE_IDLE, ret);
 
     ret = LOS_TaskPriSet(g_taskMaxNum + 1, TASK_PRIO_TEST - 1);

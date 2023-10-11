@@ -261,6 +261,9 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LosShellInit(VOID)
     task1.uwStackSize  = LOSCFG_SHELL_STACK_SIZE;
     task1.pcName       = "ShellTaskEntry";
     task1.usTaskPrio   = LOSCFG_SHELL_PRIO;
+#ifdef LOSCFG_KERNEL_SMP
+    task1.usCpuAffiMask = CPUID_TO_AFFI_MASK(0);
+#endif
     ret = LOS_TaskCreate(&taskID1, &task1);
     if (ret != LOS_OK) {
         PRINTK("Create Shell Task failed! ERROR: 0x%x\n", ret);

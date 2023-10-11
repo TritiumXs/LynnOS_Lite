@@ -230,11 +230,11 @@ STATIC UINT32 OsPmSuspendCheck(LosPmCB *pm, Suspend *sysSuspendEarly, Suspend *d
 {
     UINT32 intSave;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     pm->sysMode = pm->pmMode;
     if (pm->lock > 0) {
         pm->sysMode = LOS_SYS_NORMAL_SLEEP;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_NOK;
     }
 
@@ -244,7 +244,7 @@ STATIC UINT32 OsPmSuspendCheck(LosPmCB *pm, Suspend *sysSuspendEarly, Suspend *d
     *mode = pm->sysMode;
     *sysSuspendEarly = pm->sysctrl->early;
     *deviceSuspend = pm->device->suspend;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return LOS_OK;
 }
 
@@ -263,12 +263,12 @@ STATIC UINT32 OsPmSuspendSleep(LosPmCB *pm)
 
     ret = OsPmSuspendPrepare(sysSuspendEarly, deviceSuspend, (UINT32)mode, &prepare);
     if (ret != LOS_OK) {
-        intSave = LOS_IntLock();
+        SCHEDULER_LOCK(intSave);
         LOS_TaskLock();
         goto EXIT;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     LOS_TaskLock();
     if (pm->isWake || (pm->lock > 0)) {
         goto EXIT;
@@ -294,7 +294,7 @@ STATIC UINT32 OsPmSuspendSleep(LosPmCB *pm)
 EXIT:
     pm->sysMode = LOS_SYS_NORMAL_SLEEP;
     OsPmResumePrepare(pm, (UINT32)mode, prepare);
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     LOS_TaskUnlock();
     return ret;
@@ -308,13 +308,13 @@ STATIC VOID OsPmNormalSleep(VOID)
     UINT32 intSave;
     LosPmCB *pm = &g_pmCB;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
 
     OsPmCpuSuspend(pm);
 
     OsPmCpuResume(pm);
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 #endif
 }
 
@@ -326,9 +326,9 @@ STATIC UINT32 OsPmDeviceRegister(LosPmCB *pm, LosPmDevice *device)
         return LOS_ERRNO_PM_INVALID_PARAM;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     pm->device = device;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return LOS_OK;
 }
@@ -345,12 +345,12 @@ STATIC UINT32 OsPmTickTimerRegister(LosPmCB *pm, LosPmTickTimer *tickTimer)
          (tickTimer->timerCycleGet == NULL) && (tickTimer->freq == 0)) ||
         ((tickTimer->timerStart != NULL) && (tickTimer->timerStop != NULL) &&
          (tickTimer->timerCycleGet != NULL) && (tickTimer->freq != 0))) {
-        intSave = LOS_IntLock();
+        SCHEDULER_LOCK(intSave);
 #if (LOSCFG_BASE_CORE_TICK_WTIMER == 0)
         pm->enterSleepTime = 0;
 #endif
         pm->tickTimer = tickTimer;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_OK;
     }
 
@@ -359,7 +359,9 @@ STATIC UINT32 OsPmTickTimerRegister(LosPmCB *pm, LosPmTickTimer *tickTimer)
 
 STATIC UINT32 OsPmSysctrlRegister(LosPmCB *pm, LosPmSysctrl *sysctrl)
 {
-    UINT32 intSave = LOS_IntLock();
+    UINT32 intSave;
+
+    SCHEDULER_LOCK(intSave);
     if (sysctrl->early != NULL) {
         pm->sysctrl->early = sysctrl->early;
     }
@@ -393,7 +395,7 @@ STATIC UINT32 OsPmSysctrlRegister(LosPmCB *pm, LosPmSysctrl *sysctrl)
     if (sysctrl->shutdownResume != NULL) {
         pm->sysctrl->shutdownResume = sysctrl->shutdownResume;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return LOS_OK;
 }
 
@@ -423,15 +425,15 @@ STATIC UINT32 OsPmDeviceUnregister(LosPmCB *pm, LosPmDevice *device)
 {
     UINT32 intSave;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (pm->device == device) {
         pm->device = NULL;
         pm->pmMode = LOS_SYS_NORMAL_SLEEP;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_OK;
     }
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return LOS_ERRNO_PM_INVALID_NODE;
 }
 
@@ -439,28 +441,29 @@ STATIC UINT32 OsPmTickTimerUnregister(LosPmCB *pm, LosPmTickTimer *tickTimer)
 {
     UINT32 intSave;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (pm->tickTimer == tickTimer) {
         pm->tickTimer = NULL;
         if ((pm->pmMode != LOS_SYS_NORMAL_SLEEP) && (pm->pmMode != LOS_SYS_LIGHT_SLEEP)) {
             pm->pmMode = LOS_SYS_NORMAL_SLEEP;
         }
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_OK;
     }
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return LOS_ERRNO_PM_INVALID_NODE;
 }
 
 STATIC UINT32 OsPmSysctrlUnregister(LosPmCB *pm, LosPmSysctrl *sysctrl)
 {
     (VOID)sysctrl;
+    UINT32 intSave;
 
-    UINT32 intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     OsPmSysctrlInit();
     pm->pmMode = LOS_SYS_NORMAL_SLEEP;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return LOS_OK;
 }
 
@@ -491,9 +494,9 @@ VOID LOS_PmWakeSet(VOID)
     UINT32 intSave;
     LosPmCB *pm = &g_pmCB;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     pm->isWake = TRUE;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return;
 }
 
@@ -501,10 +504,11 @@ LOS_SysSleepEnum LOS_PmModeGet(VOID)
 {
     LOS_SysSleepEnum mode;
     LosPmCB *pm = &g_pmCB;
-
-    UINT32 intSave = LOS_IntLock();
+    UINT32 intSave;
+    
+    SCHEDULER_LOCK(intSave);
     mode = pm->pmMode;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return mode;
 }
@@ -519,29 +523,29 @@ UINT32 LOS_PmModeSet(LOS_SysSleepEnum mode)
         return LOS_ERRNO_PM_INVALID_MODE;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((mode != LOS_SYS_NORMAL_SLEEP) && (pm->device == NULL)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_PM_DEVICE_NULL;
     }
 
     if ((mode == LOS_SYS_LIGHT_SLEEP) && (pm->sysctrl->lightSuspend == NULL)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_PM_HANDLER_NULL;
     }
 
     if ((mode == LOS_SYS_DEEP_SLEEP) && (pm->sysctrl->deepSuspend == NULL)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_PM_HANDLER_NULL;
     }
 
     if ((mode == LOS_SYS_SHUTDOWN) && (pm->sysctrl->shutdownSuspend == NULL)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_PM_HANDLER_NULL;
     }
 
     pm->pmMode = mode;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return LOS_OK;
 }
@@ -557,13 +561,13 @@ VOID LOS_PmLockInfoShow(VOID)
 
     PRINTK("Name                          Count\n\r");
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     while (list != head) {
         lock = LOS_DL_LIST_ENTRY(list, OsPmLockCB, list);
         PRINTK("%-30s%5u\n\r", lock->name, lock->count);
         list = list->pstNext;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return;
 }
@@ -579,7 +583,7 @@ UINT32 OsPmLockRequest(const CHAR *name, UINT32 swtmrID)
     LOS_DL_LIST *head = &pm->lockList;
     LOS_DL_LIST *list = head->pstNext;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     while (list != head) {
         listNode = LOS_DL_LIST_ENTRY(list, OsPmLockCB, list);
         if (strcmp(name, listNode->name) == 0) {
@@ -593,7 +597,7 @@ UINT32 OsPmLockRequest(const CHAR *name, UINT32 swtmrID)
     if (lock == NULL) {
         lock = LOS_MemAlloc((VOID *)OS_SYS_MEM_ADDR, sizeof(OsPmLockCB));
         if (lock == NULL) {
-            LOS_IntRestore(intSave);
+            SCHEDULER_UNLOCK(intSave);
             return LOS_NOK;
         }
         lock->name = (CHAR *)name;
@@ -606,7 +610,7 @@ UINT32 OsPmLockRequest(const CHAR *name, UINT32 swtmrID)
 
     if ((lock->swtmrID != OS_INVALID) && (lock->count > 1)) {
         lock->count--;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_PM_ALREADY_LOCK;
     }
 
@@ -615,7 +619,7 @@ UINT32 OsPmLockRequest(const CHAR *name, UINT32 swtmrID)
         ret = LOS_OK;
     }
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return ret;
 }
 
@@ -645,7 +649,7 @@ UINT32 LOS_PmLockRelease(const CHAR *name)
         return LOS_ERRNO_PM_INVALID_PARAM;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     mode = (UINT32)pm->pmMode;
     while (list != head) {
         listNode = LOS_DL_LIST_ENTRY(list, OsPmLockCB, list);
@@ -658,7 +662,7 @@ UINT32 LOS_PmLockRelease(const CHAR *name)
     }
 
     if (lock == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_PM_NOT_LOCK;
     } else if (lock->count > 0) {
         lock->count--;
@@ -675,7 +679,7 @@ UINT32 LOS_PmLockRelease(const CHAR *name)
         }
         ret = LOS_OK;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     if (lockFree != NULL) {
         (VOID)LOS_SwtmrDelete(lockFree->swtmrID);
@@ -752,13 +756,14 @@ UINT32 LOS_PmSuspend(UINT32 wakeCount)
 BOOL OsIsPmMode(VOID)
 {
     LosPmCB *pm = &g_pmCB;
+    UINT32 intSave;
 
-    UINT32 intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((pm->sysMode != LOS_SYS_NORMAL_SLEEP) && (pm->lock == 0)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return TRUE;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return FALSE;
 }
 

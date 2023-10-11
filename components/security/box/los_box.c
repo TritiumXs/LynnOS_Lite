@@ -39,13 +39,14 @@ static LosBoxCB g_boxCB[1];
 
 VOID OsUserTaskInit(UINT32 taskID, UINTPTR entry, UINTPTR userArea, UINTPTR userSp)
 {
+    INT32 cpuID = ArchCurrCpuid();
     LosTaskCB *taskCB = OS_TCB_FROM_TID(taskID);
     taskCB->taskStatus |= OS_TASK_FLAG_USER_TASK;
     HalUserTaskStackInit(taskCB->stackPointer, entry, userSp);
 
     g_UserTaskCBArray[taskID].userArea = userArea;
     g_UserTaskCBArray[taskID].userSp = userSp;
-    g_UserTaskCBArray[taskID].boxID = g_UserTaskCBArray[g_losTask.runTask->taskID].boxID;
+    g_UserTaskCBArray[taskID].boxID = g_UserTaskCBArray[g_losTask[cpuID].runTask->taskID].boxID;
 }
 
 VOID OsUserTaskDelete(UINT32 taskID)

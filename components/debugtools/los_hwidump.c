@@ -67,9 +67,9 @@ STATIC VOID ShellCmdHwiInfoShow(OsIrqCpupCB *irqData, CPUP_INFO_S *hwiCpup1s,
             continue;
         }
 
-        intSave = LOS_IntLock();
+        SCHEDULER_LOCK(intSave);
         (VOID)memcpy_s(irqData, IRQ_DATA_SIZE, &irqDataBase[i], IRQ_DATA_SIZE);
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
 
         if (irqData->status == 0) {
             continue;

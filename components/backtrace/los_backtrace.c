@@ -711,12 +711,13 @@ VOID LOS_BackTrace(VOID)
 {
     UINTPTR LR[BACKTRACE_MAX_DEPTH] = {0};
     UINT32 index;
+    UINT32 cpuID = ArchCurrCpuid();
 
     LOS_RecordLR(LR, BACKTRACE_MAX_DEPTH, OS_BACKTRACE_START, 0);
 
     if (LOS_TaskIsRunning()) {
-        PRINTK("taskName = %s\n", g_losTask.runTask->taskName);
-        PRINTK("taskID   = %u\n", g_losTask.runTask->taskID);
+        PRINTK("taskName = %s\n", g_losTask[cpuID].runTask->taskName);
+        PRINTK("taskID   = %u\n", g_losTask[cpuID].runTask->taskID);
     }
 
     PRINTK("----- traceback start -----\r\n");

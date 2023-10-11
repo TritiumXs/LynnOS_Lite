@@ -90,22 +90,22 @@ VOID OsAdd2SortLink(SortLinkList *node, UINT64 startTime, UINT32 waitTicks, Sort
         LOS_Panic("Sort link type error : %u\n", type);
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     SET_SORTLIST_VALUE(node, startTime + OS_SYS_TICK_TO_CYCLE(waitTicks));
     OsAddNode2SortLink(sortLinkHead, node);
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 }
 
 VOID OsDeleteSortLink(SortLinkList *node)
 {
     UINT32 intSave;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (node->responseTime != OS_SORT_LINK_INVALID_TIME) {
         OsSchedResetSchedResponseTime(node->responseTime);
         OsDeleteNodeSortLink(node);
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 }
 
 STATIC INLINE VOID SortLinkNodeTimeUpdate(SortLinkAttribute *sortLinkHead, UINT32 oldFreq)

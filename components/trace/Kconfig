@@ -9,7 +9,7 @@ config TRACE_MSG_EXTEND
     depends on KERNEL_TRACE
 
 config TRACE_FRAME_CORE_MSG
-    bool "Record cpuid, hardware interrupt status, task lock status"
+    bool "Record cpuID, hardware interrupt status, task lock status"
     default n
     depends on TRACE_MSG_EXTEND
 

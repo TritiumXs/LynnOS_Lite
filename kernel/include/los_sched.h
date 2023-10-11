@@ -36,6 +36,8 @@
 #include "los_interrupt.h"
 #include "los_tick.h"
 #include "los_sortlink.h"
+#include "los_core.h"
+#include "los_spinlock.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -46,8 +48,34 @@ extern "C" {
 #define OS_SCHED_MINI_PERIOD       (g_sysClock / LOSCFG_BASE_CORE_TICK_PER_SECOND_MINI)
 #define OS_SCHED_MAX_RESPONSE_TIME OS_SORT_LINK_UINT64_MAX
 
+#define OS_MP_CPU_ALL              LOSCFG_KERNEL_CPU_MASK
+
+#define BIT(nr)                    (1UL << (nr))
+#define LOS_MP_IPI_SCHEDULE        BIT(0)
+
 extern UINT32 g_taskScheduled;
+#define OS_SCHEDULER_ACTIVE (g_taskScheduled & (1U << ArchCurrCpuid()))
+#define OS_SCHEDULER_ALL_ACTIVE (g_taskScheduled == LOSCFG_KERNEL_CPU_MASK)
+
+/*
+ * Schedule flag, one bit represents one core.
+ * This flag is used to prevent kernel scheduling before OSStartToRun.
+ */
+#define OS_SCHEDULER_SET(cpuID) do {     \
+    g_taskScheduled |= (1U << (cpuID));  \
+} while (0);
+
+#define OS_SCHEDULER_CLR(cpuID) do {     \
+    g_taskScheduled &= ~(1U << (cpuID)); \
+} while (0);
+
 typedef BOOL (*SchedScan)(VOID);
+
+typedef struct {
+    UINT16            tickIntLock;
+    UINT64            responseTime;
+    UINT32            responseID;
+} SchedRunqueue;
 
 VOID OsSchedResetSchedResponseTime(UINT64 responseTime);
 
@@ -98,7 +126,7 @@ STATIC INLINE UINT64 OsGetCurrSchedTimeCycle(VOID)
 
 STATIC INLINE BOOL OsCheckKernelRunning(VOID)
 {
-    return (g_taskScheduled && LOS_CHECK_SCHEDULE);
+    return (OS_SCHEDULER_ACTIVE && LOS_CHECK_SCHEDULE);
 }
 
 /**
@@ -154,6 +182,8 @@ extern VOID LOS_SchedTickHandler(VOID);
  * @see
  */
 extern VOID LOS_Schedule(VOID);
+
+extern VOID LOS_MpSchedule(UINT32 target);
 
 #ifdef __cplusplus
 #if __cplusplus
