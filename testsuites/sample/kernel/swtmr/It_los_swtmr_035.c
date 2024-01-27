@@ -208,8 +208,7 @@ static UINT32 Testcase(VOID)
     ret = LOS_EventDestroy(&g_eventCB3);
     ICUNIT_GOTO_EQUAL(ret, LOS_OK, ret, EXIT);
 
-    return LOS_OK;
-
+    // cleanup resources after tests
 EXIT:
     LOS_SwtmrDelete(g_swtmrId3);
     LOS_SwtmrDelete(g_swtmrId2);

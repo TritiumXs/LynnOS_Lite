@@ -127,7 +127,7 @@ Description: initialization of CPUP Daemon
 Input      : None
 Return     : LOS_OK or Error Information
 *****************************************************************************/
-LITE_OS_SEC_TEXT_INIT UINT32 OsCpupDaemonInit()
+LITE_OS_SEC_TEXT_INIT UINT32 OsCpupDaemonInit(void)
 {
 #if (LOSCFG_BASE_CORE_SWTMR == 1)
     (VOID)OsCpupGuardCreator();
@@ -144,7 +144,7 @@ Description: initialization of CPUP
 Input      : None
 Return     : LOS_OK or Error Information
 *****************************************************************************/
-LITE_OS_SEC_TEXT_INIT UINT32 OsCpupInit()
+LITE_OS_SEC_TEXT_INIT UINT32 OsCpupInit(void)
 {
     UINT32 size;
     CHAR *cpupMem = NULL;

@@ -52,7 +52,7 @@
 
 .macro SIGNAL_CONTEXT_RESTORE
     push    {r12, lr}
-    blx     OsSignalTaskContextRestore
+    bl     OsSignalTaskContextRestore
     pop     {r12, lr}
     cmp     r0, #0
     mov     r1, r0
@@ -162,7 +162,7 @@ HalTaskSwitch:
     SIGNAL_CONTEXT_RESTORE
 
     push    {r12, lr}
-    blx     OsSchedTaskSwitch
+    bl     OsSchedTaskSwitch
     pop     {r12, lr}
     cmp     r0, #0
     mov     r0, lr
