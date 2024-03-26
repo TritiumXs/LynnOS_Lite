@@ -93,6 +93,57 @@ int PollQueryFd(int fd, struct PollTable *table)
 UINT32 g_fsMutex;
 static UINT32 g_dirNum = 0;
 
+static struct Dir *g_dirs = NULL;
+
+static void AddToDirList(struct Dir *d)
+{
+    d->next = g_dirs;
+    g_dirs = d;
+}
+
+static void DelFromDirList(struct Dir *d)
+{
+    struct Dir *node = g_dirs;
+
+    if (d == g_dirs) {
+        g_dirs = d->next;
+        return;
+    }
+
+    while (node->next != d) {
+        node = node->next;
+    }
+
+    node->next = d->next;
+}
+
+void CloseDirInMp(struct MountPoint *mp)
+{
+    struct Dir *node = g_dirs;
+    struct Dir *tmp = node;
+
+    while (node != NULL) {
+        if (node->dMp != mp) {
+            tmp = node;
+            node = node->next;
+            continue;
+        }
+
+        tmp->next = node->next;
+        if ((node->dMp->mFs != NULL) && (node->dMp->mFs->fsFops != NULL) &&
+            (node->dMp->mFs->fsFops->closedir != NULL)) {
+            (void)node->dMp->mFs->fsFops->closedir(node);
+        }
+
+        LOSCFG_FS_FREE_HOOK(node);
+        mp->mRefs--;
+        g_dirNum--;
+        node = tmp->next;
+    }
+
+    g_dirs = NULL;
+}
+
 int LOS_FsLock(void)
 {
     if (!OsCheckKernelRunning()) {
@@ -932,6 +983,7 @@ DIR *opendir(const char *path)
     if (ret == 0) {
         mp->mRefs++;
         g_dirNum++;
+        AddToDirList(dir);
     } else {
         LOSCFG_FS_FREE_HOOK(dir);
         dir = NULL;
@@ -998,6 +1050,7 @@ int closedir(DIR *dir)
     if (ret == 0) {
         mp->mRefs--;
         g_dirNum--;
+        DelFromDirList(d);
     } else {
         VFS_ERRNO_SET(EBADF);
     }
