@@ -131,6 +131,16 @@ VOID ItSuiteLosTask()
     ItLosTask129();
     ItLosTask130();
 
+#if LOSCFG_KERNEL_SMP
+    ItSmpLosTask001();
+    ItSmpLosTask002();
+    ItSmpLosTask003();
+    ItSmpLosTask004();
+    ItSmpLosTask005();
+    ItSmpLosTask006();
+    ItSmpLosTask007();
+#endif
+
 #if (LOS_KERNEL_TEST_FULL == 1)
     ItLosTask039();
     ItLosTask040();

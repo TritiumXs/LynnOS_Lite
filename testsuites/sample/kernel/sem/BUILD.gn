@@ -75,7 +75,20 @@ static_library("test_sem") {
     "it_los_sem_041.c",
     "it_los_sem_042.c",
     "it_los_sem_043.c",
+    "smp/It_smp_los_sem_001.c",
+    "smp/It_smp_los_sem_002.c",
+    "smp/It_smp_los_sem_003.c",
+    "smp/It_smp_los_sem_004.c",
+    "smp/It_smp_los_sem_005.c",
+    "smp/It_smp_los_sem_006.c",
+    "smp/It_smp_los_sem_007.c",
+    "smp/It_smp_los_sem_008.c",
+    "smp/It_smp_los_sem_009.c",
+    "smp/It_smp_los_sem_010.c",
+    "smp/It_smp_los_sem_011.c",
   ]
+
+  include_dirs = [ "." ]
 
   configs += [ "$LITEOSTOPDIR/testsuites:include" ]
 }

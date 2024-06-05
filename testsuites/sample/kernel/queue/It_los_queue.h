@@ -43,6 +43,8 @@ extern "C" {
 #define QUEUE_BASE_NUM 3
 #define QUEUE_BASE_MSGSIZE 8
 
+#define LOOP 100
+
 #define PER_ADDED_VALUE 1
 
 extern UINT32 g_testTaskID01;
@@ -211,6 +213,32 @@ extern VOID ItLosQueueStatic006(VOID);
 #if (LOS_KERNEL_MULTI_HWI_TEST == 1)
 extern VOID ItLosQueue046(VOID);
 #endif
+
+extern VOID ItSmpLosQueue001(VOID);
+extern VOID ItSmpLosQueue002(VOID);
+extern VOID ItSmpLosQueue003(VOID);
+extern VOID ItSmpLosQueue004(VOID);
+extern VOID ItSmpLosQueue005(VOID);
+extern VOID ItSmpLosQueue006(VOID);
+extern VOID ItSmpLosQueue007(VOID);
+extern VOID ItSmpLosQueue008(VOID);
+extern VOID ItSmpLosQueue009(VOID);
+extern VOID ItSmpLosQueue010(VOID);
+extern VOID ItSmpLosQueue011(VOID);
+extern VOID ItSmpLosQueue012(VOID);
+extern VOID ItSmpLosQueue013(VOID);
+extern VOID ItSmpLosQueue014(VOID);
+extern VOID ItSmpLosQueue015(VOID);
+extern VOID ItSmpLosQueue016(VOID);
+extern VOID ItSmpLosQueue017(VOID);
+extern VOID ItSmpLosQueue018(VOID);
+extern VOID ItSmpLosQueue019(VOID);
+extern VOID ItSmpLosQueue020(VOID);
+extern VOID ItSmpLosQueue021(VOID);
+extern VOID ItSmpLosQueue022(VOID);
+extern VOID ItSmpLosQueue023(VOID);
+extern VOID ItSmpLosQueue024(VOID);
+extern VOID ItSmpLosQueue025(VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

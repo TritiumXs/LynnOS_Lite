@@ -78,6 +78,34 @@ VOID ItSuiteLosSwtmr(void)
     ItLosSwtmrAlign004();
 #endif
 
+#if LOSCFG_KERNEL_SMP
+    ItSmpLosSwtmr001();
+    ItSmpLosSwtmr002();
+    ItSmpLosSwtmr003();
+    ItSmpLosSwtmr004();
+    ItSmpLosSwtmr005();
+    ItSmpLosSwtmr006();
+    ItSmpLosSwtmr007();
+    ItSmpLosSwtmr008();
+    ItSmpLosSwtmr009();
+    ItSmpLosSwtmr010();
+    ItSmpLosSwtmr011();
+    ItSmpLosSwtmr012();
+    ItSmpLosSwtmr013();
+    ItSmpLosSwtmr014();
+    ItSmpLosSwtmr015();
+    ItSmpLosSwtmr016();
+    ItSmpLosSwtmr017();
+    ItSmpLosSwtmr018();
+    ItSmpLosSwtmr019();
+    ItSmpLosSwtmr020();
+    ItSmpLosSwtmr021();
+    ItSmpLosSwtmr022();
+    ItSmpLosSwtmr023();
+    ItSmpLosSwtmr024();
+    ItSmpLosSwtmr025();
+#endif
+
 #if (LOS_KERNEL_TEST_FULL == 1)
     ItLosSwtmr025();
     ItLosSwtmr026();

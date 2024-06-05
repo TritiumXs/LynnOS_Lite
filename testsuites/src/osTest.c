@@ -62,8 +62,9 @@ UINT32 g_usSemID2;
 UINT32 g_cpupTestCount;
 UINT32 g_cmsisRobinCount1;
 UINT32 g_cmsisCount;
+UINT32 g_testPeriod;
 
-UINT16 g_usSwTmrID;
+UINT32 g_usSwTmrID;
 
 UINT32 g_testQueueID01;
 UINT32 g_testQueueID02;
@@ -138,22 +139,60 @@ UINT32 QueueUsedCountGet(VOID)
     return count;
 }
 
-extern LosTaskCB *g_taskCBArray;
-UINT32 TaskUsedCountGet(VOID)
+UINT64 TestTickCountGet(VOID)
 {
-    UINT32 intSave;
-    UINT32 count = 0;
+    /* not use LOS_TickCountGet for now,
+       cause every timer is not match with others.
+       use cpu0 timer instead. */
+    return LOS_TickCountGet();
+}
 
-    intSave = LOS_IntLock();
-    for (UINT32 index = 0; index < LOSCFG_BASE_CORE_TSK_LIMIT; index++) {
-        LosTaskCB *taskCB = ((LosTaskCB *)g_taskCBArray) + index;
-        if (taskCB->taskStatus & OS_TASK_STATUS_UNUSED) {
-            count++;
+UINT64 TestTickCountByCurrCpuid(VOID)
+{
+    return LOS_TickCountGet();
+}
+
+/*
+ * different from calling LOS_TaskDelay,
+ * this func will not yield this task to another one.
+ */
+VOID TestBusyTaskDelay(UINT32 tick)
+{
+    UINT64 runtime;
+
+    runtime = TestTickCountByCurrCpuid() + tick;
+    while (1) {
+        if (runtime <= TestTickCountByCurrCpuid()) {
+            break;
         }
     }
-    LOS_IntRestore(intSave);
+}
 
-    return (LOSCFG_BASE_CORE_TSK_LIMIT - count);
+VOID TestAssertBusyTaskDelay(UINT32 timeout, UINT32 flag)
+{
+    UINT64 runtime;
+
+    runtime = TestTickCountGet() + timeout;
+    while (1) {
+        if ((runtime <= TestTickCountGet()) || (g_testCount == flag)) {
+            break;
+        }
+    }
+}
+
+VOID TestTestHwiDelete(unsigned int irq, VOID *devId)
+{
+    HwiIrqParam stuwIrqPara;
+
+    if (OS_INT_ACTIVE) {
+        return;
+    }
+
+    stuwIrqPara.swIrq = irq;
+    stuwIrqPara.pDevId = devId;
+
+    (VOID)LOS_HwiDelete(irq, &stuwIrqPara);
+    return;
 }
 
 void TestKernel(void)
@@ -268,6 +307,9 @@ UINT32 los_TestInit(VOID)
     osTaskInitParam.pcName = "IT_TST_INI";
     osTaskInitParam.usTaskPrio = TASK_PRIO_TEST;
     osTaskInitParam.uwResved = LOS_TASK_ATTR_JOINABLE;
+#ifdef LOSCFG_KERNEL_SMP
+    osTaskInitParam.usCpuAffiMask = CPUID_TO_AFFI_MASK(ArchCurrCpuid());
+#endif
 
     ret = LOS_TaskCreate(&g_testTskHandle, &osTaskInitParam);
     if (LOS_OK != ret) {
