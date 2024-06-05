@@ -93,6 +93,26 @@ int PollQueryFd(int fd, struct PollTable *table)
 UINT32 g_fsMutex;
 static UINT32 g_dirNum = 0;
 
+void CloseDirInMp(struct MountPoint *mp)
+{
+    struct Dir *node = NULL;
+
+    while (mp->dirList.pstNext != &mp->dirList) {
+        node = LOS_DL_LIST_ENTRY(mp->dirList.pstNext, struct Dir, dirNode);
+
+        // the node will not be empty and the node is found in mp, mp will not be empty
+        if ((node->dMp->mFs != NULL) && (node->dMp->mFs->fsFops != NULL) &&
+            (node->dMp->mFs->fsFops->closedir != NULL)) {
+            (void)node->dMp->mFs->fsFops->closedir(node);
+        }
+
+        LOS_ListDelete(mp->dirList.pstNext);
+        LOSCFG_FS_FREE_HOOK(node);
+        mp->mRefs--;
+        g_dirNum--;
+    }
+}
+
 int LOS_FsLock(void)
 {
     if (!OsCheckKernelRunning()) {
@@ -932,6 +952,7 @@ DIR *opendir(const char *path)
     if (ret == 0) {
         mp->mRefs++;
         g_dirNum++;
+        LOS_ListAdd(&mp->dirList, &dir->dirNode);
     } else {
         LOSCFG_FS_FREE_HOOK(dir);
         dir = NULL;
@@ -998,6 +1019,7 @@ int closedir(DIR *dir)
     if (ret == 0) {
         mp->mRefs--;
         g_dirNum--;
+        LOS_ListDelete(&d->dirNode);
     } else {
         VFS_ERRNO_SET(EBADF);
     }
