@@ -59,6 +59,9 @@ struct MountPoint {
     UINT32             mRefs;  /* reference to mount point */
     void              *mData;  /* specific file system handle */
     BOOL               mWriteEnable; /* writable flag */
+#if (LOSCFG_PARTITION_LOCK == 1)
+    UINT32            mLock;
+#endif
 };
 
 extern struct MountPoint *g_mountPoints;

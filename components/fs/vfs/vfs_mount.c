@@ -288,10 +288,20 @@ int mount(const char *source, const char *target,
         return (int)LOS_NOK;
     }
 
+#if (LOSCFG_PARTITION_LOCK == 1)
+    if (LOS_MuxCreate(&mp->mLock) != LOS_OK) {
+        PRINT_ERR("partition lock create failed, target %s.\n", target);
+        goto errout;
+    }
+#endif
+
     ret = mp->mFs->fsMops->mount(mp, mountflags, data);
     if (ret != 0) {
         /* errno is set */
         PRINT_ERR("mount failed, target %s.\n", target);
+#if (LOSCFG_PARTITION_LOCK == 1)
+        (void)LOS_MuxDelete(mp->mLock);
+#endif
         goto errout;
     }
 
@@ -335,6 +345,9 @@ int umount(const char *target)
     /* delete mp from mount list */
     MpDeleteFromList(mp);
     mp->mFs->fsRefs--;
+#if (LOSCFG_PARTITION_LOCK == 1)
+    (void)LOS_MuxDelete(mp->mLock);
+#endif
     LOSCFG_FS_FREE_HOOK(mp);
 
     LOS_FsUnlock();
@@ -392,6 +405,9 @@ int umount2(const char *target, int flag)
     /* delete mp from mount list */
     MpDeleteFromList(mp);
     mp->mFs->fsRefs--;
+#if (LOSCFG_PARTITION_LOCK == 1)
+    (void)LOS_MuxDelete(mp->mLock);
+#endif
     LOSCFG_FS_FREE_HOOK(mp);
 
     LOS_FsUnlock();
