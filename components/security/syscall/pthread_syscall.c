@@ -96,20 +96,21 @@ int *SysSchedGetArea(unsigned int tid)
         return NULL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     area = (int *)OsGetUserTaskCB(tid)->userArea;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return area;
 }
 
 int SysSetThreadArea(const char *area)
 {
     unsigned int intSave;
+    INT32 cpuID = ArchCurrCpuid();
 
-    intSave = LOS_IntLock();
-    LosTaskCB *runTask = g_losTask.runTask;
+    SCHEDULER_LOCK(intSave);
+    LosTaskCB *runTask = g_losTask[cpuID].runTask;
     OsGetUserTaskCB(runTask->taskID)->userArea = (unsigned long)(uintptr_t)area;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return 0;
 }
 
@@ -117,10 +118,11 @@ char *SysGetThreadArea(void)
 {
     unsigned int intSave;
     char *area = NULL;
+    INT32 cpuID = ArchCurrCpuid();
 
-    intSave = LOS_IntLock();
-    LosTaskCB *runTask = g_losTask.runTask;
+    SCHEDULER_LOCK(intSave);
+    LosTaskCB *runTask = g_losTask[cpuID].runTask;
     area = (char *)OsGetUserTaskCB(runTask->taskID)->userArea;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return area;
 }

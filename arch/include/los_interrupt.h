@@ -155,6 +155,13 @@ UINT32 ArchIntSetPriority(HWI_HANDLE_T hwiNum, HWI_PRIOR_T priority);
 UINT32 ArchIntCurIrqNum(VOID);
 HwiControllerOps *ArchIntOpsGet(VOID);
 
+#ifdef LOSCFG_KERNEL_SMP
+VOID ArchIntIpiEnable(VOID);
+VOID ArchIntIpiDisable(VOID);
+VOID ArchIntSendIpi(UINT32 target, UINT32 ipi);
+VOID ArchIntSetAffinity(UINT32 vector, UINT32 cpuMask);
+#endif
+
 #define OS_INT_ACTIVE           (ArchIsIntActive())
 #define OS_INT_INACTIVE         (!(OS_INT_ACTIVE))
 #define LOS_IntLock             ArchIntLock
@@ -169,6 +176,11 @@ HwiControllerOps *ArchIntOpsGet(VOID);
 #define LOS_HwiSetPriority      ArchIntSetPriority
 #define LOS_HwiCurIrqNum        ArchIntCurIrqNum
 #define LOS_HwiOpsGet           ArchIntOpsGet
+
+#ifdef LOSCFG_KERNEL_SMP
+#define LOS_HwiSendIpi          ArchIntSendIpi
+#define LOS_HwiSetAffinity      ArchIntSetAffinity    
+#endif
 
 #ifdef __cplusplus
 #if __cplusplus

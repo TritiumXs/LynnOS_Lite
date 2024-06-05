@@ -169,8 +169,9 @@ STATIC VOID LOS_TraceTaskDelete(const LosTaskCB *taskCB)
 
 STATIC VOID LOS_TraceTaskSwitchedIn(VOID)
 {
-    LosTaskCB *newTask = g_losTask.newTask;
-    LosTaskCB *runTask = g_losTask.runTask;
+    INT32 cpuID = ArchCurrCpuid();
+    LosTaskCB *newTask = g_losTask[cpuID].newTask;
+    LosTaskCB *runTask = g_losTask[cpuID].runTask;
     LOS_TRACE(TASK_SWITCH, newTask->taskID, runTask->priority, runTask->taskStatus,
         newTask->priority, newTask->taskStatus);
 }
@@ -182,7 +183,8 @@ STATIC VOID LOS_TraceTaskResume(const LosTaskCB *taskCB)
 
 STATIC VOID LOS_TraceTaskSuspend(const LosTaskCB *taskCB)
 {
-    LOS_TRACE(TASK_SUSPEND, taskCB->taskID, taskCB->taskStatus, g_losTask.runTask->taskID);
+    INT32 cpuID = ArchCurrCpuid();
+    LOS_TRACE(TASK_SUSPEND, taskCB->taskID, taskCB->taskStatus, g_losTask[cpuID].runTask->taskID);
 }
 
 STATIC VOID LOS_TraceIsrEnter(UINT32 hwiNum)

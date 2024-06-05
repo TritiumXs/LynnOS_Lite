@@ -339,11 +339,12 @@ STATIC VOID OsExcInfoDisplay(const ExcInfo *excInfo)
 
 VOID HalExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type)
 {
+    UINT32 cpuID = ArchCurrCpuid();
     g_excInfo.nestCnt++;
     g_excInfo.faultAddr = faultAddr;
     g_excInfo.type = type;
 
-    LosTaskCB *taskCB = g_losTask.runTask;
+    LosTaskCB *taskCB = g_losTask[cpuID].runTask;
 
     if ((taskCB == NULL) || (taskCB == OS_TCB_FROM_TID(g_taskMaxNum))) {
         g_excInfo.phase = OS_EXC_IN_INIT;
@@ -353,7 +354,7 @@ VOID HalExcHandleEntry(UINTPTR faultAddr, EXC_CONTEXT_S *excBufAddr, UINT32 type
         g_excInfo.thrdPid = HwiNumGet();
     } else {
         g_excInfo.phase = OS_EXC_IN_TASK;
-        g_excInfo.thrdPid = g_losTask.runTask->taskID;
+        g_excInfo.thrdPid = g_losTask[cpuID].runTask->taskID;
     }
 
     g_excInfo.context = excBufAddr;

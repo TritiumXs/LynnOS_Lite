@@ -181,13 +181,13 @@ static int CheckForCancel(void)
     }
 
     tcb = OS_TCB_FROM_TID((UINT32)thread);
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     PthreadData *pthreadData = (PthreadData *)(UINTPTR)tcb->arg;
     if ((pthreadData->canceled) && (pthreadData->cancelState == PTHREAD_CANCEL_ENABLE)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return 1;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return 0;
 }
 
@@ -215,13 +215,13 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     }
 
     PthreadData *pthreadData = (PthreadData *)taskInitParam.uwArg;
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (g_pthreadListHead.pstNext == NULL) {
         LOS_ListInit(&g_pthreadListHead);
     }
 
     LOS_ListAdd(&g_pthreadListHead, &pthreadData->threadList);
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     *thread = (pthread_t)taskID;
 
@@ -282,10 +282,10 @@ int pthread_once(pthread_once_t *onceControl, void (*initRoutine)(void))
     if ((onceControl == NULL) || (initRoutine == NULL)) {
         return EINVAL;
     }
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     old = *onceControl;
     *onceControl = 1;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     if (!old) {
         initRoutine();
@@ -315,10 +315,10 @@ int pthread_setcancelstate(int state, int *oldState)
     }
 
     tcb = OS_TCB_FROM_TID((UINT32)thread);
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     pthreadData = (PthreadData *)(UINTPTR)tcb->arg;
     if (pthreadData == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return EINVAL;
     }
 
@@ -326,7 +326,7 @@ int pthread_setcancelstate(int state, int *oldState)
         *oldState = pthreadData->cancelState;
     }
     pthreadData->cancelState = (UINT8)state;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return 0;
 }
@@ -348,10 +348,10 @@ int pthread_setcanceltype(int type, int *oldType)
     }
 
     tcb = OS_TCB_FROM_TID((UINT32)thread);
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     pthreadData = (PthreadData *)(UINTPTR)tcb->arg;
     if (pthreadData == NULL) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return EINVAL;
     }
 
@@ -360,7 +360,7 @@ int pthread_setcanceltype(int type, int *oldType)
     }
 
     pthreadData->cancelType = (UINT8)type;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return 0;
 }
@@ -424,7 +424,7 @@ int pthread_cancel(pthread_t thread)
         PRINT_ERR("[%s:%d] This task %lu is not a posix thread!!!\n", __FUNCTION__, __LINE__, thread);
         return EINVAL;
     }
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     tcb = OS_TCB_FROM_TID((UINT32)thread);
     pthreadData = (PthreadData *)(UINTPTR)tcb->arg;
     pthreadData->canceled = 1;
@@ -436,11 +436,11 @@ int pthread_cancel(pthread_t thread)
          * We also release the thread out of any current wait to make it wake up.
          */
         if (DoPthreadCancel(tcb) == LOS_NOK) {
-            LOS_IntRestore(intSave);
+            SCHEDULER_UNLOCK(intSave);
             return ESRCH;
         }
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return 0;
 }
@@ -527,10 +527,10 @@ void pthread_exit(void *retVal)
         PthreadExitKeyDtor(pthreadData);
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     LOS_ListDelete(&pthreadData->threadList);
     tcb->taskName = PTHREAD_DEFAULT_NAME;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     free(pthreadData);
     (void)LOS_TaskDelete(tcb->taskID);
 EXIT:
@@ -559,19 +559,19 @@ int pthread_setname_np(pthread_t thread, const char *name)
     }
 
     taskCB = OS_TCB_FROM_TID((UINT32)thread);
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (taskCB->taskStatus & OS_TASK_STATUS_EXIT) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return EINVAL;
     }
 
     if (taskCB->taskEntry == PthreadEntry) {
         (void)strcpy_s(taskName, PTHREAD_NAMELEN, name);
     } else {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return EINVAL;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return 0;
 }
@@ -605,22 +605,22 @@ static void PthreadExitKeyDtor(PthreadData *pthreadData)
     PthreadKey *keys = NULL;
     unsigned int intSave;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     for (unsigned int count = 0; count < PTHREAD_KEYS_MAX; count++) {
         keys = &g_pthreadKeyData[count];
         if (keys->flag == PTHREAD_KEY_UNUSED) {
             continue;
         }
         PthreadKeyDtor dtor = keys->destructor;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
 
         if ((dtor != NULL) && (pthreadData->key[count] != 0)) {
             dtor((void *)pthreadData->key[count]);
         }
 
-        intSave = LOS_IntLock();
+        SCHEDULER_LOCK(intSave);
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     free((void *)pthreadData->key);
 }
@@ -641,9 +641,9 @@ int pthread_key_create(pthread_key_t *k, void (*dtor)(void *))
         return EINVAL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (g_pthreadkeyCount >= PTHREAD_KEYS_MAX) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return EAGAIN;
     }
 
@@ -658,7 +658,7 @@ int pthread_key_create(pthread_key_t *k, void (*dtor)(void *))
     keys->destructor = dtor;
     keys->flag = PTHREAD_KEY_USED;
     g_pthreadkeyCount++;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     *k = count;
 
@@ -679,9 +679,9 @@ int pthread_key_delete(pthread_key_t k)
         return EINVAL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((g_pthreadkeyCount == 0) || (g_pthreadKeyData[k].flag == PTHREAD_KEY_UNUSED)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return EAGAIN;
     }
 
@@ -700,7 +700,7 @@ int pthread_key_delete(pthread_key_t k)
     g_pthreadKeyData[k].destructor = NULL;
     g_pthreadKeyData[k].flag = PTHREAD_KEY_UNUSED;
     g_pthreadkeyCount--;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return 0;
 }
@@ -730,9 +730,9 @@ int pthread_setspecific(pthread_key_t k, const void *x)
         (void)memset_s(key, sizeof(uintptr_t) * PTHREAD_KEYS_MAX, 0, sizeof(uintptr_t) * PTHREAD_KEYS_MAX);
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (g_pthreadKeyData[k].flag == PTHREAD_KEY_UNUSED) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         free(key);
         return EAGAIN;
     }
@@ -742,7 +742,7 @@ int pthread_setspecific(pthread_key_t k, const void *x)
     }
 
     pthreadData->key[k] = (uintptr_t)x;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return 0;
 }
@@ -763,14 +763,14 @@ void *pthread_getspecific(pthread_key_t k)
 
     LosTaskCB *taskCB = OS_TCB_FROM_TID((UINT32)self);
     PthreadData *pthreadData = (PthreadData *)taskCB->arg;
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if ((g_pthreadKeyData[k].flag == PTHREAD_KEY_UNUSED) || (pthreadData->key == NULL)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return NULL;
     }
 
     key = (void *)pthreadData->key[k];
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return key;
 }

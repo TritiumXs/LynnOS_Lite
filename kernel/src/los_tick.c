@@ -93,7 +93,9 @@ LITE_OS_SEC_TEXT UINT64 LOS_SysCycleGet(VOID)
     return g_sysTickTimer->getCycle(NULL);
 #else
     UINT32 period = 0;
-    UINT32 intSave = LOS_IntLock();
+    UINT32 intSave;
+
+    SCHEDULER_LOCK(intSave);
     UINT64 time = g_sysTickTimer->getCycle(&period);
     UINT64 schedTime = g_tickTimerBase + time;
     if (schedTime < g_oldTickTimerBase) {
@@ -106,7 +108,7 @@ LITE_OS_SEC_TEXT UINT64 LOS_SysCycleGet(VOID)
     LOS_ASSERT(schedTime >= g_oldTickTimerBase);
 
     g_oldTickTimerBase = schedTime;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return schedTime;
 #endif
 }
@@ -161,20 +163,20 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsTickTimerInit(VOID)
         tickHandler = g_sysTickTimer->tickHandler;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     ret = g_sysTickTimer->init(tickHandler);
     if (ret != LOS_OK) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return ret;
     }
 
     if ((g_sysTickTimer->freq == 0) || (g_sysTickTimer->freq < LOSCFG_BASE_CORE_TICK_PER_SECOND)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_SYS_CLOCK_INVALID;
     }
 
     if (g_sysTickTimer->irqNum > (INT32)LOSCFG_PLATFORM_HWI_LIMIT) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_TICK_CFG_INVALID;
     }
 
@@ -182,7 +184,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 OsTickTimerInit(VOID)
     g_cyclesPerTick = g_sysTickTimer->freq / LOSCFG_BASE_CORE_TICK_PER_SECOND;
     g_sysTimerIsInit = TRUE;
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return LOS_OK;
 }
@@ -202,13 +204,13 @@ LITE_OS_SEC_TEXT UINT32 LOS_TickTimerRegister(const ArchTickTimer *timer, const 
             return ret;
         }
 
-        intSave = LOS_IntLock();
+        SCHEDULER_LOCK(intSave);
         if (g_sysTickTimer == NULL) {
             g_sysTickTimer = LOS_SysTickTimerGet();
         }
 
         if (g_sysTickTimer == timer) {
-            LOS_IntRestore(intSave);
+            SCHEDULER_UNLOCK(intSave);
             return LOS_ERRNO_SYS_TIMER_ADDR_FAULT;
         }
 
@@ -217,7 +219,7 @@ LITE_OS_SEC_TEXT UINT32 LOS_TickTimerRegister(const ArchTickTimer *timer, const 
             PRINT_ERR("%s timer addr fault! errno %d\n", __FUNCTION__, errRet);
             ret = LOS_ERRNO_SYS_TIMER_ADDR_FAULT;
         }
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return ret;
     }
 
@@ -225,13 +227,13 @@ LITE_OS_SEC_TEXT UINT32 LOS_TickTimerRegister(const ArchTickTimer *timer, const 
         return LOS_ERRNO_SYS_TIMER_IS_RUNNING;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (g_sysTickTimer == NULL) {
         g_sysTickTimer = LOS_SysTickTimerGet();
     }
 
     g_sysTickTimer->tickHandler = tickHandler;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return LOS_OK;
 }
 
@@ -245,7 +247,7 @@ UINT32 LOS_SysTickClockFreqAdjust(const SYS_TICK_FREQ_ADJUST_FUNC handler, UINTP
         return LOS_ERRNO_SYS_HOOK_IS_NULL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     g_sysTickTimer->lock();
 #if (LOSCFG_BASE_CORE_TICK_WTIMER == 0)
     UINT64 currTimeCycle = LOS_SysCycleGet();
@@ -254,7 +256,7 @@ UINT32 LOS_SysTickClockFreqAdjust(const SYS_TICK_FREQ_ADJUST_FUNC handler, UINTP
     freq = handler(param);
     if ((freq == 0) || (freq == g_sysClock)) {
         g_sysTickTimer->unlock();
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         return LOS_ERRNO_SYS_CLOCK_INVALID;
     }
 
@@ -271,7 +273,7 @@ UINT32 LOS_SysTickClockFreqAdjust(const SYS_TICK_FREQ_ADJUST_FUNC handler, UINTP
     g_sysClock = g_sysTickTimer->freq;
     g_cyclesPerTick = g_sysTickTimer->freq / LOSCFG_BASE_CORE_TICK_PER_SECOND;
     OsSchedTimeConvertFreq(oldFreq);
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return LOS_OK;
 }

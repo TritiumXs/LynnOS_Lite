@@ -54,7 +54,7 @@ extern EVENT_CB_S g_eventCB3;
 #define TIMER_LOS_HANDLER_PARAMETER 0xFF
 #define TIMER_LOS_SELF_DELETED 1
 
-extern UINT32 g_idleTaskID;
+extern UINT32 g_idleTaskID[LOSCFG_KERNEL_CORE_NUM];
 
 extern UINT32 g_swtmrId1;
 extern UINT32 g_swtmrId2;

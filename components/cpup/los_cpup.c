@@ -81,7 +81,7 @@ LITE_OS_SEC_TEXT_INIT VOID OsCpupGuard(VOID)
     UINT32 loop;
     UINT32 intSave;
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     prevPos = g_irqHisPos;
 
     if (g_irqHisPos == OS_CPUP_HISTORY_RECORD_NUM - 1) {
@@ -98,7 +98,7 @@ LITE_OS_SEC_TEXT_INIT VOID OsCpupGuard(VOID)
         g_irqCpup[loop].historyTime[prevPos] = g_irqCpup[loop].allTime;
         g_cpuHistoryTime[prevPos] += g_irqCpup[loop].allTime;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return;
 }
@@ -188,12 +188,13 @@ Return     : None
 LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleStart(VOID)
 {
     UINT32 taskID;
+    UINT32 cpuID = ArchCurrCpuid();
 
     if (g_cpupInitFlg == 0) {
         return;
     }
 
-    taskID = g_losTask.newTask->taskID;
+    taskID = g_losTask[cpuID].newTask->taskID;
     g_cpup[taskID].cpupID = taskID;
     g_cpup[taskID].startTime = CpupTimeUsGet();
 
@@ -210,12 +211,13 @@ LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleEnd(VOID)
 {
     UINT32 taskID;
     UINT64 cpuTime;
+    UINT32 cpuID = ArchCurrCpuid();
 
     if (g_cpupInitFlg == 0) {
         return;
     }
 
-    taskID = g_losTask.runTask->taskID;
+    taskID = g_losTask[cpuID].runTask->taskID;
 
     if (g_cpup[taskID].startTime == 0) {
         return;
@@ -243,12 +245,13 @@ LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleEndStart(VOID)
     UINT32 taskID;
     UINT64 cpuTime;
     UINT16 loopNum;
+    UINT32 cpuID = ArchCurrCpuid();
 
     if (g_cpupInitFlg == 0) {
         return;
     }
 
-    taskID = g_losTask.runTask->taskID;
+    taskID = g_losTask[cpuID].runTask->taskID;
     cpuTime = CpupTimeUsGet();
 
     if (g_cpup[taskID].startTime != 0) {
@@ -260,7 +263,7 @@ LITE_OS_SEC_TEXT_MINOR VOID OsTskCycleEndStart(VOID)
         g_cpup[taskID].startTime = 0;
     }
 
-    taskID = g_losTask.newTask->taskID;
+    taskID = g_losTask[cpuID].newTask->taskID;
     g_cpup[taskID].cpupID = taskID;
     g_cpup[taskID].startTime = cpuTime;
 
@@ -316,13 +319,14 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_SysCpuUsage(VOID)
     UINT32  cpupRet = 0;
     UINT16  loopNum;
     UINT32 intSave;
+    UINT32 cpuID = ArchCurrCpuid();
 
     if (g_cpupInitFlg == 0) {
         return LOS_ERRNO_CPUP_NO_INIT;
     }
 
     // get end time of current task
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     OsTskCycleEnd();
 
     for (loopNum = 0; loopNum < g_taskMaxNum; loopNum++) {
@@ -331,11 +335,11 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_SysCpuUsage(VOID)
 
     if (cpuTimeAll) {
         cpupRet = LOS_CPUP_PRECISION -  (UINT32)((LOS_CPUP_PRECISION *
-            g_cpup[g_idleTaskID].allTime) / cpuTimeAll);
+            g_cpup[g_idleTaskID[cpuID]].allTime) / cpuTimeAll);
     }
 
     OsTskCycleStart();
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return cpupRet;
 }
@@ -355,13 +359,14 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistorySysCpuUsage(UINT16 mode)
     UINT16  curPos;
     UINT16  prePos = 0;
     UINT32 intSave;
+    UINT32 cpuID = ArchCurrCpuid();
 
     if (g_cpupInitFlg == 0) {
         return LOS_ERRNO_CPUP_NO_INIT;
     }
 
     // get end time of current task
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     OsTskCycleEnd();
 
     OsGetPositions(mode, &curPos, &prePos);
@@ -375,10 +380,10 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistorySysCpuUsage(UINT16 mode)
     }
 
     if (mode == CPUP_IN_1S) {
-        idleCycleAll += g_cpup[g_idleTaskID].historyTime[curPos] -
-                           g_cpup[g_idleTaskID].historyTime[prePos];
+        idleCycleAll += g_cpup[g_idleTaskID[cpuID]].historyTime[curPos] -
+                           g_cpup[g_idleTaskID[cpuID]].historyTime[prePos];
     } else {
-        idleCycleAll += g_cpup[g_idleTaskID].allTime - g_cpup[g_idleTaskID].historyTime[curPos];
+        idleCycleAll += g_cpup[g_idleTaskID[cpuID]].allTime - g_cpup[g_idleTaskID[cpuID]].historyTime[curPos];
     }
 
     if (cpuTimeAll) {
@@ -386,7 +391,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistorySysCpuUsage(UINT16 mode)
     }
 
     OsTskCycleStart();
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return cpupRet;
 }
@@ -416,7 +421,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_TaskCpuUsage(UINT32 taskID)
     if ((g_cpup[taskID].status & OS_TASK_STATUS_UNUSED) || (g_cpup[taskID].status == 0)) {
         return LOS_ERRNO_CPUP_THREAD_NO_CREATED;
     }
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     OsTskCycleEnd();
 
     /* get total Cycle */
@@ -432,7 +437,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_TaskCpuUsage(UINT32 taskID)
     }
 
     OsTskCycleStart();
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return cpupRet;
 }
@@ -465,7 +470,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistoryTaskCpuUsage(UINT32 taskID, UINT16 mode
     if ((g_cpup[taskID].status & OS_TASK_STATUS_UNUSED) || (g_cpup[taskID].status == 0)) {
         return LOS_ERRNO_CPUP_THREAD_NO_CREATED;
     }
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     OsTskCycleEnd();
 
     OsGetPositions(mode, &curPos, &prePos);
@@ -493,7 +498,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_HistoryTaskCpuUsage(UINT32 taskID, UINT16 mode
     }
 
     OsTskCycleStart();
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return cpupRet;
 }
@@ -515,7 +520,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_AllTaskCpuUsage(CPUP_INFO_S *cpupInfo, UINT16 
         return LOS_ERRNO_CPUP_TASK_PTR_NULL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     OsTskCycleEnd();
 
     OsGetPositions(mode, &curPos, &prePos);
@@ -553,7 +558,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_AllTaskCpuUsage(CPUP_INFO_S *cpupInfo, UINT16 
     }
 
     OsTskCycleStart();
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     return LOS_OK;
 }
@@ -722,7 +727,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_GetAllIrqCpuUsage(UINT16 mode, CPUP_INFO_S *cp
         return LOS_ERRNO_CPUP_TASK_PTR_NULL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
 
     OsGetIrqPositions(mode, &curPos, &prePos);
     if (mode == CPUP_IN_10S) {
@@ -749,7 +754,7 @@ LITE_OS_SEC_TEXT_MINOR UINT32 LOS_GetAllIrqCpuUsage(UINT16 mode, CPUP_INFO_S *cp
         }
     }
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return LOS_OK;
 }
 #endif

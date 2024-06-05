@@ -38,6 +38,15 @@
 #if (LOSCFG_KERNEL_LMK == 1)
 STATIC LosLmkOps g_losLmkOps;
 
+#if (LOSCFG_KERNEL_SMP == 1)
+LITE_OS_SEC_BSS SPIN_LOCK_INIT(g_lmkSpin);
+#define LMK_LOCK(state)                 LOS_SpinLockSave(&g_lmkSpin, &(state))
+#define LMK_UNLOCK(state)               LOS_SpinUnlockRestore(&g_lmkSpin, (state))
+#else
+#define LMK_LOCK(state)                 (state) = LOS_IntLock()
+#define LMK_UNLOCK(state)               LOS_IntRestore(state)
+#endif
+
 STATIC BOOL OsIsLmkOpsNodeRegistered(LosLmkOpsNode *lmkNode)
 {
     LosLmkOpsNode *opsNode = NULL;
@@ -62,14 +71,14 @@ UINT32 LOS_LmkOpsNodeRegister(LosLmkOpsNode *lmkNode)
         return LOS_ERRNO_LMK_INVALID_PARAMETER;
     }
 
-    intSave = LOS_IntLock();
+    LMK_LOCK(intSave);
     if (OsIsLmkOpsNodeRegistered(lmkNode)) {
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         return LOS_ERRNO_LMK_ALREADY_REGISTERED;
     }
     if (LOS_ListEmpty(&g_losLmkOps.lmkOpsList)) {
         LOS_ListHeadInsert(&g_losLmkOps.lmkOpsList, &lmkNode->node);
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         return LOS_OK;
     }
 
@@ -77,7 +86,7 @@ UINT32 LOS_LmkOpsNodeRegister(LosLmkOpsNode *lmkNode)
     opsNode = LOS_DL_LIST_ENTRY(g_losLmkOps.lmkOpsList.pstNext, LosLmkOpsNode, node);
     if (lmkNode->priority <= opsNode->priority) {
         LOS_ListHeadInsert(&g_losLmkOps.lmkOpsList, &lmkNode->node);
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         return LOS_OK;
     }
 
@@ -85,7 +94,7 @@ UINT32 LOS_LmkOpsNodeRegister(LosLmkOpsNode *lmkNode)
     opsNode = LOS_DL_LIST_ENTRY(g_losLmkOps.lmkOpsList.pstPrev, LosLmkOpsNode, node);
     if (lmkNode->priority >= opsNode->priority) {
         LOS_ListTailInsert(&g_losLmkOps.lmkOpsList, &lmkNode->node);
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         return LOS_OK;
     }
 
@@ -97,7 +106,7 @@ UINT32 LOS_LmkOpsNodeRegister(LosLmkOpsNode *lmkNode)
         }
     }
 
-    LOS_IntRestore(intSave);
+    LMK_UNLOCK(intSave);
     return LOS_OK;
 }
 
@@ -109,13 +118,13 @@ UINT32 LOS_LmkOpsNodeUnregister(LosLmkOpsNode *lmkNode)
         return LOS_ERRNO_LMK_INVALID_PARAMETER;
     }
 
-    intSave = LOS_IntLock();
+    LMK_LOCK(intSave);
     if (LOS_ListEmpty(&g_losLmkOps.lmkOpsList) || !OsIsLmkOpsNodeRegistered(lmkNode)) {
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         return LOS_ERRNO_LMK_NOT_REGISTERED;
     }
     LOS_ListDelete(&lmkNode->node);
-    LOS_IntRestore(intSave);
+    LMK_UNLOCK(intSave);
     return LOS_OK;
 }
 
@@ -126,27 +135,27 @@ UINT32 LOS_LmkTasksKill(VOID)
     LosLmkOpsNode *opsNode = NULL;
     FreeMemByKillingTask freeMem = NULL;
 
-    intSave = LOS_IntLock();
+    LMK_LOCK(intSave);
 
     // if tasks already killed, no need to do it again.
     if (g_losLmkOps.isMemFreed) {
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         return LOS_ERRNO_LMK_MEMORY_ALREADY_FREED;
     } else {
         g_losLmkOps.isMemFreed = TRUE;
     }
     LOS_DL_LIST_FOR_EACH_ENTRY(opsNode, &g_losLmkOps.lmkOpsList, LosLmkOpsNode, node) {
         freeMem = opsNode->freeMem;
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         if (freeMem != NULL) {
             ret = freeMem();
             if (ret != LOS_OK) {
                 return LOS_ERRNO_LMK_FREE_MEMORY_FAILURE;
             }
         }
-        intSave = LOS_IntLock();
+        LMK_LOCK(intSave);
     }
-    LOS_IntRestore(intSave);
+    LMK_UNLOCK(intSave);
 
     return LOS_OK;
 }
@@ -158,27 +167,27 @@ UINT32 LOS_LmkTasksRestore(VOID)
     LosLmkOpsNode *opsNode = NULL;
     RestoreKilledTask restore = NULL;
 
-    intSave = LOS_IntLock();
+    LMK_LOCK(intSave);
 
     // if no tasks killed, no need to restore.
     if (!g_losLmkOps.isMemFreed) {
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         return LOS_ERRNO_LMK_RESTORE_NOT_NEEDED;
     } else {
         g_losLmkOps.isMemFreed = FALSE;
     }
     LOS_DL_LIST_FOR_EACH_ENTRY(opsNode, &g_losLmkOps.lmkOpsList, LosLmkOpsNode, node) {
         restore = opsNode->restoreTask;
-        LOS_IntRestore(intSave);
+        LMK_UNLOCK(intSave);
         if (restore != NULL) {
             ret = restore();
             if (ret != LOS_OK) {
                 return LOS_ERRNO_LMK_RESTORE_TASKS_FAILURE;
             }
         }
-        intSave = LOS_IntLock();
+        LMK_LOCK(intSave);
     }
-    LOS_IntRestore(intSave);
+    LMK_UNLOCK(intSave);
 
     return LOS_OK;
 }
@@ -189,12 +198,12 @@ VOID LOS_LmkOpsNodeInfoShow(VOID)
     UINT32 intSave;
     LosLmkOpsNode *opsNode = NULL;
 
-    intSave = LOS_IntLock();
+    LMK_LOCK(intSave);
     LOS_DL_LIST_FOR_EACH_ENTRY(opsNode, &g_losLmkOps.lmkOpsList, LosLmkOpsNode, node) {
         PRINTK("Priority: %-4u Free:0x%-8x Restore:0x%-8x\n", opsNode->priority,
                (UINT32)(UINTPTR)opsNode->freeMem, (UINT32)(UINTPTR)opsNode->restoreTask);
     }
-    LOS_IntRestore(intSave);
+    LMK_UNLOCK(intSave);
 }
 #endif
 

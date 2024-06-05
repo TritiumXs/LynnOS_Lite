@@ -116,12 +116,12 @@ struct OsMemUsedNodeHead {
 
 #define MEM_LOCK(pool, state)       do {                    \
     if (!((pool)->info.attr & OS_MEM_POOL_UNLOCK_ENABLE)) { \
-        (state) = LOS_IntLock();                            \
+        SCHEDULER_LOCK(state);                              \
     }                                                       \
 } while (0);
 #define MEM_UNLOCK(pool, state)     do {                    \
     if (!((pool)->info.attr & OS_MEM_POOL_UNLOCK_ENABLE)) { \
-        LOS_IntRestore(state);                              \
+        SCHEDULER_UNLOCK(state);                            \
     }                                                       \
 } while (0);
 

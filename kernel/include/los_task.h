@@ -42,12 +42,24 @@
 #include "los_event.h"
 #include "los_tick.h"
 #include "los_sortlink.h"
+#include "los_core.h"
+#include "los_spinlock.h"
 
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
+
+/* scheduler lock */
+extern Spinlock g_taskSpin;
+#define SCHEDULER_LOCK(state)                       LOS_SpinLockSave(&g_taskSpin, &(state))
+#define SCHEDULER_UNLOCK(state)                     LOS_SpinUnlockRestore(&g_taskSpin, state)
+
+#define CPUID_TO_AFFI_MASK(cpuID)                   (0x1u << (cpuID))
+
+/* default and non-running task's ownership id */
+#define OS_TASK_INVALID_CPUID                       0xFFFF
 
 /**
  * @ingroup los_task
@@ -442,6 +454,16 @@ extern "C" {
 
 /**
  * @ingroup los_task
+ * Task error code: The cpu affinity mask is incorrect.
+ *
+ * Value: 0x0200022a
+ *
+ * Solution: Please set the correct cpu affinity mask.
+ */
+#define LOS_ERRNO_TSK_CPU_AFFINITY_MASK_ERR          LOS_ERRNO_OS_FATAL(LOS_MOD_TSK, 0x2a)
+
+/**
+ * @ingroup los_task
  * Define the type of the task entry function.
  *
  */
@@ -460,6 +482,9 @@ typedef struct tagTskInitParam {
     UINTPTR              stackAddr;                 /**< Task stack memory                      */
     UINT32               uwStackSize;               /**< Task stack size                        */
     CHAR                 *pcName;                   /**< Task name                              */
+#ifdef LOSCFG_KERNEL_SMP
+    UINT32               usCpuAffiMask;             /**< Task cpu affinity                      */
+#endif
     UINT32               uwResved;                  /**< Reserved                               */
 } TSK_INIT_PARAM_S;
 
@@ -1503,6 +1528,10 @@ typedef struct {
 #ifdef LOSCFG_TASK_STRUCT_EXTENSION
     LOSCFG_TASK_STRUCT_EXTENSION;                         /**< Task extension field */
 #endif
+#ifdef LOSCFG_KERNEL_SMP
+    UINT32                      cpuAffiMask;              /**< CPU affinity mask, support up to 32 cores */
+    UINT16                      currCpu;                  /**< CPU core number of this task is running on */
+#endif
 } LosTaskCB;
 
 STATIC INLINE BOOL OsTaskIsExit(const LosTaskCB *taskCB)
@@ -1552,20 +1581,20 @@ typedef struct {
 extern TaskSwitchInfo g_taskSwitchInfo;
 #endif
 
-extern LosTask              g_losTask;
+extern LosTask              g_losTask[LOSCFG_KERNEL_CORE_NUM];
 
 /**
  * @ingroup los_task
  * Task lock flag.
  *
  */
-extern UINT16               g_losTaskLock;
+extern UINT16               g_losTaskLock[LOSCFG_KERNEL_CORE_NUM];
 
 /* *
  * @ingroup los_hw
  * Check task schedule.
  */
-#define LOS_CHECK_SCHEDULE (!g_losTaskLock)
+#define LOS_CHECK_SCHEDULE (!g_losTaskLock[ArchCurrCpuid()])
 
 /**
  * @ingroup los_task
@@ -1579,7 +1608,7 @@ extern UINT32               g_taskMaxNum;
  * Idle task ID.
  *
  */
-extern UINT32               g_idleTaskID;
+extern UINT32               g_idleTaskID[LOSCFG_KERNEL_CORE_NUM];
 
 /**
  * @ingroup los_task
@@ -1644,14 +1673,36 @@ extern UINT32 OsTaskInit(VOID);
  * <li>None.</li>
  * </ul>
  *
- * @param  None.
+ * @param  cpuID  [IN] Type #UINT32   current cpu id.
  *
  * @retval  UINT32   Create result.
  * @par Dependency:
  * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
  * @see
  */
-extern UINT32 OsIdleTaskCreate(VOID);
+extern UINT32 OsIdleTaskCreate(UINT32 cpuID);
+
+/**
+ * @ingroup  los_task
+ * @brief Check task id is idle task.
+ *
+ * @par Description:
+ * This API is used to check task id is idle task.
+ *
+ * @attention
+ * <ul>
+ * <li>None.</li>
+ * </ul>
+ *
+ * @param  taskID  [IN] Type #UINT32   task id.
+ *
+ * @retval #TRUE         Tasks id is idle task.
+ * @retval #FALSE        Tasks id is not idle task.
+ * @par Dependency:
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
+ * @see
+ */
+extern BOOL OsIsIdleTask(UINT32 taskID);
 
 /**
  * @ingroup  los_task
@@ -1779,13 +1830,59 @@ extern UINT8 *OsConvertTskStatus(UINT16 taskStatus);
  */
 extern UINT32 OsGetAllTskInfo(VOID);
 
+/**
+ * @ingroup  los_task
+ * @brief Set the affinity mask of the task scheduling cpu.
+ *
+ * @par Description:
+ * This API is used to set the affinity mask of the task scheduling cpu.
+ *
+ * @attention
+ * <ul>
+ * <li>If any low LOSCFG_KERNEL_CORE_NUM bit of the mask is not set, an error is reported.</li>
+ * </ul>
+ *
+ * @param  taskID        [IN]  Type  #UINT32 Task ID. The task id value is obtained from task creation.
+ * @param  cpuAffiMask   [IN]  Type  #UINT32 The scheduling cpu mask.The low to high bit of the mask corresponds to
+ *                             the cpu number, the high bit that exceeding the CPU number is ignored.
+ *
+ * @retval #LOS_ERRNO_TSK_ID_INVALID                Invalid task ID.
+ * @retval #LOS_ERRNO_TSK_NOT_CREATED               The task is not created.
+ * @retval #LOS_ERRNO_TSK_CPU_AFFINITY_MASK_ERR     The task cpu affinity mask is incorrect.
+ * @retval #LOS_OK                                  The task cpu affinity mask is successfully set.
+ * @par Dependency:
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
+ * @see LOS_TaskCpuAffiGet
+ */
+extern UINT32 LOS_TaskCpuAffiSet(UINT32 taskID, UINT16 cpuAffiMask);
+
+/**
+ * @ingroup  los_task
+ * @brief Get the affinity mask of the task scheduling cpu.
+ *
+ * @par Description:
+ * This API is used to get the affinity mask of the task scheduling cpu.
+ *
+ * @attention None.
+ *
+ * @param  taskID       [IN]  Type  #UINT32 Task ID. The task id value is obtained from task creation.
+ *
+ * @retval #0           The cpu affinity mask fails to be obtained.
+ * @retval #UINT16      The scheduling cpu mask. The low to high bit of the mask corresponds to the cpu number.
+ * @par Dependency:
+ * <ul><li>los_task.h: the header file that contains the API declaration.</li></ul>
+ * @see LOS_TaskCpuAffiSet
+ */
+UINT32 LOS_TaskCpuAffiGet(UINT32 taskID);
+
 extern VOID *OsTskUserStackInit(VOID* stackPtr, VOID* userSP, UINT32 userStackSize);
 
 extern UINT32 OsPmEnterHandlerSet(VOID (*func)(VOID));
 
 STATIC INLINE LosTaskCB *OsCurrTaskGet(VOID)
 {
-    return g_losTask.runTask;
+    UINT32 cpuID = ArchCurrCpuid();
+    return g_losTask[cpuID].runTask;
 }
 
 extern VOID LOS_TaskResRecycle(VOID);

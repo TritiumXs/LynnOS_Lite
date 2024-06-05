@@ -63,7 +63,7 @@ LITE_OS_SEC_TEXT_INIT VOID *ArchTskStackInit(UINT32 taskID, UINT32 stackSize, VO
     return (VOID *)context;
 }
 
-extern LosTask g_losTask;
+extern LosTask g_losTask[LOSCFG_KERNEL_CORE_NUM];
 LITE_OS_SEC_TEXT_INIT UINT32 ArchStartSchedule(VOID)
 {
     (VOID)LOS_IntLock();
@@ -79,9 +79,10 @@ VOID ArchTaskSchedule(VOID)
 
 VOID HalTaskSwitch(VOID)
 {
+    UINT32 cpuID = ArchCurrCpuid();
     SysTimer_ClearSWIRQ();
     OsSchedTaskSwitch();
     /* Set newTask to runTask */
-    g_losTask.runTask = g_losTask.newTask;
+    g_losTask[cpuID].runTask = g_losTask[cpuID].newTask;
 }
 

@@ -37,17 +37,18 @@
 static VOID TaskF01(VOID)
 {
     UINT32 ret, newPrio;
+    UINT32 cpuID = ArchCurrCpuid();
     g_testCount++;
     ret = LOS_CurTaskPriSet(OS_TASK_PRIORITY_HIGHEST);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ICUNIT_ASSERT_EQUAL_VOID(g_losTask.runTask->priority, OS_TASK_PRIORITY_HIGHEST, g_losTask.runTask->priority);
+    ICUNIT_ASSERT_EQUAL_VOID(g_losTask[cpuID].runTask->priority, OS_TASK_PRIORITY_HIGHEST, g_losTask[cpuID].runTask->priority);
 
     newPrio = TASK_PRIO_TEST - 4; // 4，get new priority, it is higher than the task of testsuit.
     ret = LOS_CurTaskPriSet(newPrio);
     ICUNIT_ASSERT_EQUAL_VOID(ret, LOS_OK, ret);
 
-    ICUNIT_ASSERT_EQUAL_VOID(g_losTask.runTask->priority, newPrio, g_losTask.runTask->priority);
+    ICUNIT_ASSERT_EQUAL_VOID(g_losTask[cpuID].runTask->priority, newPrio, g_losTask[cpuID].runTask->priority);
 
     ICUNIT_ASSERT_EQUAL_VOID(g_testCount, 1, g_testCount);
     ret = LOS_CurTaskPriSet(OS_TASK_PRIORITY_LOWEST);

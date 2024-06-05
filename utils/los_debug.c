@@ -67,20 +67,24 @@ VOID OsBackTraceHookCall(UINTPTR *LR, UINT32 LRSize, UINT32 jumpCount, UINTPTR S
 
 VOID OsExcHookRegister(ExcHookFn excHookFn)
 {
-    UINT32 intSave = LOS_IntLock();
+    UINT32 intSave;
+
+    SCHEDULER_LOCK(intSave);
     if (!g_excHook) {
         g_excHook = excHookFn;
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 }
 
 VOID OsDoExcHook(EXC_TYPE excType)
 {
-    UINT32 intSave = LOS_IntLock();
+    UINT32 intSave;
+
+    SCHEDULER_LOCK(intSave);
     if (g_excHook) {
         g_excHook(excType);
     }
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 }
 
 #if (LOSCFG_KERNEL_PRINTF == 1)

@@ -97,9 +97,9 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_MuxCreate(UINT32 *muxHandle)
         return LOS_ERRNO_MUX_PTR_NULL;
     }
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (LOS_ListEmpty(&g_unusedMuxList)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_MUX_ALL_BUSY);
     }
 
@@ -112,7 +112,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_MuxCreate(UINT32 *muxHandle)
     muxCreated->owner = (LosTaskCB *)NULL;
     LOS_ListInit(&muxCreated->muxList);
     *muxHandle = (UINT32)muxCreated->muxID;
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     OsHookCall(LOS_HOOK_TYPE_MUX_CREATE, muxCreated);
     return LOS_OK;
 ERR_HANDLER:
@@ -138,14 +138,14 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_MuxDelete(UINT32 muxHandle)
     }
 
     muxDeleted = GET_MUX(muxHandle);
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (muxDeleted->muxStat == OS_MUX_UNUSED) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_MUX_INVALID);
     }
 
     if ((!LOS_ListEmpty(&muxDeleted->muxList)) || muxDeleted->muxCount) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         OS_GOTO_ERR_HANDLER(LOS_ERRNO_MUX_PENDED);
     }
 
@@ -154,7 +154,7 @@ LITE_OS_SEC_TEXT_INIT UINT32 LOS_MuxDelete(UINT32 muxHandle)
 #if (LOSCFG_MUTEX_CREATE_TRACE == 1)
     muxDeleted->createInfo = 0;
 #endif
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
 
     OsHookCall(LOS_HOOK_TYPE_MUX_DELETE, muxDeleted);
     return LOS_OK;
@@ -164,6 +164,8 @@ ERR_HANDLER:
 
 STATIC_INLINE UINT32 OsMuxValidCheck(LosMuxCB *muxPended)
 {
+    UINT32 cpuId = ArchCurrCpuid();
+
     if (muxPended->muxStat == OS_MUX_UNUSED) {
         return LOS_ERRNO_MUX_INVALID;
     }
@@ -172,12 +174,12 @@ STATIC_INLINE UINT32 OsMuxValidCheck(LosMuxCB *muxPended)
         return LOS_ERRNO_MUX_IN_INTERR;
     }
 
-    if (g_losTaskLock) {
+    if (g_losTaskLock[cpuId]) {
         PRINT_ERR("!!!LOS_ERRNO_MUX_PEND_IN_LOCK!!!\n");
         return LOS_ERRNO_MUX_PEND_IN_LOCK;
     }
 
-    if (g_losTask.runTask->taskStatus & OS_TASK_FLAG_SYSTEM_TASK) {
+    if (g_losTask[cpuId].runTask->taskStatus & OS_TASK_FLAG_SYSTEM_TASK) {
         return LOS_ERRNO_MUX_PEND_IN_SYSTEM_TASK;
     }
 
@@ -198,30 +200,31 @@ LITE_OS_SEC_TEXT UINT32 LOS_MuxPend(UINT32 muxHandle, UINT32 timeout)
     LosMuxCB *muxPended = NULL;
     UINT32 retErr;
     LosTaskCB *runningTask = NULL;
+    UINT32 cpuId = ArchCurrCpuid();
 
     if (muxHandle >= (UINT32)LOSCFG_BASE_IPC_MUX_LIMIT) {
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);
     }
 
     muxPended = GET_MUX(muxHandle);
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     retErr = OsMuxValidCheck(muxPended);
     if (retErr) {
         goto ERROR_MUX_PEND;
     }
 
-    runningTask = (LosTaskCB *)g_losTask.runTask;
+    runningTask = (LosTaskCB *)g_losTask[cpuId].runTask;
     if (muxPended->muxCount == 0) {
         muxPended->muxCount++;
         muxPended->owner = runningTask;
         muxPended->priority = runningTask->priority;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         goto HOOK;
     }
 
     if (muxPended->owner == runningTask) {
         muxPended->muxCount++;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         goto HOOK;
     }
 
@@ -238,18 +241,18 @@ LITE_OS_SEC_TEXT UINT32 LOS_MuxPend(UINT32 muxHandle, UINT32 timeout)
 
     OsSchedTaskWait(&muxPended->muxList, timeout);
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     OsHookCall(LOS_HOOK_TYPE_MUX_PEND, muxPended, timeout);
     LOS_Schedule();
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
     if (runningTask->taskStatus & OS_TASK_STATUS_TIMEOUT) {
         runningTask->taskStatus &= (~OS_TASK_STATUS_TIMEOUT);
         retErr = LOS_ERRNO_MUX_TIMEOUT;
         goto ERROR_MUX_PEND;
     }
 
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     return LOS_OK;
 
 HOOK:
@@ -257,7 +260,7 @@ HOOK:
     return LOS_OK;
 
 ERROR_MUX_PEND:
-    LOS_IntRestore(intSave);
+    SCHEDULER_UNLOCK(intSave);
     OS_RETURN_ERROR(retErr);
 }
 
@@ -274,28 +277,29 @@ LITE_OS_SEC_TEXT UINT32 LOS_MuxPost(UINT32 muxHandle)
     LosMuxCB *muxPosted = GET_MUX(muxHandle);
     LosTaskCB *resumedTask = NULL;
     LosTaskCB *runningTask = NULL;
+    UINT32 cpuId = ArchCurrCpuid();
 
-    intSave = LOS_IntLock();
+    SCHEDULER_LOCK(intSave);
 
     if ((muxHandle >= (UINT32)LOSCFG_BASE_IPC_MUX_LIMIT) ||
         (muxPosted->muxStat == OS_MUX_UNUSED)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);
     }
 
     if (OS_INT_ACTIVE) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         OS_RETURN_ERROR(LOS_ERRNO_MUX_IN_INTERR);
     }
 
-    runningTask = (LosTaskCB *)g_losTask.runTask;
+    runningTask = (LosTaskCB *)g_losTask[cpuId].runTask;
     if ((muxPosted->muxCount == 0) || (muxPosted->owner != runningTask)) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         OS_RETURN_ERROR(LOS_ERRNO_MUX_INVALID);
     }
 
     if (--(muxPosted->muxCount) != 0) {
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         OsHookCall(LOS_HOOK_TYPE_MUX_POST, muxPosted);
         return LOS_OK;
     }
@@ -314,12 +318,15 @@ LITE_OS_SEC_TEXT UINT32 LOS_MuxPost(UINT32 muxHandle)
 
         OsSchedTaskWake(resumedTask);
 
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
         OsHookCall(LOS_HOOK_TYPE_MUX_POST, muxPosted);
+#ifdef LOSCFG_KERNEL_SMP
+        LOS_MpSchedule(OS_MP_CPU_ALL);
+#endif
         LOS_Schedule();
     } else {
         muxPosted->owner = NULL;
-        LOS_IntRestore(intSave);
+        SCHEDULER_UNLOCK(intSave);
     }
 
     return LOS_OK;

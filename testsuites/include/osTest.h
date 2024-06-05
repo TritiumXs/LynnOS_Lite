@@ -63,6 +63,24 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
+#define TEST_TASK_PARAM_INIT(testTask, task_name, entry, prio) do {                         \
+        (void)memset_s(&(testTask), sizeof(TSK_INIT_PARAM_S), 0, sizeof(TSK_INIT_PARAM_S)); \
+        testTask.pfnTaskEntry = (TSK_ENTRY_FUNC)entry;                                      \
+        testTask.uwStackSize = 0x1000;                                                      \
+        testTask.pcName = task_name;                                                        \
+        testTask.usTaskPrio = prio;                                                         \
+        testTask.uwResved = LOS_TASK_STATUS_DETACHED;                                       \
+    } while (0);
+
+#ifdef LOSCFG_KERNEL_SMP
+#define TEST_TASK_PARAM_INIT_AFFI(testTask, task_name, entry, prio, affi) \
+    TEST_TASK_PARAM_INIT(testTask, task_name, entry, prio)                \
+    testTask.usCpuAffiMask = affi;
+#else
+#define TEST_TASK_PARAM_INIT_AFFI(stTestTask, task_name, entry, prio, affi) \
+    TEST_TASK_PARAM_INIT(stTestTask, task_name, entry, prio)
+#endif
+
 #define PRINTF(fmt, args...) \
     do {                     \
         printf(fmt, ##args); \
@@ -122,6 +140,7 @@ extern UINT32 g_usSemID;
 extern UINT32 g_usSemID2;
 extern UINT32 g_mutexTest;
 
+extern UINT32 g_testPeriod;
 extern UINT16 g_usSwTmrID;
 extern UINT32 g_usSemID;
 extern UINT32 g_testQueueID01;
@@ -210,6 +229,7 @@ extern EVENT_CB_S g_exampleEvent;
 
 #define TASK_PRIO_TEST 25
 #define TASK_PRIO_TEST_NORMAL 20
+#define TASK_PRIO_TEST_SWTMR 4
 
 #define TASK_LOOP_NUM 0x100000
 #define QUEUE_LOOP_NUM 100
@@ -248,6 +268,11 @@ extern UINT32 QueueUsedCountGet(VOID);
 extern UINT32 TaskUsedCountGet(VOID);
 #define TASK_EXISTED_NUM TaskUsedCountGet()
 #define QUEUE_EXISTED_NUM QueueUsedCountGet()
+
+extern UINT64 TestTickCountGet(VOID);
+extern UINT64 TestTickCountByCurrCpuid(VOID);
+extern VOID TestBusyTaskDelay(UINT32 tick);
+extern VOID TestAssertBusyTaskDelay(UINT32 timeout, UINT32 flag);
 
 #define HWI_NUM_INT_NEG (-4)
 #define HWI_NUM_INT0 0
@@ -392,7 +417,7 @@ extern UINT32 g_taskMaxNum;
 
 extern LITE_OS_SEC_BSS_INIT LOS_DL_LIST g_stUnusedSemList;
 
-extern LosTask g_losTask;
+extern LosTask g_losTask[LOSCFG_KERNEL_CORE_NUM];
 extern VOID LOS_Schedule(VOID);
 extern LosTaskCB *g_taskCBArray;
 

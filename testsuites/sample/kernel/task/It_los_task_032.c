@@ -36,11 +36,12 @@
 static UINT32 TestCase(VOID)
 {
     UINT32 ret;
+    UINT32 cpuID = ArchCurrCpuid();
 
-    ret = LOS_TaskSuspend(g_idleTaskID);
+    ret = LOS_TaskSuspend(g_idleTaskID[cpuID]);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_OPERATE_IDLE, ret);
 
-    ret = LOS_TaskResume(g_idleTaskID);
+    ret = LOS_TaskResume(g_idleTaskID[cpuID]);
     ICUNIT_ASSERT_EQUAL(ret, LOS_ERRNO_TSK_NOT_SUSPENDED, ret);
 
     return LOS_OK;

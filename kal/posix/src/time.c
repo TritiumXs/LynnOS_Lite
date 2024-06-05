@@ -79,6 +79,15 @@ STATIC struct RtcTimeHook g_rtcTimeFunc;
 STATIC UINT64 g_rtcTimeBase = 0;
 STATIC UINT64 g_systickBase = 0;
 
+#if (LOSCFG_KERNEL_SMP == 1)
+LITE_OS_SEC_BSS SPIN_LOCK_INIT(g_timeSpin);
+#define TIME_LOCK(state)             LOS_SpinLockSave(&g_timeSpin, &(state))
+#define TIME_UNLOCK(state)           LOS_SpinUnlockRestore(&g_timeSpin, (state))
+#else
+#define TIME_LOCK(state)             (state) = LOS_IntLock()
+#define TIME_UNLOCK(state)           LOS_IntRestore(state)
+#endif
+
 VOID LOS_RtcHookRegister(struct RtcTimeHook *cfg)
 {
     if (cfg == NULL) {
@@ -211,13 +220,13 @@ int timer_settime(timer_t timerID, int flags,
         return -1;
     }
 
-    intSave = LOS_IntLock();
+    TIME_LOCK(intSave);
     swtmr = OS_SWT_FROM_SID(swtmrID);
     swtmr->ucMode = (interval ? LOS_SWTMR_MODE_PERIOD : LOS_SWTMR_MODE_NO_SELFDELETE);
     swtmr->uwInterval = (interval ? interval : expiry);
 
     swtmr->ucOverrun = 0;
-    LOS_IntRestore(intSave);
+    TIME_UNLOCK(intSave);
 
     if ((value->it_value.tv_sec == 0) && (value->it_value.tv_nsec == 0)) {
         /*
@@ -290,11 +299,11 @@ STATIC VOID OsGetRealTime(struct timespec *realTime)
     UINT32 intSave;
     struct timespec hwTime = {0};
     OsGetHwTime(&hwTime);
-    intSave = LOS_IntLock();
+    TIME_LOCK(intSave);
     realTime->tv_nsec = hwTime.tv_nsec + g_accDeltaFromSet.tv_nsec;
     realTime->tv_sec = hwTime.tv_sec + g_accDeltaFromSet.tv_sec + (realTime->tv_nsec >= OS_SYS_NS_PER_SECOND);
     realTime->tv_nsec %= OS_SYS_NS_PER_SECOND;
-    LOS_IntRestore(intSave);
+    TIME_UNLOCK(intSave);
 }
 
 STATIC VOID OsSetRealTime(const struct timespec *realTime)
@@ -302,11 +311,11 @@ STATIC VOID OsSetRealTime(const struct timespec *realTime)
     UINT32 intSave;
     struct timespec hwTime = {0};
     OsGetHwTime(&hwTime);
-    intSave = LOS_IntLock();
+    TIME_LOCK(intSave);
     g_accDeltaFromSet.tv_nsec = realTime->tv_nsec - hwTime.tv_nsec;
     g_accDeltaFromSet.tv_sec = realTime->tv_sec - hwTime.tv_sec - (g_accDeltaFromSet.tv_nsec < 0);
     g_accDeltaFromSet.tv_nsec = (g_accDeltaFromSet.tv_nsec + OS_SYS_NS_PER_SECOND) % OS_SYS_NS_PER_SECOND;
-    LOS_IntRestore(intSave);
+    TIME_UNLOCK(intSave);
 }
 
 int clock_settime(clockid_t clockID, const struct timespec *tp)

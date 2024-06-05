@@ -684,8 +684,22 @@ extern UINT8 *m_aucSysMem0;
  * Configuration item to set shell stack size.
  */
 #ifndef LOSCFG_SHELL_STACK_SIZE
-#define LOSCFG_SHELL_STACK_SIZE                         0x1000
+#define LOSCFG_SHELL_STACK_SIZE                       0x1000
 #endif
+
+/**
+ * @ingroup los_config
+ * Configuration item to set cpu core number.
+ */
+#ifndef LOSCFG_KERNEL_CORE_NUM
+#define LOSCFG_KERNEL_CORE_NUM                        1
+#endif
+
+/**
+ * @ingroup los_config
+ * Configuration item to set cpu mask.
+ */
+#define LOSCFG_KERNEL_CPU_MASK                        ((1 << LOSCFG_KERNEL_CORE_NUM) - 1)
 
 #ifdef __cplusplus
 #if __cplusplus

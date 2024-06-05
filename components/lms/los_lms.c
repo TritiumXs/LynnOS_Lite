@@ -433,7 +433,7 @@ STATIC UINT32 OsLmsCheckAddr(UINTPTR addr)
     UINT32 shadowValue = INVALID_SHADOW_VALUE;
     /* do not check nested or before all cpu start */
     LMS_LOCK(intSave);
-    if ((g_checkDepth != 0) || (!g_taskScheduled)) {
+    if ((g_checkDepth != 0) || (!OS_SCHEDULER_ACTIVE)) {
         LMS_UNLOCK(intSave);
         return 0;
     }
